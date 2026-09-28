@@ -1,20 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { fontBody, fontDisplay } from "@/lib/fonts";
 import { getProfile } from "@/lib/queries";
 import "../../globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Quản trị · I Love English Club",
@@ -45,20 +35,22 @@ export default async function AdminLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
+        className={`${fontBody.variable} ${fontDisplay.variable} flex min-h-screen flex-col antialiased`}
       >
-        <header className="border-b">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-            <span className="text-sm font-bold">Quản trị · I Love English Club</span>
+        <header className="sticky top-0 z-40 border-b-2 bg-card/90 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+            <span className="font-display text-[17px] font-bold">
+              Quản trị · I Love English <span className="text-primary">Club</span>
+            </span>
             <Link
               href="/en"
-              className="text-sm text-muted-foreground hover:underline"
+              className="rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground hover:bg-accent"
             >
               ← Về trang chính
             </Link>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
           {children}
         </main>
       </body>

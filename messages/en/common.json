@@ -7,14 +7,17 @@
     "logout": "Log out",
     "account": "Account",
     "language": "Language",
-    "theme": "Theme",
-    "themeLight": "Light",
-    "themeDark": "Dark",
-    "themeSystem": "System"
+    "theme": "Theme"
   },
   "footer": {
     "tagline": "Listen. Type. Learn.",
-    "rights": "All rights reserved."
+    "levels": "Levels",
+    "learn": "Learn",
+    "method": "The 4-step method",
+    "support": "Support",
+    "contact": "Contact: hello@iloveenglish.club",
+    "rights": "All rights reserved.",
+    "steps": "Listen · Type · Check · Read aloud"
   },
   "locale": { "en": "English", "vi": "Tiếng Việt" }
 }

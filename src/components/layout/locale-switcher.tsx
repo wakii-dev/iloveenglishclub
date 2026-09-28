@@ -1,19 +1,15 @@
 "use client";
 
-import { Languages } from "lucide-react";
 import { useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { cn } from "cn";
 
-/** Switch ngôn ngữ = đổi route locale (spec §8), giữ nguyên path hiện tại. */
+/**
+ * §2.1 LocaleSwitch — pill EN|VI (ToggleGroup style, rounded-full),
+ * active = bg-secondary text-secondary-foreground. Switch = đổi route locale.
+ */
 export function LocaleSwitcher() {
   const t = useTranslations("common");
   const locale = useLocale();
@@ -28,28 +24,31 @@ export function LocaleSwitcher() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("header.language")}
-          disabled={isPending}
+    <div
+      role="group"
+      aria-label={t("header.language")}
+      className={cn(
+        "flex items-center rounded-full border-2 border-border bg-card p-0.5",
+        isPending && "opacity-60",
+      )}
+    >
+      {routing.locales.map((l) => (
+        <button
+          key={l}
+          type="button"
+          onClick={() => switchTo(l)}
+          disabled={l === locale || isPending}
+          aria-pressed={l === locale}
+          className={cn(
+            "rounded-full px-2.5 py-1 text-[12px] font-extrabold uppercase tracking-wide transition-colors duration-150",
+            l === locale
+              ? "bg-secondary text-secondary-foreground"
+              : "text-muted-foreground hover:bg-accent",
+          )}
         >
-          <Languages className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {routing.locales.map((l) => (
-          <DropdownMenuItem
-            key={l}
-            onClick={() => switchTo(l)}
-            disabled={l === locale}
-          >
-            {t(`locale.${l}`)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {l}
+        </button>
+      ))}
+    </div>
   );
 }

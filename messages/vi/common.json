@@ -7,14 +7,17 @@
     "logout": "Đăng xuất",
     "account": "Tài khoản",
     "language": "Ngôn ngữ",
-    "theme": "Giao diện",
-    "themeLight": "Sáng",
-    "themeDark": "Tối",
-    "themeSystem": "Hệ thống"
+    "theme": "Giao diện"
   },
   "footer": {
     "tagline": "Nghe. Gõ. Học.",
-    "rights": "Mọi quyền được bảo lưu."
+    "levels": "Các level",
+    "learn": "Học",
+    "method": "Phương pháp 4 bước",
+    "support": "Hỗ trợ",
+    "contact": "Liên hệ: hello@iloveenglish.club",
+    "rights": "Mọi quyền được bảo lưu.",
+    "steps": "Nghe · Gõ · Kiểm tra · Đọc to"
   },
   "locale": { "en": "English", "vi": "Tiếng Việt" }
 }

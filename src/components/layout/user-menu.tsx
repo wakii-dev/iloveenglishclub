@@ -2,8 +2,8 @@
 
 import { LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { signOut } from "next-auth/react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,19 +14,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
+import { cn } from "cn";
 
-/** User menu: guest → Login/Register; đã login → tên + logout. */
+function initialsOf(name: string | null | undefined): string {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+/**
+ * §2.1 UserChip — avatar 28px (teal fallback initials) + name 13px w800.
+ * Hàng stats XP/streak thêm ở SF-6 (data chưa có ở bản nền tảng).
+ * Guest: Log in (ghost) + Sign up (primary).
+ */
 export function UserMenu() {
   const t = useTranslations("common");
   const { status, data } = useSession();
 
   if (status === "loading") {
-    return <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />;
+    return <div className="h-8 w-24 animate-pulse rounded-full bg-muted" />;
   }
 
   if (status !== "authenticated") {
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/login">{t("header.login")}</Link>
         </Button>
@@ -42,13 +57,28 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-w-40">
-          <span className="truncate">{user.name ?? t("header.account")}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="max-w-44 gap-2 rounded-full"
+        >
+          <Avatar className="size-7">
+            <AvatarFallback
+              className={cn(
+                "bg-secondary text-[11px] font-extrabold text-secondary-foreground",
+              )}
+            >
+              {initialsOf(user.name)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="truncate text-[13px] font-extrabold">
+            {user.name ?? t("header.account")}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-medium">
+          <p className="truncate text-sm font-bold">
             {user.name ?? t("header.account")}
           </p>
           {user.email ? (
