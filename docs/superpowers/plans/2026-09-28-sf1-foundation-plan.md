@@ -22,19 +22,19 @@ Hệ quả: RLS policies (spec §4) → authorization app-level (server-only DB 
 
 ## Tasks (thứ tự thực thi)
 
-- [ ] T1. Scaffold Next.js 15.5 + TS + Tailwind 4 + ESLint (create-next-app, merge vào worktree)
-- [ ] T2. shadcn/ui init + add 14 component (button input textarea dialog select progress tabs tooltip dropdown-menu sonner badge card skeleton label separator) — Tier 2 chỉ import
-- [ ] T3. i18n: next-intl routing (`/en` default, `/vi`, `/` → `/en`) + per-namespace messages `messages/{en,vi}/{common,home,auth,lesson,admin,gamification}.json` + request loader merge namespace
-- [ ] T4. DB: Drizzle + Neon (postgres.js, pooled, `prepare:false`) + schema Auth.js (users/accounts/sessions/verification_tokens) + `profiles` (locale/role/relaxed_mode/display_name) + generate migration + push lên Neon thật
-- [ ] T5. Auth: Auth.js v5 config edge-split (auth.config.ts / auth.ts) + Credentials (bcryptjs) + Google + JWT callbacks (role/locale vào session) + events.createUser profile + `/api/auth/[...nextauth]` route + register Server Action (set profiles.locale theo route)
-- [ ] T6. Trang `/[locale]/login` + `/[locale]/register` (form chức năng, trung tính) + user-menu (login/logout state)
-- [ ] T7. Middleware gộp: next-intl routing + exclude `/admin` + `/api` + chặn `/admin` chưa login (JWT edge-safe); role-check admin ở `src/app/admin/layout.tsx` (server, DB) + admin placeholder page UI tiếng Việt
-- [ ] T8. lib/storage.ts: put/delete, driver dev `public/uploads/` ⇄ prod Vercel Blob (env-switch), path key tương đối tương thích 2 driver
-- [ ] T9. Layout skeleton trung tính: header (logo, nav, user menu, locale switch, theme toggle) + footer + theme provider (next-themes, persist) + Home placeholder hero (i18n strings)
-- [ ] T10. [GATE] Design hand-off `docs/superpowers/designs/` → áp tokens + structure + behavior notes vào layout/header/footer/globals.css (nếu hand-off chưa land trước cuối run: giữ skeleton trung tính, ghi rõ trong report)
-- [ ] T11. Tests Vitest: routing config + messages parity EN⇄VI (mọi namespace) + storage path builder
-- [ ] T12. CI: `.github/workflows/ci.yml` lint + typecheck + test + build; `.env.example` đầy đủ var mới (DATABASE_URL, AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, NEXT_PUBLIC_SITE_URL, BLOB_READ_WRITE_TOKEN)
-- [ ] T13. Verify: ACCEPTANCE từng dòng (browser 3 tầng) + code-reviewer độc lập + evidence + audit log
+- [x] T1. Scaffold Next.js 15.5 + TS + Tailwind 4 + ESLint (create-next-app, merge vào worktree)
+- [x] T2. shadcn/ui init + add 14 component (button input textarea dialog select progress tabs tooltip dropdown-menu sonner badge card skeleton label separator) — Tier 2 chỉ import
+- [x] T3. i18n: next-intl routing (`/en` default, `/vi`, `/` → `/en`) + per-namespace messages `messages/{en,vi}/{common,home,auth,lesson,admin,gamification}.json` + request loader merge namespace
+- [x] T4. DB: Drizzle + Neon (postgres.js, pooled, `prepare:false`) + schema Auth.js (users/accounts/sessions/verification_tokens) + `profiles` (locale/role/relaxed_mode/display_name) + generate migration + push lên Neon thật
+- [x] T5. Auth: Auth.js v5 config edge-split (auth.config.ts / auth.ts) + Credentials (bcryptjs) + Google + JWT callbacks (role/locale vào session) + events.createUser profile + `/api/auth/[...nextauth]` route + register Server Action (set profiles.locale theo route)
+- [x] T6. Trang `/[locale]/login` + `/[locale]/register` (form chức năng, trung tính) + user-menu (login/logout state)
+- [x] T7. Middleware gộp: next-intl routing + exclude `/admin` + `/api` + chặn `/admin` chưa login (JWT edge-safe); role-check admin ở `src/app/admin/layout.tsx` (server, DB) + admin placeholder page UI tiếng Việt
+- [x] T8. lib/storage.ts: put/delete, driver dev `public/uploads/` ⇄ prod Vercel Blob (env-switch), path key tương đối tương thích 2 driver
+- [x] T9. Layout skeleton trung tính: header (logo, nav, user menu, locale switch, theme toggle) + footer + theme provider (next-themes, persist) + Home placeholder hero (i18n strings)
+- [x] T10. [GATE] Design hand-off `docs/superpowers/designs/` → áp tokens + structure + behavior notes vào layout/header/footer/globals.css (nếu hand-off chưa land trước cuối run: giữ skeleton trung tính, ghi rõ trong report)
+- [x] T11. Tests Vitest: routing config + messages parity EN⇄VI (mọi namespace) + storage path builder
+- [x] T12. CI: `.github/workflows/ci.yml` lint + typecheck + test + build; `.env.example` đầy đủ var mới (DATABASE_URL, AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, NEXT_PUBLIC_SITE_URL, BLOB_READ_WRITE_TOKEN)
+- [x] T13. Verify: ACCEPTANCE từng dòng (browser 3 tầng) + code-reviewer độc lập + evidence + audit log
 
 ## ACCEPTANCE (từ context pack)
 

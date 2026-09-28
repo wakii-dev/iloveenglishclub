@@ -1,0 +1,45 @@
+SF-1 Foundation (VU-16) — test evidence
+Date: 2026-09-29
+Code commit: 4268f69 (feat(design): bổ sung avatar/toggle-group/toggle components + fonts.ts)
+HEAD at evidence: 4268f69
+
+== UNIT TESTS (vitest) ==
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  06:54:07
+   Duration  189ms (import 59%, transform 32%, worker 4%, tests 4%)
+Command: npm test
+Result: 3 files / 14 tests PASSED
+  - src/i18n/routing.test.ts (3): locales en+vi, defaultLocale en, localePrefix always
+  - src/messages.test.ts (3+3): namespace parity EN⇄VI + flatten key parity + empty namespaces
+  - src/lib/storage.test.ts (8): buildAudioPath zero-pad, storageDriver env-switch, resolveAudioUrl
+
+== TYPECHECK == npm run typecheck → PASS (tsc --noEmit, 0 error)
+== LINT == npm run lint → PASS (eslint, 0 error 0 warning)
+== BUILD == npm run build → PASS (turbopack)
+  Routes: /[locale] SSG (/en /vi prerendered) · /[locale]/login·register SSG · /admin dynamic · /api/auth dynamic · Middleware edge 104kB
+
+== BROWSER E2E (Rule 0 — 3 tầng, dev server + Neon THẬT) ==
+T1 DOM (orca eval): / → 307 /en · lang=en/vi theo route · theme localStorage persist (light↔dark class trên html)
+  · bg #fff8f0 light / #211711 dark (đúng hand-off §1) · font h1 "Baloo 2" · session API trả {role, locale} từ profiles
+T2 VISUAL (screenshots /tmp/ilec-verify/): 01-home-en (dark neutral cũ) · 02/09-home-vi · 03-logged-in-vi (light warm) ·
+  04-admin-gate-guest (login page, 0 UI admin lộ) · 06-warm-home-en · 08-warm-login · 09-warm-home-vi (Classroom Warm)
+  ⚠ Orca CDP screenshot timeout tái diễn (window không surface) → fallback headless Chrome TRÊN CÙNG build (được phép theo skill);
+  dark-mode screenshot Orca FAIL → chỉ verify DOM (values khớp hand-off), CHƯA có pixel dark — nhờ user nhìn thêm.
+T3 FLOW (Orca browser, trusted input):
+  register /vi/register (Test User VI) → 303 → /vi logged-in · DB profiles.locale='vi' role='user' ✓ (acceptance)
+  logout → login /en/login cùng account → /en logged-in, session {role:user, locale:vi} ✓
+  /admin GUEST → redirect /en/login?next=/admin, không lộ UI ✓
+  /admin non-admin (role=user) → layout role-check DB → redirect / → /vi, không lộ UI ✓
+  /admin admin@ilec.dev (role=admin) → render "Quản trị" + email admin ✓
+  Google OAuth: KHÔNG verify được E2E — thiếu GOOGLE_CLIENT_ID/SECRET (REQUIREMENT-GAP); code path hoàn chỉnh (provider + callback + UserChip).
+
+== BUGS TÌM THẤY + FIX trong run ==
+1. postgres.js bị Turbopack bundle → query treo vĩnh viễn (registerAction kẹt ở insert; node thuần cùng URL OK) →
+   FIX next.config serverExternalPackages:["postgres"] → register E2E 303 trong ~5s (Neon cold start).
+2. next-intl 4.14: GetRequestConfigParams dùng requestLocale (không phải requested).
+3. @auth/drizzle-adapter yêu cầu property names snake_case schema chính thức (accounts table).
+4. JWT augmentation phải target "@auth/core/jwt" (next-auth/jwt chỉ re-export).
+
+tdd: skipped-tdd: foundation scaffold — logic rủi ro là auth flow + config (browser E2E thật trên Neon đã chạy);
+unit tests bảo vệ convention (routing/parity/path) viết cùng commit, GREEN tại HEAD 4268f69
