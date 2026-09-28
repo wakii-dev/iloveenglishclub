@@ -1,0 +1,20 @@
+{
+  "appName": "I Love English Club",
+  "nav": { "home": "Home" },
+  "header": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "account": "Account",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "footer": {
+    "tagline": "Listen. Type. Learn.",
+    "rights": "All rights reserved."
+  },
+  "locale": { "en": "English", "vi": "Tiếng Việt" }
+}

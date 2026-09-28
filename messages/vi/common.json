@@ -1,0 +1,20 @@
+{
+  "appName": "I Love English Club",
+  "nav": { "home": "Trang chủ" },
+  "header": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "account": "Tài khoản",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Hệ thống"
+  },
+  "footer": {
+    "tagline": "Nghe. Gõ. Học.",
+    "rights": "Mọi quyền được bảo lưu."
+  },
+  "locale": { "en": "English", "vi": "Tiếng Việt" }
+}
