@@ -13,7 +13,7 @@
 - **Input:** Spec duyệt (file này) · site tham chiếu dailydictation.com (chỉ tính năng + mô hình sản phẩm, KHÔNG content) · audio thu âm sẵn của đội sản xuất.
 - **Context:** Repo greenfield (trống code) · stack chốt Next.js 15 + Supabase · quản lý bằng story-workflow (epic + SF bracket).
 - **Success criteria:** Mỗi phase shippable (build xanh + browser walkthrough gate); cuối story: học viên đăng ký → chọn sách → học lesson (nghe-gõ-check) → nhận XP/streak → thấy leaderboard + stats; admin tạo unit → lesson → bulk upload audio → publish → bài hiện trên site. Tất cả chạy thật trên production URL.
-- **Out-of-scope (v1):** App mobile native · AI chấm phát âm · AI sinh nội dung · thanh toán/subscription · các section ngoài sách (Numbers, Spelling, Expressions, Pronunciation, TOEIC/IELTS/TOEFL, Blog).
+- **Out-of-scope (v1):** App mobile native · AI chấm phát âm · AI sinh nội dung · thanh toán/subscription · voice input (micro trên input — candidate v1.1) · các section ngoài sách (Numbers, Spelling, Expressions, Pronunciation, TOEIC/IELTS/TOEFL, Blog).
 
 ---
 
@@ -199,7 +199,8 @@ Trang lesson, tab **Dictation**:
    - `wpm` tính theo **duration audio gốc** (không theo tốc độ phát)
    - XP = `round(10 × accuracy × hintModifier × relaxedModifier)`, chỉ attempt đầu của part (attempts sau xp=0)
    - Client chỉ gửi `typed_text` + `client_attempt_id`; server recompute toàn bộ (cùng pure module)
-6. **Progress:** thanh tiến độ trên đầu (done parts / tổng — skip không tính); các part xong thu gọn thành câu đã đúng, sai highlight
+6. **Progress + part navigation:** thanh tiến độ (done parts / tổng — skip không tính); thanh điều hướng **`← 1/21 →`** trên đầu exercise (giống DailyDictation) — qua lại giữa các part ĐÃ xong để xem lại; part chưa xong không nhảy tới (sequential); các part xong thu gọn thành câu đã đúng, sai highlight
+   - Visual reference (từ screenshot DailyDictation): tabs Dictation | Full transcript trên đầu card; player inline (play, timeline, volume, speed 1x dropdown); textarea "Type what you hear..."; nút Check (primary) + Skip (secondary); Settings góc phải (relaxed mode, tốc độ mặc định)
 7. **Kết thúc:** lesson xong khi **mọi part done-or-skipped** → màn kết quả: accuracy TB các part done, XP nhận, streak hiện tại, nút "Bài tiếp theo"; % lessons done trên /me chỉ tính lesson **0 skipped**
 8. **Persist per-part NGAY khi check** (đăng nhập) — thoát giữa chừng vẫn giữ điểm; **guest:** state in-memory (XP live hiển thị ephemeral, banner rõ "đăng nhập để lưu"); guest login GIỮA lesson → toàn bộ in-memory results được commit như user thường (không mất trắng)
 9. **Tab Full transcript:** xem toàn bộ text các câu + audio player tổng (bật sau khi bắt đầu lesson)
