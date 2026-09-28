@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>I Love English Club — Direction A · Studio Quiet</title>
+<!--
+  VU-15 prototype · Direction A "Studio Quiet" (faithful-minimal, DailyDictation-anchored)
+  Assumptions:
+  - Brand logo chua co: wordmark tam (icon tim + chu). Can logo that tu PM.
+  - Book cover la placeholder typographic (khong dung anh bia Cambridge that - license).
+  - Player la visual mock, khong phat am thanh that.
+  - i18n: demo roi EN/VI de minh hoa pattern; product se co locale day du.
+  - CSS variables dat ten theo shadcn/ui (--background, --primary, --radius, .dark) de map
+    truc tiep vao theme.css cua app Next.js.
+  Form origin: motif "sound becomes text" - waveform cua player + word-diff; moi progress
+  bar trong san pham la mini dictation progress.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#ffffff; --foreground:#18181b;
+  --card:#ffffff; --card-foreground:#18181b;
+  --primary:#2563eb; --primary-foreground:#ffffff;
+  --secondary:#f4f4f5; --secondary-foreground:#18181b;
+  --muted:#f4f4f5; --muted-foreground:#71717a;
+  --accent:#f4f4f5; --accent-foreground:#18181b;
+  --destructive:#dc2626; --destructive-foreground:#ffffff;
+  --border:#e4e4e7; --input:#e4e4e7; --ring:#93c5fd;
+  --success:#16a34a; --success-foreground:#ffffff;
+  --radius:8px;
+}
+.dark{
+  --background:#09090b; --foreground:#fafafa;
+  --card:#141417; --card-foreground:#fafafa;
+  --primary:#3b82f6; --primary-foreground:#ffffff;
+  --secondary:#1e1e22; --secondary-foreground:#fafafa;
+  --muted:#1e1e22; --muted-foreground:#a1a1aa;
+  --accent:#26262b; --accent-foreground:#fafafa;
+  --destructive:#ef4444; --destructive-foreground:#ffffff;
+  --border:#2a2a30; --input:#2a2a30; --ring:#1d4ed8;
+  --success:#22c55e; --success-foreground:#052e16;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--background);color:var(--foreground);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+::selection{background:var(--ring);color:var(--background)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+p{text-wrap:pretty}
+svg{flex:none}
+.container{max-width:1080px;margin:0 auto;padding:0 24px}
+.narrow{max-width:760px;margin:0 auto;padding:0 24px}
+button{font:inherit;cursor:pointer;color:inherit}
+
+/* ---- demo chrome (khong phai product UI) ---- */
+.proto-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:10px 24px;border-bottom:1px dashed var(--border);font-size:12.5px;color:var(--muted-foreground)}
+.proto-bar b{color:var(--foreground);font-weight:600}
+.proto-bar .sp{flex:1}
+.proto-bar .hint{opacity:.75}
+
+/* ---- header ---- */
+.site-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--background) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.site-header .container{display:flex;align-items:center;gap:20px;height:60px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:15px;letter-spacing:-.01em;text-decoration:none;color:inherit}
+.brand .mark{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--primary);color:var(--primary-foreground)}
+.brand em{font-style:normal;color:var(--muted-foreground);font-weight:500}
+.nav{display:flex;gap:2px;margin-left:8px}
+.nav button{background:none;border:0;padding:7px 11px;border-radius:6px;font-size:14px;color:var(--muted-foreground)}
+.nav button:hover{background:var(--accent);color:var(--foreground)}
+.nav button.on{color:var(--foreground);font-weight:500}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.locale{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:12px}
+.locale button{background:none;border:0;padding:4px 8px;color:var(--muted-foreground)}
+.locale button.on{background:var(--secondary);color:var(--foreground);font-weight:600}
+.icon-btn{display:grid;place-items:center;width:32px;height:32px;border-radius:6px;
+  background:none;border:1px solid var(--border);color:var(--muted-foreground)}
+.icon-btn:hover{color:var(--foreground);background:var(--accent)}
+.user-chip{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:4px 10px 4px 4px}
+.avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--secondary);
+  font-size:12px;font-weight:600;color:var(--secondary-foreground)}
+.user-chip .meta{display:flex;flex-direction:column;line-height:1.15}
+.user-chip .name{font-size:12.5px;font-weight:600}
+.user-chip .stats{display:flex;gap:8px;font-size:11px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.user-chip .stats span{display:flex;align-items:center;gap:3px}
+.flame{color:#ea580c}
+
+/* ---- buttons ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:var(--radius);border:1px solid transparent;font-weight:500;font-size:14px;
+  padding:9px 18px;transition:background .15s ease,border-color .15s ease}
+.btn-primary{background:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--foreground)}
+.btn-ghost:hover{background:var(--accent)}
+.btn-lg{padding:12px 26px;font-size:15px}
+
+/* ---- lesson ---- */
+.breadcrumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted-foreground);padding:28px 0 4px}
+.breadcrumb b{color:var(--foreground);font-weight:500}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:14px 0 0}
+.tabs button{background:none;border:0;padding:9px 14px;font-size:14px;color:var(--muted-foreground);
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--foreground);font-weight:600;border-bottom-color:var(--foreground)}
+.lesson-body{padding:24px 0 56px}
+.player{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card)}
+.play-btn{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:0;
+  background:var(--primary);color:var(--primary-foreground)}
+.play-btn:hover{filter:brightness(1.07)}
+.wave{flex:1;display:flex;align-items:center;gap:2px;height:34px;min-width:0;overflow:hidden}
+.wave i{flex:1;max-width:5px;border-radius:2px;background:var(--border)}
+.wave i.fill{background:var(--primary)}
+.time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted-foreground);white-space:nowrap}
+.speed{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 9px;
+  font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--muted-foreground)}
+.speed:hover{color:var(--foreground);background:var(--accent)}
+textarea{width:100%;min-height:120px;margin-top:14px;padding:14px 16px;resize:vertical;
+  border:1px solid var(--input);border-radius:var(--radius);background:var(--card);color:var(--foreground);
+  font:inherit;line-height:1.6}
+textarea:focus{outline:2px solid var(--ring);outline-offset:1px;border-color:transparent}
+textarea::placeholder{color:var(--muted-foreground)}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.part-nav{display:flex;flex-direction:column;gap:10px;margin-top:34px}
+.progress{height:4px;border-radius:2px;background:var(--secondary);overflow:hidden}
+.progress span{display:block;height:100%;background:var(--primary)}
+.part-nav .row{display:flex;align-items:center;justify-content:center;gap:16px;font-size:13.5px;
+  color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.part-nav .row button{display:grid;place-items:center;width:32px;height:32px;border-radius:6px;
+  background:none;border:1px solid var(--border);color:var(--foreground)}
+.part-nav .row button:hover{background:var(--accent)}
+
+/* start + result states */
+.center{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:28px 0 56px}
+.eyebrow{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground)}
+h1{font-size:32px;line-height:1.15;letter-spacing:-.02em;font-weight:700;margin:10px 0 6px}
+.lead{color:var(--muted-foreground);margin:0 0 20px;max-width:52ch}
+.facts{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--muted-foreground);
+  padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  margin-bottom:24px;font-variant-numeric:tabular-nums;width:100%}
+.diff{font-size:19px;line-height:1.9;max-width:64ch;margin:0 0 8px}
+.w{position:relative;border-radius:4px;padding:1px 3px;margin:0 1px}
+.w.ok{background:color-mix(in srgb,var(--success) 12%,transparent);color:var(--success);font-weight:500}
+.w.bad{background:color-mix(in srgb,var(--destructive) 10%,transparent);color:var(--destructive);font-weight:500;text-decoration:line-through}
+.w.bad i{position:absolute;left:50%;transform:translateX(-50%);top:-22px;font-style:normal;
+  font-size:12.5px;color:var(--success);background:var(--card);border:1px solid var(--border);
+  border-radius:5px;padding:1px 7px;font-weight:600;text-decoration:none;white-space:nowrap}
+.diff-note{font-size:13px;color:var(--muted-foreground);margin:14px 0 0}
+.stats-row{display:flex;gap:0;width:100%;border:1px solid var(--border);border-radius:var(--radius);margin:26px 0 24px}
+.stat{flex:1;padding:16px 20px;border-left:1px solid var(--border)}
+.stat:first-child{border-left:0}
+.stat .k{font-size:12px;color:var(--muted-foreground);letter-spacing:.04em;text-transform:uppercase}
+.stat .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v small{font-size:13px;font-weight:500;color:var(--muted-foreground)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{font-size:12.5px;padding:4px 10px;border-radius:99px;background:var(--secondary);color:var(--secondary-foreground)}
+.row-end{display:flex;gap:10px}
+
+/* transcript */
+.sentences{margin:18px 0 0;padding:0;list-style:none}
+.sentences li{padding:12px 2px;border-bottom:1px solid var(--border);font-size:15.5px}
+.sentences li .n{color:var(--muted-foreground);font-variant-numeric:tabular-nums;margin-right:10px;font-size:13px}
+.sentences li.locked{color:var(--muted-foreground);filter:blur(4px);user-select:none}
+.lock-note{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--muted-foreground)}
+
+/* ---- home ---- */
+.hero{padding:84px 0 64px;text-align:center}
+.hero h1{font-size:46px;margin:0 auto;max-width:20ch}
+.hero .lead{margin:16px auto 28px;max-width:56ch}
+.hero .vi{font-size:14px;color:var(--muted-foreground);margin:-18px 0 30px}
+.hero .ctas{display:flex;gap:12px;justify-content:center}
+.section{padding:40px 0;border-top:1px solid var(--border)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px}
+h2{font-size:22px;letter-spacing:-.015em;margin:0}
+.section-head a{font-size:13.5px;color:var(--primary);text-decoration:none}
+.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.level-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);
+  padding:18px 18px 16px;text-align:left;transition:border-color .15s ease}
+.level-card:hover{border-color:var(--muted-foreground)}
+.level-card .top{display:flex;justify-content:space-between;align-items:center}
+.level-card .num{font-size:12.5px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.pill{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:99px;border:1px solid var(--border);color:var(--muted-foreground)}
+.pill.solid{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+.level-card h3{font-size:17px;margin:12px 0 2px;letter-spacing:-.01em}
+.level-card .exam{font-size:13px;color:var(--muted-foreground)}
+.level-card .progress{margin:14px 0 8px}
+.level-card .foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.method{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;padding-top:26px}
+.step .n{font-size:13px;color:var(--primary);font-weight:600;font-variant-numeric:tabular-nums}
+.step h3{font-size:15.5px;margin:6px 0 4px}
+.step h3 span{color:var(--muted-foreground);font-weight:400}
+.step p{font-size:13.5px;color:var(--muted-foreground);margin:0}
+
+/* ---- book / unit ---- */
+.book-grid{display:grid;grid-template-columns:280px 1fr;gap:40px;padding:32px 0 56px;align-items:start}
+.cover{aspect-ratio:3/4;border:1px solid var(--border);border-radius:10px;background:var(--muted);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px}
+.cover .s{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground)}
+.cover .b{font-size:40px;font-weight:700;letter-spacing:-.02em}
+.cover .c{font-size:13px;color:var(--muted-foreground)}
+.cover-note{font-size:12px;color:var(--muted-foreground);margin-top:10px}
+.meta-list{margin-top:18px;border-top:1px solid var(--border)}
+.meta-list div{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+.meta-list dt{color:var(--muted-foreground)} .meta-list dd{margin:0;font-variant-numeric:tabular-nums;font-weight:500}
+.units{border-top:1px solid var(--border)}
+.unit-row{display:grid;grid-template-columns:44px 1fr 110px 90px 20px;gap:12px;align-items:center;
+  padding:14px 4px;border-bottom:1px solid var(--border);background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font:inherit}
+.unit-row:hover{background:var(--accent)}
+.unit-row .idx{color:var(--muted-foreground);font-variant-numeric:tabular-nums;font-size:13px}
+.unit-row .t{font-weight:500;font-size:14.5px}
+.unit-row .t small{display:block;font-weight:400;color:var(--muted-foreground);font-size:12.5px}
+.unit-row .prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.unit-row .prog .progress{width:52px}
+.unit-row .chev{color:var(--muted-foreground)}
+.more-units{display:block;width:100%;padding:12px;font-size:13px;color:var(--muted-foreground);
+  background:none;border:0;border-bottom:1px solid var(--border);text-align:center}
+.page-head{padding:30px 0 6px}
+.page-head h1{margin:6px 0 4px}
+.lessons{border-top:1px solid var(--border);margin-top:18px}
+.lesson-row{display:grid;grid-template-columns:52px 1fr auto auto;gap:14px;align-items:center;
+  padding:15px 4px;border-bottom:1px solid var(--border)}
+.lesson-row .idx{color:var(--muted-foreground);font-variant-numeric:tabular-nums;font-size:13px}
+.lesson-row .t{font-weight:500}
+.lesson-row .t .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted-foreground);border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin-right:8px;vertical-align:1px}
+.score{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;padding:3px 10px;border-radius:99px}
+.score.hi{background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success)}
+.score.mid{background:color-mix(in srgb,#f59e0b 16%,transparent);color:#b45309}
+.dark .score.mid{color:#fbbf24}
+.score.todo{background:var(--secondary);color:var(--muted-foreground);font-weight:500}
+.lesson-row.current{background:var(--card);border:1px solid var(--primary);border-radius:var(--radius);padding-left:12px;padding-right:12px}
+
+/* ---- footer ---- */
+footer{border-top:1px solid var(--border);margin-top:24px}
+.foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px;padding:44px 0 28px}
+.foot-grid h4{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 12px}
+.foot-grid ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.foot-grid a{color:inherit;text-decoration:none;font-size:13.5px}
+.foot-grid a:hover{color:var(--primary)}
+.foot-brand p{font-size:13.5px;color:var(--muted-foreground);max-width:34ch;margin:10px 0 0}
+.foot-bottom{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;
+  border-top:1px solid var(--border);padding:18px 0 26px;font-size:12.5px;color:var(--muted-foreground)}
+
+@media(max-width:900px){
+  .levels{grid-template-columns:repeat(2,1fr)}
+  .method{grid-template-columns:repeat(2,1fr)}
+  .book-grid{grid-template-columns:1fr;gap:24px}
+  .cover{max-width:220px}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .lesson-grid-single{grid-template-columns:1fr}
+  .nav{display:none}
+}
+@media(max-width:640px){
+  .hero{padding:56px 0 44px}
+  .hero h1{font-size:32px}
+  .levels{grid-template-columns:1fr}
+  .method{grid-template-columns:1fr;gap:20px}
+  .unit-row{grid-template-columns:32px 1fr 20px}
+  .unit-row .prog{display:none}
+  .lesson-row{grid-template-columns:1fr auto}
+  .lesson-row .idx{display:none}
+  .stats-row{flex-direction:column}
+  .stat{border-left:0;border-top:1px solid var(--border)}
+  .stat:first-child{border-top:0}
+  .user-chip .meta{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <b>VU-15 prototype</b><span>Direction A · Studio Quiet</span>
+  <span class="sp"></span>
+  <button class="proto-nav" data-nav="lesson">Lesson</button>
+  <button class="proto-nav" data-nav="home">Home</button>
+  <button class="proto-nav" data-nav="book">Book</button>
+  <button class="proto-nav" data-nav="unit">Unit</button>
+  <button class="icon-btn" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+  <span class="hint">Try: Start → Check (see result) · tabs · theme</span>
+</div>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="#" data-nav="home">
+      <span class="mark"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+      I Love English <em>Club</em>
+    </a>
+    <nav class="nav">
+      <button data-nav="home">Home</button>
+      <button data-nav="book">Levels</button>
+      <button data-nav="home">Method</button>
+      <button data-nav="unit">Unit 4</button>
+    </nav>
+    <div class="header-right">
+      <div class="locale" role="group" aria-label="Language">
+        <button class="on">EN</button><button>VI</button>
+      </div>
+      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+      </button>
+      <div class="user-chip">
+        <span class="avatar">M</span>
+        <span class="meta">
+          <span class="name">Mai</span>
+          <span class="stats">
+            <span>1,240 XP</span>
+            <span class="flame"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.5 3.5 4.5 5.5 4.5 10a4.5 4.5 0 0 1-9 0c0-1.8.8-3.2 1.8-4.6.3 1.5 1.2 2.6 2.7 3.1C11 7.5 11.2 4.6 12 2z"/></svg>6</span>
+          </span>
+        </span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ SCREEN: LESSON ============ -->
+<section class="screen" id="screen-lesson">
+  <div class="narrow">
+
+    <!-- state: START -->
+    <div class="lesson-state" id="state-start">
+      <div class="center">
+        <span class="eyebrow">Level 3 (A2) · Unit 4 — Free time</span>
+        <h1>Part 2 — My daily routine</h1>
+        <p class="lead">Listen and type exactly what you hear. You can replay each sentence as many times as you need.</p>
+        <div class="facts">
+          <span>4 sentences</span><span>~12s audio</span><span>~2 minutes</span><span>+25 XP max</span>
+        </div>
+        <button class="btn btn-primary btn-lg" data-go="type">Start part
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- state: TYPE -->
+    <div class="lesson-state" id="state-type" hidden>
+      <div class="breadcrumb">
+        <span>Level 3 (A2)</span> / <span>Unit 4 — Free time</span> / <b>My daily routine</b>
+        <span class="sp" style="flex:1"></span>
+        <span>Part 2 of 21</span>
+      </div>
+      <div data-tabs>
+        <div class="tabs" role="tablist">
+          <button class="on" data-tab="dictation">Dictation</button>
+          <button data-tab="transcript">Full transcript</button>
+        </div>
+
+        <div data-pane="dictation">
+          <div class="lesson-body">
+            <div class="player">
+              <button class="play-btn" aria-label="Play">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <div class="wave" aria-hidden="true">
+                <i class="fill" style="height:22%"></i><i class="fill" style="height:40%"></i><i class="fill" style="height:64%"></i><i class="fill" style="height:38%"></i><i class="fill" style="height:80%"></i><i class="fill" style="height:52%"></i><i class="fill" style="height:30%"></i><i class="fill" style="height:58%"></i><i class="fill" style="height:88%"></i><i class="fill" style="height:44%"></i><i class="fill" style="height:26%"></i><i class="fill" style="height:60%"></i><i class="fill" style="height:74%"></i><i class="fill" style="height:36%"></i>
+                <i style="height:48%"></i><i style="height:70%"></i><i style="height:32%"></i><i style="height:56%"></i><i style="height:84%"></i><i style="height:40%"></i><i style="height:24%"></i><i style="height:62%"></i><i style="height:46%"></i><i style="height:34%"></i><i style="height:66%"></i><i style="height:28%"></i><i style="height:52%"></i><i style="height:38%"></i>
+              </div>
+              <span class="time">0:07 / 0:12</span>
+              <button class="speed" data-speed>1x</button>
+            </div>
+
+            <textarea aria-label="Type what you hear" placeholder="Type what you hear...">I usualy get up at six oclock and help my mother in the kitchen.</textarea>
+
+            <div class="actions">
+              <button class="btn btn-ghost">Skip</button>
+              <button class="btn btn-primary" data-go="result">Check
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+              </button>
+            </div>
+
+            <div class="part-nav">
+              <div class="progress"><span style="width:9.5%"></span></div>
+              <div class="row">
+                <button aria-label="Previous part"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <span>Part 2 / 21</span>
+                <button aria-label="Next part"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-pane="transcript" hidden>
+          <div class="lesson-body">
+            <ul class="sentences">
+              <li><span class="n">1</span>My name is Mai and I live in Ha Long City with my parents.</li>
+              <li class="locked" aria-hidden="true"><span class="n">2</span>I usually get up at six o'clock and help my mother in the kitchen.</li>
+              <li class="locked" aria-hidden="true"><span class="n">3</span>After school, I play badminton with my friends in the park.</li>
+              <li class="locked" aria-hidden="true"><span class="n">4</span>In the evening, I do my homework and watch cartoons for an hour.</li>
+            </ul>
+            <p class="lock-note">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              Finish the part to unlock the full transcript.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- state: RESULT -->
+    <div class="lesson-state" id="state-result" hidden>
+      <div class="center">
+        <span class="eyebrow">Sentence 2 of 4 · checked</span>
+        <h1 style="font-size:26px">Almost perfect — 2 words to fix</h1>
+        <p class="diff">
+          <span class="w ok">I</span>
+          <span class="w bad">usualy<i>usually</i></span>
+          <span class="w ok">get</span>
+          <span class="w ok">up</span>
+          <span class="w ok">at</span>
+          <span class="w ok">six</span>
+          <span class="w bad">oclock<i>o'clock</i></span>
+          <span class="w ok">and</span>
+          <span class="w ok">help</span>
+          <span class="w ok">my</span>
+          <span class="w ok">mother</span>
+          <span class="w ok">in</span>
+          <span class="w ok">the</span>
+          <span class="w ok">kitchen.</span>
+        </p>
+        <p class="diff-note">Green — correct. Red — typed word, with the correct word above. Capitalisation and punctuation are forgiven.</p>
+        <div class="stats-row">
+          <div class="stat"><div class="k">Accuracy</div><div class="v">86<small>%</small></div></div>
+          <div class="stat"><div class="k">XP earned</div><div class="v">+25</div></div>
+          <div class="stat"><div class="k">Streak</div><div class="v">6 <small>days</small></div></div>
+        </div>
+        <div class="chips">
+          <span class="chip">Words to review: usually</span>
+          <span class="chip">o'clock</span>
+        </div>
+        <div class="row-end">
+          <button class="btn btn-ghost" data-go="type">Try again</button>
+          <button class="btn btn-primary">Next sentence
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ SCREEN: HOME ============ -->
+<section class="screen" id="screen-home" hidden>
+  <div class="container">
+    <div class="hero">
+      <h1>Train your ears, one sentence at a time.</h1>
+      <p class="lead">Dictation practice built on the Cambridge English Prepare path — from Pre-A1 starters to B2 First. Free core, made for Vietnamese learners.</p>
+      <p class="vi">Luyện nghe tiếng Anh mỗi ngày bằng chép chính tả — theo lộ trình 7 cấp độ Cambridge English Prepare.</p>
+      <div class="ctas">
+        <button class="btn btn-primary btn-lg" data-nav="lesson">Continue Level 3</button>
+        <button class="btn btn-ghost btn-lg" data-nav="book">Explore all levels</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Choose your level</h2>
+        <a href="#" data-nav="book">See the full path</a>
+      </div>
+      <div class="levels">
+        <button class="level-card"><div class="top"><span class="num">Level 1</span><span class="pill">Pre-A1</span></div><h3>Pre A1 Starters</h3><span class="exam">First words · classroom English</span><div class="progress"><span style="width:100%"></span></div><div class="foot"><span>86 lessons</span><span>Completed</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 2</span><span class="pill">A1</span></div><h3>A1 Movers</h3><span class="exam">Everyday topics · simple stories</span><div class="progress"><span style="width:74%"></span></div><div class="foot"><span>92 lessons</span><span>74%</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 3</span><span class="pill solid">A2</span></div><h3>A2 Key (KET)</h3><span class="exam">Daily life · plans and free time</span><div class="progress"><span style="width:38%"></span></div><div class="foot"><span>104 lessons</span><span>38% · Continue</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 4</span><span class="pill">A2+</span></div><h3>KET → PET Bridge</h3><span class="exam">Longer texts · past tenses</span><div class="progress"><span style="width:0%"></span></div><div class="foot"><span>96 lessons</span><span>Not started</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 5</span><span class="pill">B1</span></div><h3>B1 Preliminary (PET)</h3><span class="exam">Opinions · real-world listening</span><div class="progress"><span style="width:0%"></span></div><div class="foot"><span>110 lessons</span><span>Not started</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 6</span><span class="pill">B1+</span></div><h3>PET → FCE Bridge</h3><span class="exam">Media English · narratives</span><div class="progress"><span style="width:0%"></span></div><div class="foot"><span>108 lessons</span><span>Not started</span></div></button>
+        <button class="level-card"><div class="top"><span class="num">Level 7</span><span class="pill">B2</span></div><h3>B2 First (FCE)</h3><span class="exam">Academic + news listening</span><div class="progress"><span style="width:0%"></span></div><div class="foot"><span>120 lessons</span><span>Not started</span></div></button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>The method — Nghe · Gõ · Kiểm tra · Đọc to</h2></div>
+      <div class="method">
+        <div class="step"><span class="n">01</span><h3>Listen <span>/ Nghe</span></h3><p>Play the audio as many times as you need. No time pressure, ever.</p></div>
+        <div class="step"><span class="n">02</span><h3>Type <span>/ Gõ</span></h3><p>Write down exactly what you hear — every word matters.</p></div>
+        <div class="step"><span class="n">03</span><h3>Check <span>/ Kiểm tra</span></h3><p>See every word you got right or wrong, and learn from the difference.</p></div>
+        <div class="step"><span class="n">04</span><h3>Read aloud <span>/ Đọc to</span></h3><p>Say the sentence out loud to lock in pronunciation and rhythm.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN: BOOK ============ -->
+<section class="screen" id="screen-book" hidden>
+  <div class="container">
+    <div class="book-grid">
+      <aside>
+        <div class="cover" role="img" aria-label="Book cover placeholder">
+          <span class="s">Cambridge English Prepare</span>
+          <span class="b">Level 3</span>
+          <span class="c">A2 · Second edition</span>
+        </div>
+        <p class="cover-note">Cover artwork placeholder — official cover to be licensed.</p>
+        <dl class="meta-list">
+          <div><dt>CEFR</dt><dd>A2</dd></div>
+          <div><dt>Target exam</dt><dd>A2 Key (KET)</dd></div>
+          <div><dt>Units</dt><dd>21</dd></div>
+          <div><dt>Dictation lessons</dt><dd>104</dd></div>
+          <div><dt>Your progress</dt><dd>38%</dd></div>
+        </dl>
+      </aside>
+      <div>
+        <div class="section-head" style="margin-bottom:6px"><h2>Contents — table of units</h2></div>
+        <div class="units">
+          <button class="unit-row"><span class="idx">01</span><span class="t">Families, families<small>5 lessons · completed</small></span><span class="prog"><span class="progress"><span style="width:100%"></span></span>5/5</span><span class="score hi">100%</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">02</span><span class="t">Likes and dislikes<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:80%"></span></span>4/5</span><span class="score hi">92%</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">03</span><span class="t">Home sweet home<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:60%"></span></span>3/5</span><span class="score mid">84%</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">04</span><span class="t">Free time<small>5 lessons · in progress</small></span><span class="prog"><span class="progress"><span style="width:40%"></span></span>2/5</span><span class="pill solid">Continue</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">05</span><span class="t">School days<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:0%"></span></span>0/5</span><span class="score todo">—</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">06</span><span class="t">Around town<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:0%"></span></span>0/5</span><span class="score todo">—</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">07</span><span class="t">Amazing animals<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:0%"></span></span>0/5</span><span class="score todo">—</span><span class="chev">›</span></button>
+          <button class="unit-row"><span class="idx">08</span><span class="t">Food and health<small>5 lessons</small></span><span class="prog"><span class="progress"><span style="width:0%"></span></span>0/5</span><span class="score todo">—</span><span class="chev">›</span></button>
+          <span class="more-units">+ 13 more units</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SCREEN: UNIT ============ -->
+<section class="screen" id="screen-unit" hidden>
+  <div class="narrow">
+    <div class="page-head">
+      <div class="breadcrumb"><span>Level 3 (A2)</span> / <b>Unit 4 — Free time</b></div>
+      <h1>Free time</h1>
+      <p class="lead">2 of 5 lessons done · average score 94%. Keep going.</p>
+    </div>
+    <div class="lessons">
+      <div class="lesson-row"><span class="idx">4.1</span><span class="t"><span class="tag">Vocabulary</span>Free-time activities</span><span class="score hi">100%</span><span>›</span></div>
+      <div class="lesson-row"><span class="idx">4.2</span><span class="t"><span class="tag">Dictation</span>After school</span><span class="score hi">100%</span><span>›</span></div>
+      <div class="lesson-row"><span class="idx">4.3</span><span class="t"><span class="tag">Grammar</span>Adverbs of frequency</span><span class="score hi">90%</span><span>›</span></div>
+      <div class="lesson-row current"><span class="idx">4.4</span><span class="t"><span class="tag">Dictation</span>My daily routine</span><span class="score mid">9% · in progress</span><button class="btn btn-primary" data-nav="lesson" style="padding:7px 14px;font-size:13px">Continue</button></div>
+      <div class="lesson-row"><span class="idx">4.5</span><span class="t"><span class="tag">Dictation</span>Weekend plans</span><span class="score todo">Not started</span><span>›</span></div>
+      <div class="lesson-row"><span class="idx">4.6</span><span class="t"><span class="tag">Listening</span>An interview with a young swimmer</span><span class="score todo">Not started</span><span>›</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#" data-nav="home">
+          <span class="mark"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+          I Love English <em>Club</em>
+        </a>
+        <p>Luyện nghe tiếng Anh bằng chép chính tả — theo lộ trình Cambridge English Prepare, từ Pre-A1 đến B2 First.</p>
+      </div>
+      <div><h4>Levels</h4><ul>
+        <li><a href="#" data-nav="book">Level 1 · Pre-A1</a></li><li><a href="#" data-nav="book">Level 2 · A1</a></li>
+        <li><a href="#" data-nav="book">Level 3 · A2</a></li><li><a href="#" data-nav="book">Level 4 · A2+</a></li>
+        <li><a href="#" data-nav="book">Level 5 · B1</a></li><li><a href="#" data-nav="book">Level 6 · B1+</a></li>
+        <li><a href="#" data-nav="book">Level 7 · B2</a></li>
+      </ul></div>
+      <div><h4>Learn</h4><ul>
+        <li><a href="#" data-nav="home">The method</a></li><li><a href="#" data-nav="book">All books</a></li>
+        <li><a href="#" data-nav="unit">Unit sample</a></li><li><a href="#">About us</a></li>
+      </ul></div>
+      <div><h4>Support</h4><ul>
+        <li><a href="#">Contact</a></li><li><a href="#">FAQ</a></li>
+        <li><a href="#">Terms</a></li><li><a href="#">Privacy</a></li>
+      </ul></div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 I Love English Club · Made for Vietnamese English learners</span>
+      <span>EN / VI · Nghe · Gõ · Kiểm tra · Đọc to</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var screens=['lesson','home','book','unit'];
+  function show(id){
+    screens.forEach(function(s){var el=document.getElementById('screen-'+s); if(el) el.hidden=(s!==id);});
+    document.querySelectorAll('[data-nav]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-nav')===id);});
+    window.scrollTo({top:0});
+  }
+  document.querySelectorAll('[data-nav]').forEach(function(b){
+    b.addEventListener('click',function(e){e.preventDefault();show(b.getAttribute('data-nav'));});
+  });
+  var states=['start','type','result'];
+  function state(id){
+    states.forEach(function(s){var el=document.getElementById('state-'+s); if(el) el.hidden=(s!==id);});
+  }
+  document.querySelectorAll('[data-go]').forEach(function(b){
+    b.addEventListener('click',function(){state(b.getAttribute('data-go'));});
+  });
+  document.querySelectorAll('[data-tab]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var wrap=b.closest('[data-tabs]');
+      wrap.querySelectorAll('[data-tab]').forEach(function(x){x.classList.toggle('on',x===b);});
+      wrap.querySelectorAll('[data-pane]').forEach(function(p){
+        p.hidden=(p.getAttribute('data-pane')!==b.getAttribute('data-tab'));
+      });
+    });
+  });
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(b){
+    b.addEventListener('click',function(){document.documentElement.classList.toggle('dark');});
+  });
+  var speeds=[1,1.25,0.75],si=0;
+  var sp=document.querySelector('[data-speed]');
+  if(sp){sp.addEventListener('click',function(){si=(si+1)%speeds.length;sp.textContent=speeds[si]+'x';});}
+  show('lesson');
+})();
+</script>
+</body>
+</html>
