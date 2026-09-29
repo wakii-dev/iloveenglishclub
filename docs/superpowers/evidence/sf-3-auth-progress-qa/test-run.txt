@@ -1,20 +1,22 @@
 tdd: RED→GREEN
 code commit: a819b36 — RED→GREEN tracks: (1) QA-200 open-redirect: probe e2e protocol-relative //evil.com ĐỎ trên code cũ (waitForURL 30s timeout + page snapshot 'Application error', evilHit=null) → internalNext() fix (af52872) → 4/4 GREEN; (2) VERIFY 695f0ef: mutation revert providers.tsx về 695f0ef~1 → register regression FAIL 16.5s (header kẹt guest) → restore → 2/2 GREEN (09ce377) — SAU ĐÓ mới bỏ page.reload() workaround progress.spec → 3/3 GREEN không reload.
 
-Lane run trên HEAD a819b36 (dev server warm port 3211, DB ilec_sf3 — sau cleanup về baseline 4 users/1 attempt):
+Lane run trên HEAD 563a18b (dev server warm port 3211, DB ilec_sf3 — sau cleanup về baseline 4 users/1 attempt; 563a18b = review-P0 fix, docs-only sau đó):
 - unit  (npm test):                       Test Files 20 passed · Tests 229/229 (baseline SF-1 unchanged — 0 test existing bị sửa)
-- rls   (npm run test:rls):               18/18 — RE-RUN sau fix chạm auth (QA-200 internalNext), contract authorization
+- rls   (npm run test:rls):               18/18 — RE-RUN sau MỖI lần fix chạm auth (QA-200 + review P0), contract authorization
 - audit (npm run test:audit):             15/15
 - integration (vitest.sf3.config.ts):     23/23 — 5 files mới: submit-attempt 9 (badInput/MAX_TYPED_LEN 2000|2001/race Promise.all 1-row-1-XP/2-tab 2-row-1-XP/daily distinct) · xp-modifiers 4 (10/8/5/4 + acc0.75 8/4 + replay 0) · streak 4 (hôm qua+1/hôm nay giữ/reset/cap 400) · leaderboard 3 (ISO week TZ+07/all_time/view 4 cột) · me-stats 3 (DISTINCT/best-acc/3.0min/window 84d/draft-không-đếm)
-- e2e sf3 (playwright.sf3.config.ts):     25 passed (1.1m) — progress-* 22 test mới (register/login/session-sync/session/oauth/xp-truth/leaderboard/me/guest-commit) + progress.spec 3 (SF-6 cũ, KHÔNG reload)
+- e2e sf3 (playwright.sf3.config.ts):     26 passed (1.1m) — progress-* 23 test mới (register/login+2 probe open-redirect/session-sync/session/oauth/xp-truth/leaderboard/me/guest-commit) + progress.spec 3 (SF-6 cũ, KHÔNG reload)
 - typecheck (tsc --noEmit): exit 0 · eslint (mọi file đổi): exit 0
+
+Review độc lập (code-reviewer, 2 vòng): round 1 CHANGES-REQUESTED — 1 P0 (variant backslash /\\evil.com: WHATWG URL normalize \\→/ cho special scheme → host evil.com, vượt guard startsWith("/") && !startsWith("//")) → fix 563a18b regex chặn char thứ 2 [/\\] server+client + probe RED→GREEN; round 2 APPROVED (regex tự-phá Node: //REJECT /\REJECT /KEEP /en/me KEEP /\en/me REJECT — \ ngay sau / ĐÚNG là rời origin, không over-reject; probe byte-verified). Coverage 30/30 files (finding hoặc reviewed-clean). P2: 2 nhận (npm scripts test:sf3/test:e2e:sf3, assert leaderboard email-specific) · 1 từ chối có rationale (streak today-at-module-load flake 1/1440 — streak.ts ngoài touch map).
 
 Rule 0 — BROWSER VERIFY 3 TẦNG (scripts/sf3-browser-verify.mjs):
 - FLOW PASS: 5 bước LIỀN MẠCH 0 console/page error — register (không F5) → header 'SF3 Browser Walk 0 XP' NGAY (695f0ef) → học part 1 'Exactly right!' chip +10 XP → header '10 XP' + DB xp=10 → /me: 1 part · 100% · 0.1 min · 10 XP · streak 1 · heatmap ô hôm nay → /top-users có tên (weekly+all-time) → logout header guest sạch.
 - VISUAL: browser-1-register-form.png · browser-2-registered-header.png (header login ngay không F5) · browser-3-lesson-correct.png (+10 XP chip) · browser-4-me-stats.png (5 cards đúng số) · browser-5-top-users.png · browser-6-logged-out.png — headless Chromium TRÊN CÙNG dev build port 3211 (fallback FI-464 — Orca browser không surface; ảnh pixel thật, đã tự đọc từng ảnh).
 - DOM: assert innerText/locator từng bước trong script + 25 e2e suite.
 
-Registry findings-sf3.md (QA-200–299): QA-200 FIXED (P1 open-redirect protocol-relative — fix internalNext server+client) · QA-201 DEFERRED ENV-LIMIT (Google creds thiếu — googleEnabled=false graceful, cần creds mới test round-trip) · QA-202 DEFERRED P2 (guest-relaxed commit drift +5 preview vs +10 commit — trust-boundary §4, cần product/schema decision) → **0 OPEN surface auth/progress**.
+Registry findings-sf3.md (QA-200–299): QA-200 FIXED (P1 open-redirect 2 variant protocol-relative + backslash — fix internalNext server+client, 2 probe e2e RED→GREEN) · QA-201 DEFERRED ENV-LIMIT (Google creds thiếu — googleEnabled=false graceful, cần creds mới test round-trip) · QA-202 DEFERRED P2 (guest-relaxed commit drift +5 preview vs +10 commit — trust-boundary §4, cần product/schema decision) → **0 OPEN surface auth/progress**.
 
 Config SF-3: playwright.sf3.config.ts (port 3211 khớp 3 chỗ qua E2E_PORT; testMatch [\\/]progress.*\.spec\.ts$ — anchor chống khớp ĐƯỜNG DẪN worktree sf-3-auth-progress-qa; anti-orphan: baseline config vẫn nhặt progress-*) · DB riêng ilec_sf3 (LOCAL template SF-1) · vitest.sf3.config.ts lane integration mới (DB guard).
 
