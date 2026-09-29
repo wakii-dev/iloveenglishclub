@@ -1,8 +1,10 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { units } from "@/db/schema";
+import { CONTENT_TAG } from "@/lib/revalidate";
 import { assertAdmin } from "@/lib/content/guards";
 import { pgErrorCode } from "./pg-errors";
 
@@ -80,5 +82,7 @@ export async function deleteUnitAction(unitId: number): Promise<UnitActionState>
     console.error("[deleteUnitAction] delete failed:", error);
     throw error;
   }
+  // revalidate matrix (spec §5): cascade xóa lessons/parts — public stale ngay
+  revalidateTag(CONTENT_TAG);
   return { ok: true };
 }

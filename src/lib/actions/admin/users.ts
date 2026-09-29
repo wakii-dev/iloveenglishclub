@@ -19,6 +19,8 @@ export async function changeUserRoleAction(
   role: "user" | "admin",
 ): Promise<UserActionState> {
   await assertAdmin();
+  // runtime validate (review P2 — TS-only không chặn crafted payload)
+  if (role !== "user" && role !== "admin") return { error: "invalidRole" };
   const session = await auth();
   if (session?.user?.id === userId) {
     return { error: "cannotChangeSelf" };

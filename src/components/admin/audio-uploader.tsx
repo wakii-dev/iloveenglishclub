@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import type { AdminPartRow } from "@/lib/admin/queries";
 import {
+  MAX_AUDIO_BYTES,
   numericFileSort,
   parseFileNameIndex,
   type IndexedFile,
@@ -98,6 +99,10 @@ export function AudioUploader({
       ...f,
       // auto-map: file#N → part#N; vượt tổng part → để null (warning liệt kê)
       targetPart: f.index !== null && f.index <= parts.length ? f.index : null,
+      // client pre-check 4MB (server vẫn chặn — security P2-1): fail nhanh
+      // không phí băng thông upload
+      status: f.file.size > MAX_AUDIO_BYTES ? ("error" as const) : ("ready" as const),
+      errorMessage: f.file.size > MAX_AUDIO_BYTES ? "tooLarge" : undefined,
     }));
     setItems((prev) => [...prev, ...incoming]);
     if (inputRef.current) inputRef.current.value = "";
@@ -138,11 +143,18 @@ export function AudioUploader({
     setUploading(true);
     startTransition(async () => {
       const queue = items.filter((it) => it.status !== "done" && it.targetPart !== null);
+      let failed = 0;
       for (const item of queue) {
-        await uploadOne(item);
+        const ok = await uploadOne(item);
+        if (!ok) failed++;
       }
       setUploading(false);
-      toast.success(t("done"));
+      // error-aware toast (review P2): không báo "Xong" khi có file lỗi
+      if (failed > 0) {
+        toast.error(t("errorSummary", { count: failed }));
+      } else {
+        toast.success(t("done"));
+      }
       router.refresh();
     });
   }

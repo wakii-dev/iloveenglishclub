@@ -24,6 +24,8 @@
     "partTextRequired": "Sentence text cannot be empty.",
     "noSentences": "No sentences to add — paste a script and press Split.",
     "tooManySentences": "More than 200 sentences at once — add in smaller batches.",
+    "tooManyParts": "Lesson exceeds 999 parts — cannot add more.",
+    "invalidRole": "Invalid role.",
     "cannotSplit": "Only text with more than one . ? ! ending can be split.",
     "cannotMerge": "No sentence below to merge with.",
     "publishBlocked": "Cannot publish yet — these parts are incomplete: {missing}",

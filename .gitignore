@@ -36,10 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
-# storage local driver (SF-5) — driver local ghi upload vào public/{path};
-# demo audio public/audio là COMMITTED, upload test (public/audio/unit->=90…)
-# dọn tay — không gitignore được cả cây public/audio
-/public/uploads
+# storage local driver (SF-5, review P2): driver local ghi upload vào
+# public/{path} — vd public/audio/level-3/unit-9/... CÂY public/audio là
+# COMMITTED (demo audio SF-2) nên không ignore được — upload test
+# (unit >= 90) dọn tay sau khi chạy E2E/verify
 
 # playwright (SF-5) — trace/artifact của test runs
 /test-results

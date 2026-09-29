@@ -101,6 +101,9 @@ export async function deleteLessonAction(lessonId: number): Promise<LessonAction
     console.error("[deleteLessonAction] delete failed:", error);
     throw error;
   }
+  // revalidate matrix (spec §5): delete là mutation — public (unit lesson list,
+  // book counts) stale ngay; unconditional vì row đã mất, không check được published
+  revalidateTag(CONTENT_TAG);
   return { ok: true };
 }
 

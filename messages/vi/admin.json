@@ -24,6 +24,8 @@
     "partTextRequired": "Câu không được để trống.",
     "noSentences": "Chưa có câu nào để thêm — dán script rồi bấm Split.",
     "tooManySentences": "Quá 200 câu một lần — thêm theo lô nhỏ hơn.",
+    "tooManyParts": "Bài đã quá 999 câu — không thêm được nữa.",
+    "invalidRole": "Quyền không hợp lệ.",
     "cannotSplit": "Chỉ tách được câu có nhiều hơn một câu kết bằng . ? !",
     "cannotMerge": "Không có câu bên dưới để gộp.",
     "publishBlocked": "Chưa xuất bản được — các câu sau chưa đủ: {missing}",

@@ -11,6 +11,7 @@ import {
   sanitizeSentences,
 } from "@/lib/admin/parts-logic";
 import { assertAdmin } from "@/lib/content/guards";
+import { pgErrorCode } from "./pg-errors";
 
 /**
  * Parts mutations (SF-5 — spec §3). Invariant sortOrder LIÊN TỤC 1..N (P0
@@ -65,7 +66,7 @@ export async function addPartsFromScriptAction(
   if (sentences.length > MAX_SENTENCES_PER_BATCH) {
     return { error: "tooManySentences" };
   }
-  await db.transaction(async (tx) => {
+  const txResult = await db.transaction(async (tx) => {
     const [row] = await tx
       .select({
         max: sql<number>`coalesce(max(${lessonParts.sortOrder}), 0)`.mapWith(Number),
@@ -73,6 +74,11 @@ export async function addPartsFromScriptAction(
       .from(lessonParts)
       .where(eq(lessonParts.lessonId, lessonId));
     const start = (row?.max ?? 0) + 1;
+    // cap TỔNG part/lesson ≤ 999 (review P2): shift bump-offset +1000 chỉ
+    // an toàn trong vùng < 1000 — comment parts-logic giờ được enforce thật
+    if (start - 1 + sentences.length > 999) {
+      return { error: "tooManyParts" } as const;
+    }
     await tx.insert(lessonParts).values(
       sentences.map((text, i) => ({
         lessonId,
@@ -80,7 +86,9 @@ export async function addPartsFromScriptAction(
         text,
       })),
     );
+    return { ok: true } as const;
   });
+  if ("error" in txResult) return txResult;
   await revalidateIfPublished(lessonId);
   return { ok: true };
 }
@@ -315,14 +323,21 @@ export async function deletePartAction(
         gt(lessonParts.sortOrder, part.sortOrder),
       ),
     );
-  await db.transaction(async (tx) => {
-    await tx.delete(lessonParts).where(eq(lessonParts.id, part.id));
-    await shiftByIds(
-      tx,
-      followers.map((f) => f.id),
-      -1,
-    );
-  });
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(lessonParts).where(eq(lessonParts.id, part.id));
+      await shiftByIds(
+        tx,
+        followers.map((f) => f.id),
+        -1,
+      );
+    });
+  } catch (error) {
+    // TOCTOU (review P2): attempt chen giữa count và delete → FK RESTRICT nổ
+    // tại đây — trả "hasAttempts" thay vì raw 500
+    if (pgErrorCode(error) === "23503") return { error: "hasAttempts" };
+    throw error;
+  }
   await revalidateIfPublished(part.lessonId);
   return { ok: true };
 }
