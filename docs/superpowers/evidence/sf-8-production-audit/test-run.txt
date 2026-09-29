@@ -10,6 +10,10 @@ tdd: RED→GREEN (thresholds: scripts/audit-thresholds.test.ts 13 case viết TR
 code-commit: ce7e9df (HEAD khi chạy suite cuối; evidence commit ngay sau —
   T2 30f836b · testMatch 33faf53 · a11y+runner 8d7d6d9 · security 270f250 ·
   lighthouse evidence 1d764fc · e2e hygiene 03eeefc · ISR poll ce7e9df)
+  + follow-up: 25022ad (evidence) · 3049169 (a11y round-2 — NỘI DUNG Y HỆT
+  build đã đo final: các fix nằm working tree khi đo, commit trễ do add có
+  chọn lọc theo task) · fdff2bc (docs/deploy + .env.example — không ảnh
+  hưởng build đo)
 
 == Điều kiện chạy ==
 Build PRODUCTION: `npm run build` exit 0 (turbopack) → `next start -p 3110`
