@@ -299,6 +299,7 @@ export function DictationLesson({
             text: p.text,
             status: partsState[i]?.status ?? "pending",
           }))}
+          audioUrls={parts.map((p) => p.audioUrl)}
         />
       ) : (
         <>
