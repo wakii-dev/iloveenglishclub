@@ -97,9 +97,10 @@ beforeAll(async () => {
   demoPartId = part.id;
 
   // XP mỗi attempt là số nguyên (spec §5: xp = round(10×acc×mods)) — fixture
-  // theo đúng contract; 9 ở tuần này + 3 cách đây 8 ngày (tuần trước).
-  // created_at GHỐC ĐỊNH vào đầu tuần ISO hiện tại +1h (không dùng now()) —
-  // tránh race vi mô khi beforeAll chạy sát biên Chủ nhật 23:59 (review P2)
+  // theo đúng contract; 9 ghốc vào đầu tuần ISO hiện tại +1h, 3 lùi 8 ngày
+  // (luôn ngoài tuần hiện tại). Race biên tuần (~1e-7 khi suite chạy sát
+  // CN 23:59) xử lý ở ASSERTION weekly — expected tính theo cùng week-anchor
+  // tại query-time (review vòng 2: timestamp cố định nào cũng chết ở crossing).
   await sql`
     INSERT INTO attempts (user_id, part_id, typed_text, accuracy, wpm, xp, client_attempt_id, created_at)
     VALUES
@@ -264,13 +265,31 @@ describe("Leaderboard view — chỉ expose cột cho phép + XP tuần ISO đú
     );
   });
 
-  it("weekly = chỉ attempts trong tuần ISO hiện tại (8 ngày trước KHÔNG tính)", async () => {
-    const rows = await sql<{ display_name: string; xp: number }[]>`
-      SELECT display_name, xp FROM leaderboard WHERE scope = 'weekly'
+  it("weekly = chỉ attempts trong tuần ISO hiện tại (race-immune: expected theo week-anchor query-time)", async () => {
+    // Review vòng 2: KHÔNG có timestamp cố định sống sót qua week-crossing
+    // (view dùng now() live). Nên expected được tính bằng CÙNG anchor:
+    // - tuần chưa đổi giữa fixture-insert và assert (mọi case thực tế):
+    //     userA weekly xp = 9 — chứng minh attempt -8 ngày KHÔNG bị cộng
+    // - tuần VỪA đổi (~1e-7): cả 2 attempt đều ngoài tuần mới → userA vắng
+    const [r] = await sql<{ same_week: boolean; weekly_xp: number | null }[]>`
+      WITH wk AS (
+        SELECT date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') AS ws
+      ),
+      fx AS (
+        SELECT date_trunc('week', MIN(a.created_at) AT TIME ZONE 'Asia/Ho_Chi_Minh') AS ws
+        FROM attempts a
+        WHERE a.client_attempt_id = 'aaaaaaaa-1111-4111-8111-111111111111'
+      )
+      SELECT (wk.ws = fx.ws) AS same_week,
+             (SELECT xp FROM leaderboard
+              WHERE scope = 'weekly' AND display_name = 'RLS user') AS weekly_xp
+      FROM wk, fx
     `;
-    const a = rows.find((r) => r.display_name === "RLS user");
-    expect(a).toBeDefined();
-    expect(a!.xp).toBe(9);
+    if (r.same_week) {
+      expect(Number(r.weekly_xp)).toBe(9); // 9+3=12 nếu attempt tuần trước lộ vào
+    } else {
+      expect(r.weekly_xp).toBeNull();
+    }
   });
 
   it("all_time từ profiles.xp; userB xp=0 không xuất hiện", async () => {
