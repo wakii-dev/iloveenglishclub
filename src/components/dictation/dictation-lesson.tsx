@@ -84,8 +84,12 @@ export function DictationLesson({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const appliedNonceRef = useRef(0);
+  const appliedSrcRef = useRef<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [audioEnded, setAudioEnded] = useState(false);
+  // duration LIVE từ audio element (loadedmetadata) — ưu tiên trước DB
+  // (spec §7: audio.duration hợp lệ → dùng; không → durationMs DB)
+  const [liveDurationMs, setLiveDurationMs] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("dictation");
   const activeTabRef = useRef<TabKey>("dictation");
   activeTabRef.current = activeTab;
@@ -95,7 +99,9 @@ export function DictationLesson({
       ? (parts[currentPartIndex]?.audioUrl ?? null)
       : null;
   const durationMs =
-    parts[currentPartIndex]?.durationMs ?? null;
+    liveDurationMs ??
+    parts[currentPartIndex]?.durationMs ??
+    null;
 
   // ─── Relaxed mode: đọc pref user đã login MỘT lần / mount (spec §3.8).
   // null = chưa biết (fetch dang dở) — doStart await rồi mới decide. ───
@@ -118,11 +124,15 @@ export function DictationLesson({
     const audio = audioRef.current;
     if (!audio) return;
     if (audioUrl) {
-      if (!audio.src.endsWith(audioUrl)) {
+      if (appliedSrcRef.current !== audioUrl) {
+        appliedSrcRef.current = audioUrl;
         audio.src = audioUrl;
         audio.load();
+        setAudioEnded(false); // part mới — icon về Play (P1 review: ended kẹt)
+        setLiveDurationMs(null); // chờ loadedmetadata của src mới
       }
     } else {
+      appliedSrcRef.current = null;
       audio.removeAttribute("src");
     }
     const sr = dictationStore.getState().seekRequest;
@@ -130,6 +140,9 @@ export function DictationLesson({
       appliedNonceRef.current = sr.nonce;
       if (Math.abs(audio.currentTime * 1000 - sr.ms) > 30) {
         audio.currentTime = sr.ms / 1000;
+      } else if (sr.ms === 0 && audio.ended) {
+        // replay khi ended: currentTime đã 0 sau load mới — force seeked
+        audio.currentTime = 0;
       }
     }
     if (isPlaying && audioUrl) {
@@ -150,19 +163,28 @@ export function DictationLesson({
     const audio = audioRef.current;
     if (!audio) return;
     const onTime = () => setElapsedMs(audio.currentTime * 1000);
+    const onLoaded = () =>
+      setLiveDurationMs(
+        Number.isFinite(audio.duration) ? audio.duration * 1000 : null,
+      );
     const onEnded = () => {
       setAudioEnded(true);
-      setElapsedMs(audio.duration ? audio.duration * 1000 : elapsedMs);
+      // functional update — tránh stale closure (P2 review)
+      setElapsedMs((prev) =>
+        Number.isFinite(audio.duration) ? audio.duration * 1000 : prev,
+      );
     };
     const onSeeked = () => {
       setElapsedMs(audio.currentTime * 1000);
       setAudioEnded(false);
     };
     audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("loadedmetadata", onLoaded);
     audio.addEventListener("seeked", onSeeked);
     audio.addEventListener("ended", onEnded);
     return () => {
       audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("loadedmetadata", onLoaded);
       audio.removeEventListener("seeked", onSeeked);
       audio.removeEventListener("ended", onEnded);
     };
@@ -170,7 +192,13 @@ export function DictationLesson({
   }, []);
 
   // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
-  useEffect(() => () => dictationStore.getState().reset(), []);
+  useEffect(
+    () => () => {
+      dictationStore.getState().reset();
+      if (relaxedFailTimer.current) clearTimeout(relaxedFailTimer.current);
+    },
+    [],
+  );
 
   const doStart = async () => {
     // Chuỗi 1 click (spec §3.1): reset (Try-again từ complete) → nạp parts →
@@ -193,13 +221,29 @@ export function DictationLesson({
     dictationStore.getState().start();
   };
 
-  /** Toggle relaxed: store ngay (optimistic) + prefRef + persist nếu user. */
+  /** Toggle relaxed: store ngay (optimistic) + prefRef + persist nếu user.
+   *  Persist fail → log + note tạm (không Toaster — infra ngoài scope). */
+  const [relaxedSaveFailed, setRelaxedSaveFailed] = useState(false);
+  const relaxedFailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleToggleRelaxed = () => {
     dictationStore.getState().toggleRelaxed();
     const next = dictationStore.getState().relaxed;
     relaxedPrefRef.current = next;
     if (user) {
-      void updateRelaxedMode(next); // fire-and-forget; lỗi → state UI vẫn theo store
+      updateRelaxedMode(next)
+        .then((r) => {
+          if (!r?.ok) {
+            console.error("[dictation] relaxed persist rejected (ok:false)");
+            setRelaxedSaveFailed(true);
+            if (relaxedFailTimer.current)
+              clearTimeout(relaxedFailTimer.current);
+            relaxedFailTimer.current = setTimeout(
+              () => setRelaxedSaveFailed(false),
+              4000,
+            );
+          }
+        })
+        .catch((e) => console.error("[dictation] relaxed persist failed:", e));
     }
   };
 
@@ -308,7 +352,17 @@ export function DictationLesson({
         </div>
         <div className="ml-auto flex items-center gap-2">
           <ShortcutsPanel />
-          <RelaxedToggle relaxed={relaxed} onToggle={handleToggleRelaxed} />
+          <div className="relative">
+            <RelaxedToggle relaxed={relaxed} onToggle={handleToggleRelaxed} />
+            {relaxedSaveFailed ? (
+              <span
+                role="status"
+                className="absolute -bottom-6 right-0 whitespace-nowrap rounded-full bg-destructive px-2.5 py-0.5 text-[11.5px] font-extrabold text-destructive-foreground"
+              >
+                {t("dictation.relaxed.saveFailed")}
+              </span>
+            ) : null}
+          </div>
           <XpChip earnedXp={earnedXp} isGuest={!user} />
           <span className="text-[13.5px] font-extrabold text-muted-foreground tabular-nums">
             {t("dictation.tabs.partLabel", { current: currentNo, total })}
@@ -424,6 +478,7 @@ export function DictationLesson({
     content = (
       <ResultsScreen
         name={user?.name ?? null}
+        eyebrow={`${bookTitle} · ${unitTitle}`}
         isGuest={!user}
         accuracy={averageAccuracyOfDone(partsState)}
         earnedXp={earnedXp}

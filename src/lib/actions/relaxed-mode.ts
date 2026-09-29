@@ -29,13 +29,18 @@ export async function updateRelaxedMode(
   try {
     const session = await auth();
     const userId = session?.user?.id;
-    if (!userId) return { ok: false };
+    if (!userId) {
+      console.error("[relaxed-mode] update rejected: no session");
+      return { ok: false };
+    }
     await db
       .update(profiles)
       .set({ relaxedMode: value })
       .where(eq(profiles.id, userId));
     return { ok: true };
-  } catch {
+  } catch (error) {
+    // nuốt lỗi là mất dấu vết (review P1-3) — log server-side trước khi trả ok:false
+    console.error("[relaxed-mode] update failed:", error);
     return { ok: false };
   }
 }

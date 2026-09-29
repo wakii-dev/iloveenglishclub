@@ -26,8 +26,6 @@
       "pause": "Tạm dừng",
       "replay": "Nghe lại",
       "speed": "Tốc độ {speed}x",
-      "seekBack": "Lùi 3 giây",
-      "seekForward": "Tới 3 giây",
       "noAudio": "Câu này chưa có audio — xem gợi ý và gõ theo nhớ."
     },
     "input": {
@@ -61,8 +59,7 @@
       "title": "Toàn bộ bài đọc",
       "playAll": "Phát tất cả",
       "stop": "Dừng",
-      "locked": "Hoàn thành phần này để mở toàn bộ bài đọc.",
-      "lockedRow": "Câu chưa mở"
+      "locked": "Hoàn thành phần này để mở toàn bộ bài đọc."
     },
     "shortcuts": {
       "open": "Phím tắt",
@@ -74,10 +71,10 @@
       "arrows": "Tua ±3s (khi không đang gõ)"
     },
     "relaxed": {
-      "label": "Chế độ tha thứ",
       "on": "Tha thứ ×0.5",
       "off": "Khắt khe",
-      "description": "Bỏ qua hoa/thường và dấu câu — XP ×0.5"
+      "description": "Bỏ qua hoa/thường và dấu câu — XP ×0.5",
+      "saveFailed": "Không lưu được — thử lại"
     },
     "xp": {
       "label": "+{xp} XP",
@@ -90,13 +87,11 @@
       "ephemeral": "Kết quả của bạn chưa được lưu."
     },
     "results": {
-      "eyebrow": "{sentences, plural, other {# câu}} · hoàn thành",
       "titleNamed": "Tuyệt vời, {name}!",
       "title": "Tuyệt vời!",
       "lead": "{done} hoàn thành · {skipped} bỏ qua",
       "accuracy": "chính xác",
       "xpEarned": "+{xp} XP nhận được",
-      "streak": "Streak {days} ngày — giữ chuỗi nhé!",
       "streakPlaceholder": "Streak sắp ra mắt",
       "wordsToReview": "Từ cần ôn: {words}",
       "tryAgain": "Làm lại",

@@ -172,6 +172,10 @@ test.describe("Dictation guest happy path", () => {
       p.getByText(/log in to save|đăng nhập để lưu/i),
     ).toBeVisible();
     await expect(p.getByText(/streak coming soon|streak sắp ra mắt/i)).toBeVisible();
+    // "Bài tiếp theo" — i18n Link giữ locale (review P1-1)
+    await expect(
+      p.getByRole("link", { name: /next lesson|bài tiếp theo/i }),
+    ).toBeVisible();
 
     // Try again → quay lại dictation Part 1
     await p.getByRole("button", { name: /try again|làm lại/i }).click();

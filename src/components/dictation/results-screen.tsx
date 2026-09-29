@@ -2,6 +2,7 @@
 
 import { Flame } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { accuracyRingDash } from "@/lib/dictation-ui/format";
 import { LoginBanner } from "./login-banner";
 
@@ -13,6 +14,7 @@ import { LoginBanner } from "./login-banner";
  */
 export function ResultsScreen({
   name,
+  eyebrow,
   isGuest,
   accuracy,
   earnedXp,
@@ -28,8 +30,8 @@ export function ResultsScreen({
 
   return (
     <div className="mx-auto flex max-w-[820px] flex-col items-start px-6 pb-14 pt-[26px]">
-      <span className="inline-flex items-center rounded-full bg-secondary/14 px-[13px] py-[5px] text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-secondary tabular-nums">
-        {t("dictation.results.eyebrow", { sentences: done + skipped })}
+      <span className="inline-flex items-center rounded-full bg-secondary/14 px-[13px] py-[5px] text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-secondary">
+        {eyebrow}
       </span>
       <h1 className="mt-3.5 font-display text-[38px] leading-[1.1] font-bold tracking-tight">
         {name
@@ -119,7 +121,7 @@ function LinkButton({
   children: React.ReactNode;
 }) {
   return (
-    <a
+    <Link
       href={href}
       className={
         primary
@@ -128,12 +130,13 @@ function LinkButton({
       }
     >
       {children}
-    </a>
+    </Link>
   );
 }
 
 interface Props {
   name: string | null;
+  eyebrow: string;
   isGuest: boolean;
   accuracy: number;
   earnedXp: number;

@@ -26,8 +26,6 @@
       "pause": "Pause",
       "replay": "Replay",
       "speed": "Speed {speed}x",
-      "seekBack": "Back 3 seconds",
-      "seekForward": "Forward 3 seconds",
       "noAudio": "This sentence has no audio yet — read the hint and type what you remember."
     },
     "input": {
@@ -61,8 +59,7 @@
       "title": "Full transcript",
       "playAll": "Play all",
       "stop": "Stop",
-      "locked": "Finish the part to unlock the full transcript.",
-      "lockedRow": "Locked sentence"
+      "locked": "Finish the part to unlock the full transcript."
     },
     "shortcuts": {
       "open": "Keyboard shortcuts",
@@ -74,10 +71,10 @@
       "arrows": "Seek ±3s (when not typing)"
     },
     "relaxed": {
-      "label": "Relaxed mode",
       "on": "Relaxed ×0.5",
       "off": "Strict",
-      "description": "Ignore case and punctuation — XP ×0.5"
+      "description": "Ignore case and punctuation — XP ×0.5",
+      "saveFailed": "Couldn't save — try again"
     },
     "xp": {
       "label": "+{xp} XP",
@@ -90,13 +87,11 @@
       "ephemeral": "Your results are not saved yet."
     },
     "results": {
-      "eyebrow": "{sentences, plural, one {# sentence} other {# sentences}} · finished",
       "titleNamed": "Great job, {name}!",
       "title": "Great job!",
       "lead": "{done} done · {skipped} skipped",
       "accuracy": "accuracy",
       "xpEarned": "+{xp} XP earned",
-      "streak": "{days}-day streak — keep it alive!",
       "streakPlaceholder": "Streak coming soon",
       "wordsToReview": "Words to review: {words}",
       "tryAgain": "Try again",
