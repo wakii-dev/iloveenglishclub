@@ -7,7 +7,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: config mới chạy được ≥1 smoke; DB guard (connection string chứa ilec_sf3).
 - [x] 2. register-edge — e2e `progress-register.spec.ts`: duplicate email → thông điệp emailTaken (en+vi); locale auto-set theo route (register /vi → profile locale vi + redirect /vi); validation (invalidEmail, weakPassword); transactional (user có profile — login được ngay).
        AC: mọi assert chạy xanh trên ilec_sf3.
-- [ ] 3. login-edge — e2e `progress-login.spec.ts`: sai mật khẩu → invalidCredentials; `next` guard (`//evil.com` protocol-relative probe — nếu lọt → finding QA-2xx + fix TDD); `?next=/en/me` → redirect đúng; callback redirect đăng nhập xong về `next`/`/{locale}`.
+- [x] 3. login-edge — e2e `progress-login.spec.ts`: sai mật khẩu → invalidCredentials; `next` guard (`//evil.com` protocol-relative probe — nếu lọt → finding QA-2xx + fix TDD); `?next=/en/me` → redirect đúng; callback redirect đăng nhập xong về `next`/`/{locale}`.
        AC: open-redirect probe có kết luận rõ (pass hoặc finding).
 - [ ] 4. session-sync-verify-regression — e2e `progress-session-sync.spec.ts`: register THẬT qua UI (không reload) → header hiện trạng thái đăng nhập ngay (XP chip / tên). Mutation-RED: tạm revert 695f0ef → spec ĐỎ → restore → GREEN. SAU ĐÓ bỏ `page.reload()` trong `e2e/progress.spec.ts:43` → re-run spec cũ GREEN.
        AC: regression GREEN cả 2 lần (trước + sau khi bỏ workaround); evidence mutation RED.

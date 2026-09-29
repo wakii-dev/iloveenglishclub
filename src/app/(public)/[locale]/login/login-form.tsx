@@ -19,9 +19,14 @@ export function LoginForm({
 }) {
   const t = useTranslations("auth");
   const searchParams = useSearchParams();
-  // next chỉ nhận path nội bộ (ngăn open redirect)
+  // next chỉ nhận path nội bộ (ngăn open redirect) — loại CẢ protocol-relative
+  // //evil.com (startsWith("/") nhưng là host khác → QA-200). Khớp guard
+  // server internalNext.
   const nextParam = searchParams.get("next");
-  const next = nextParam?.startsWith("/") ? nextParam : undefined;
+  const next =
+    nextParam?.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : undefined;
 
   const [state, formAction, isPending] = useActionState(
     loginAction,
