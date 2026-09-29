@@ -85,7 +85,8 @@ test.describe("Audio replace + failsoft (SF-4)", () => {
   test("replace UI: select câu + pick file → path giữ convention, badge tên mới, durationMs update", async ({
     page,
   }) => {
-    await openEditor(page);
+    const editorUrl = await openEditor(page);
+    const lessonNumber = Number(new URL(editorUrl).pathname.split("/").pop());
 
     // badge cũ 01.mp3 ở part 1
     const partsSection = page
@@ -106,8 +107,10 @@ test.describe("Audio replace + failsoft (SF-4)", () => {
     await expect(partsSection.locator("ol li").first()).toContainText("01.wav");
 
     // path convention: NN theo part + ext theo MIME
-    const part1 = await partOf(NUM, 1, 1);
-    expect(part1?.audioPath).toBe(`audio/level-3/unit-${NUM}/lesson-1/01.wav`);
+    const part1 = await partOf(NUM, lessonNumber, 1);
+    expect(part1?.audioPath).toBe(
+      `audio/level-3/unit-${NUM}/lesson-${lessonNumber}/01.wav`,
+    );
     // duration failsoft: buffer không đọc được metadata → KHÔNG crash, null
     // (readDurationMs timeout 5s — nếu có duration thì là số ≥0, không crash)
     expect(part1?.durationMs === null || typeof part1?.durationMs === "number").toBe(true);
@@ -139,7 +142,7 @@ test.describe("Audio replace + failsoft (SF-4)", () => {
     const editorUrl = await openEditor(page);
     const lessonNumber = Number(new URL(editorUrl).pathname.split("/").pop());
     const lessonId = await lessonIdByNumber(NUM, lessonNumber);
-    await page.request.post("/api/admin/upload", {
+    const res = await page.request.post("/api/admin/upload", {
       multipart: {
         file: { name: "02.mp3", mimeType: "audio/mpeg", buffer: Buffer.from("y") },
         lessonId: String(lessonId),
@@ -147,6 +150,7 @@ test.describe("Audio replace + failsoft (SF-4)", () => {
         durationMs: "9999999",
       },
     });
+    expect(res.status()).toBe(200);
     const part = await partOf(NUM, lessonNumber, 2);
     expect(part?.durationMs).toBe(600000);
   });

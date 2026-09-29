@@ -140,7 +140,9 @@ export async function partOf(
   lessonNumber: number,
   sortOrder: number,
 ): Promise<{ audioPath: string | null; durationMs: number | null } | null> {
-  const [row] = await db()`
+  const [row] = await db()<[
+    { audioPath: string | null; durationMs: number | null },
+  ]>`
     select p.audio_path as "audioPath", p.duration_ms as "durationMs"
     from lesson_parts p
     join lessons l on l.id = p.lesson_id

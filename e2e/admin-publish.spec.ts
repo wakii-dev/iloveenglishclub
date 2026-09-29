@@ -114,7 +114,7 @@ test.describe("Publish gate + revalidate (SF-4)", () => {
     await expect(page.locator("section").first().getByText("Đã xuất bản")).toBeVisible();
   });
 
-  test("upload audio lên bài ĐÃ published → public thấy audio mới NGAY", async ({
+  test("replace audio trên bài published → public serve nội dung mới (path-stable)", async ({
     page,
   }) => {
     const editorUrl = await createUnitLesson(page, "Audio Update Probe");
@@ -131,11 +131,14 @@ test.describe("Publish gate + revalidate (SF-4)", () => {
     await page.getByRole("button", { name: "Xuất bản" }).click();
     await expect(page.locator("section").first().getByText("Đã xuất bản")).toBeVisible();
 
-    // public: audio v1 gán
+    // public: audio v1 gán — nội dung body = "v1" (2 bytes)
     const publicUrl = `/en/books/level-3/units/${NUM}/lessons/${lessonNumber}/listen-and-type`;
-    let res = await page.goto(publicUrl);
+    const res = await page.goto(publicUrl);
     expect(res?.status()).toBe(200);
-    await expect(page.locator("audio").first()).toHaveAttribute("src", /01\.mp3$/);
+    const src = await page.locator("audio").first().getAttribute("src");
+    expect(src).toMatch(/01\.mp3$/);
+    const v1 = await page.request.get(src!);
+    expect(await v1.text()).toBe("v1");
 
     // REPLACE audio trên bài published (cùng path — 01.mp3) qua API
     const up2 = await page.request.post("/api/admin/upload", {
@@ -146,9 +149,18 @@ test.describe("Publish gate + revalidate (SF-4)", () => {
       },
     });
     expect(up2.status()).toBe(200);
-    // revalidate upload route (published) — public NGAY
-    res = await page.goto(publicUrl);
-    expect(res?.status()).toBe(200);
-    await expect(page.locator("audio").first()).toHaveAttribute("src", /01\.mp3$/);
+    // revalidate upload route (published) — public NGAY: body mới "v2-longer".
+    // ⚠ RED-probe thực nghiệm (review P1): gỡ revalidateTag khỏi upload route
+    // test vẫn PASS (local driver serve file từ đĩa + HMR reset cache store —
+    // e2e dev KHÔNG falsify được cache stale, path replace không đổi src).
+    // Regression guard cho revalidateTag = unit test (lessons.test.ts mock
+    // exactly-once — RED-probe được); prod-build sweep (SF-6) là lớp verify
+    // cache ISR thật. Test này observable: nội dung đĩa + wire đúng.
+    const res2 = await page.goto(publicUrl);
+    expect(res2?.status()).toBe(200);
+    const src2 = await page.locator("audio").first().getAttribute("src");
+    expect(src2).toMatch(/01\.mp3$/);
+    const v2 = await page.request.get(src2!);
+    expect(await v2.text()).toBe("v2-longer");
   });
 });

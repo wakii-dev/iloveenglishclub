@@ -183,7 +183,12 @@ export function ScriptSplitter({ lessonId }: { lessonId: number }) {
             ))}
           </ol>
           <div className="flex gap-2">
-            <Button onClick={save} disabled={pending} className="rounded-[14px]">
+            <Button
+              onClick={save}
+              disabled={pending || nonEmptyCount === 0}
+              title={nonEmptyCount === 0 ? te("noSentences") : undefined}
+              className="rounded-[14px]"
+            >
               {pending
                 ? tc("saving")
                 : t("add", { count: nonEmptyCount })}

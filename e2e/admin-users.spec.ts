@@ -4,7 +4,6 @@ import {
   loginAsAdmin,
   roleOf,
   seedQaUser,
-  userIdOf,
 } from "./admin-lib";
 
 /**
@@ -74,6 +73,5 @@ test.describe("Users mgmt (SF-4)", () => {
 
   test("learner fixture không bị đụng (READ-ONLY — vẫn user sau mọi run)", async () => {
     expect(await roleOf("e2e-learner@example.com")).toBe("user");
-    void userIdOf; // import giữ cho gating helper parity
   });
 });
