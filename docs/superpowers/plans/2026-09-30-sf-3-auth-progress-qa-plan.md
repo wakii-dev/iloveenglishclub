@@ -25,7 +25,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: ISO Mon–Sun TZ+07 boundary chứng minh bằng data thật 2 tuần.
 - [x] 11. me-page-stats — integration getMyStats/getBookProgress: heatmap 84 ngày window; listenMinutes = sum duration DISTINCT parts (attempt lặp không đếm kép); accuracy TB = best-per-part; books progress done=all-parts-accuracy≥1. e2e /me render số khớp DB.
        AC: số UI = số SQL trực tiếp.
-- [ ] 12. guest-mid-commit — e2e: guest học → login giữa chừng → commit đúng XP (mở rộng spec cũ: modifier hint/relaxed trong preview guest; sessionStorage 1-tab BY-DESIGN probe 2 tab → không leak).
+- [x] 12. guest-mid-commit — e2e: guest học → login giữa chừng → commit đúng XP (mở rộng spec cũ: modifier hint/relaxed trong preview guest; sessionStorage 1-tab BY-DESIGN probe 2 tab → không leak).
        AC: commit idempotent, không cộng kép khi quay lại lesson.
 - [ ] 13. triage-fix-e2e-expansion — fix TDD mọi finding findings-sf3.md (RED→GREEN, meta-test: test ĐỎ trên code cũ); re-run `npm run test:rls` 18/18 sau fix chạm auth/actions; giữ coverage streak/submit-attempt; messages sửa CẢ en+vi nếu chạm; e2e expansion hoàn thiện; evidence `test-run.txt` (unit/rls/audit/e2e + tdd line); Rule 0 browser 3 tầng; code-reviewer APPROVED; findings 0 OPEN (hoặc DEFERRED có rationale).
 
