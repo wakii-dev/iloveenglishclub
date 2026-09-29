@@ -75,6 +75,7 @@ export interface DictationState {
   skip: () => void;
   next: () => void;
   prevPart: () => void;
+  nextPart: () => void;
   toggleRelaxed: () => void;
   reset: () => void;
 }
@@ -291,6 +292,24 @@ export function createDictationStore(): StoreApi<DictationState> {
         const s = get();
         if (!isActive(s.phase) || s.currentPartIndex === 0) return;
         const part = s.parts[s.currentPartIndex - 1]!;
+        set({
+          currentPartIndex: part.index,
+          input: part.typedText,
+          seekRequest: { ms: 0, nonce: s.mediaNonce + 1 },
+          mediaNonce: s.mediaNonce + 1,
+          phase: part.lastDiff ? "checked" : "input",
+        });
+      },
+
+      /** › thuần điều hướng KỀ BÊN (QA-103 — §3.9: KHÔNG advance-to-pending
+       *  như next(); đối xứng prevPart, KHÔNG resolve ngầm part nào — resolve
+       *  chỉ qua next()/skip(). PartNav gate resolved-current ở UI.) */
+      nextPart: () => {
+        const s = get();
+        if (!isActive(s.phase) || s.currentPartIndex >= s.parts.length - 1) {
+          return;
+        }
+        const part = s.parts[s.currentPartIndex + 1]!;
         set({
           currentPartIndex: part.index,
           input: part.typedText,

@@ -579,7 +579,7 @@ export function DictationLesson({
               canPrev={currentPartIndex > 0}
               canNext={currentPart?.status !== "pending"}
               onPrev={() => dictationStore.getState().prevPart()}
-              onNext={() => dictationStore.getState().next()}
+              onNext={() => dictationStore.getState().nextPart()}
             />
           </div>
         </>
