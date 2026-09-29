@@ -206,9 +206,10 @@ test.describe("Progress + Gamification (SF-6)", () => {
       timeout: 10_000,
     });
 
-    // Part B chưa hề học → 0 attempt, XP không đổi
+    // Part B chưa hề học → 0 attempt (đÚNG target U2-L1 part 1 — assert cũ
+    // (3,1) nhắm U1-L3 không tồn tại trong seed → dead assert, review vòng 2)
     await page.waitForTimeout(4000);
-    expect(await attemptCountFor(email, 3, 1)).toBe(0);
+    expect(await attemptCountFor(email, 1, 1, 2)).toBe(0);
     await expect
       .poll(() => profileOf(email))
       .toMatchObject({ xp: 10 });
