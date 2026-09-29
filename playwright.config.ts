@@ -9,10 +9,15 @@ import { defineConfig, devices } from "@playwright/test";
  * Merge sf-5: suite admin có config riêng (playwright.admin.config.ts — port
  * 3000 + globalSetup admin). Hai config chia testMatch theo prefix spec để
  * không nhặt spec của nhau (testDir chung ./e2e).
+ *
+ * Merge sf-6 regression (SF-8 audit phát hiện, verify --list): testMatch bị
+ * khôi phục dictation-only → progress.spec.ts (SF-6) + i18n-switch.spec.ts
+ * (SF-7) mồ côi không config nào chạy. KHÔNG có `-` sau prefix — file là
+ * `progress.spec.ts` (không hyphen).
  */
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /dictation-.*\.spec\.ts/,
+  testMatch: /(dictation|progress|i18n).*\.spec\.ts/,
   timeout: 60_000,
   fullyParallel: false, // store singleton + DB seed — chạy tuần tự cho ổn định
   retries: 0,
