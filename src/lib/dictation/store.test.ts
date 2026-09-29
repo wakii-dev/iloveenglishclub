@@ -341,6 +341,14 @@ describe("hint — diff TƯƠI, dùng trước check (P0 spec-critic: XP=8 phả
     // part 0 đã done — revealedIndices không đổi từ lúc check (rỗng)
     expect(s.getState().parts[0]!.revealedIndices).toEqual([]);
   });
+
+  it("hint dùng diff RELAXED khi relaxed=true ('the' khớp 'The' relaxed → reveal index 1)", () => {
+    const s = active();
+    s.getState().toggleRelaxed();
+    s.getState().setInput("the");
+    s.getState().hint();
+    expect(s.getState().parts[0]!.revealedIndices).toEqual([1]);
+  });
 });
 
 describe("skip — không cộng done, không XP mới (context pack ACCEPTANCE)", () => {
