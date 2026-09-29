@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# storage local driver (SF-5) — upload dev ghi vào public/uploads
+/public/uploads
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

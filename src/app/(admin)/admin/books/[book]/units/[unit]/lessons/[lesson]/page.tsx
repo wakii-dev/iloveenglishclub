@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { AudioUploader } from "@/components/admin/audio-uploader";
 import { LessonMetaPanel } from "@/components/admin/lesson-meta-panel";
 import { PartsEditor } from "@/components/admin/parts-editor";
 import { ScriptSplitter } from "@/components/admin/script-splitter";
@@ -85,6 +86,8 @@ export default async function AdminLessonEditorPage({
       <ScriptSplitter lessonId={lesson.id} />
 
       <PartsEditor parts={lesson.parts} />
+
+      <AudioUploader lessonId={lesson.id} parts={lesson.parts} />
     </div>
   );
 }
