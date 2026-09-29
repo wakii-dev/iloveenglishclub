@@ -2,6 +2,11 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // Vite 8 transform qua Oxc — tsconfig `jsx: preserve` (của Next) bị oxc
+  // honor nên .tsx trong test graph không transform được (SF-5: error.tsx SSR
+  // test). Force automatic runtime tại ĐÂY — không đụng tsconfig, không ảnh
+  // hưởng Next build (SWC riêng) hay các test .ts thuần.
+  oxc: { jsx: { runtime: "automatic" } },
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],

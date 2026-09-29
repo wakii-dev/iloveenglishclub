@@ -16,7 +16,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /i18n.*\.spec\.ts/,
+  // Anchor basename (^|\/ … $): regex testMatch chạy trên FULL PATH — worktree
+  // này tên `sf-5-seo-i18n-qa` chứa "i18n" nên pattern trần match MỌI file
+  // (phát hiện khi --list ra 58 tests/12 file).
+  testMatch: /(^|\/)i18n.*\.spec\.ts$/,
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
