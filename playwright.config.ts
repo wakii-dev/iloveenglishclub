@@ -20,6 +20,7 @@ export default defineConfig({
   testMatch: /(dictation|progress|i18n).*\.spec\.ts/,
   timeout: 60_000,
   fullyParallel: false, // store singleton + DB seed — chạy tuần tự cho ổn định
+  workers: 1, // SF-8: testMatch fix lộ 3 file — files song song giành DB state dùng chung (flaky: fail khác nhau mỗi run); admin config đã cùng pattern
   retries: 0,
   reporter: [["list"]],
   use: {

@@ -53,6 +53,9 @@ async function createUnitAndLesson(
 
   await page
     .locator("li", { hasText: "E2E Unit" })
+    // SF-8: neo theo số unit — locator text-không alone khớp unit E2E của
+    // run TRƯỚC còn tồn trong DB (strict violation khi ≥2; DB luôn dơ chéo run)
+    .filter({ has: page.getByText(String(UNIT_NUMBER), { exact: true }) })
     .getByRole("link", { name: "Bài học" })
     .click();
   await expect(page).toHaveURL(new RegExp(`/units/${UNIT_NUMBER}/lessons$`));
@@ -178,7 +181,13 @@ test.describe("Admin CMS E2E", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "E2E Morning routine",
     );
-    await expect(page.locator("audio").first()).toBeVisible();
+    // SF-8: native <audio> của player SF-4 cố tình `hidden` (custom UI điều
+    // khiển) — assertion cũ `toBeVisible` viết thời placeholder SF-2 (audio
+    // controls visible), stale sau merge SF-4+SF-5. Intent thật: audio được
+    // wire src đúng trên trang public.
+    const audio = page.locator("audio").first();
+    await expect(audio).toBeAttached();
+    await expect(audio).toHaveAttribute("src", /\.mp3$/);
   });
 
   test("thiếu audio → publish chặn kèm thông báo liệt kê số câu", async ({
@@ -224,7 +233,11 @@ test.describe("Admin CMS E2E", () => {
     await page.getByRole("button", { name: /Tải lên 5 file/ }).click();
     const row3 = page.locator('[data-upload-row="03.mp3"]');
     await expect(row3.getByText("Lỗi mạng")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/1 file lỗi/)).toBeVisible();
+    // SF-8: scope main — text cũng nằm trong sonner toast (strict violation
+    // khi toast còn sống; race-dependent trong run cũ)
+    await expect(
+      page.getByRole("main").getByText(/1 file lỗi/),
+    ).toBeVisible();
 
     // bỏ chặn → retry RIÊNG file 3 → xong; 4 file còn lại giữ Xong
     await page.unroute("**/api/admin/upload");
@@ -243,7 +256,9 @@ test.describe("Admin CMS E2E", () => {
     // lesson demo L3-U1-L1 — part 1 có attempt (globalSetup seed)
     await page.goto("/admin/books/level-3/units/1/lessons/1");
     const part1 = page.locator("ol li").first();
-    await expect(part1.getByText(/1 lượt học/)).toBeVisible();
+    // SF-8: assertion cũ /1 lượt học/ là digit-substring brittle trên DB dùng
+    // chung (count 58 → không match; 21 → match). Intent: attemptsCount > 0.
+    await expect(part1.getByText(/\d+ lượt học/)).toBeVisible();
     const deleteBtn = part1.getByRole("button", { name: "Xóa câu" });
     await expect(deleteBtn).toBeDisabled();
     await expect(deleteBtn).toHaveAttribute("title", /không xóa được/);
