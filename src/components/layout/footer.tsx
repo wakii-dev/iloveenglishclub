@@ -3,21 +3,21 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
-const LEVEL_LABELS = [
-  "Level 1 — Starter",
-  "Level 2",
-  "Level 3",
-  "Level 4",
-  "Level 5",
-  "Level 6",
-  "Level 7 — B2",
-];
-
 /**
  * §2.6 Footer — bg card, border-t-2, grid 1.6fr_1fr_1fr_1fr.
- * Cột Levels liệt kê 7 level dạng text — thành link khi SF-2 tạo route
- * /books/[slug] (tránh dead links ở bản nền tảng).
+ * Cột Levels: 7 link /books/[slug] (SF-2 wire). Slug `level-1..7` là contract
+ * với seed — đổi slug phải đổi cả 2. Label giữ EN hardcode từ SF-1 (tên proper
+ * noun; localize theo title_vi là việc của SF sau nếu cần).
  */
+const LEVELS = [
+  { slug: "level-1", label: "Level 1 — Starter" },
+  { slug: "level-2", label: "Level 2" },
+  { slug: "level-3", label: "Level 3" },
+  { slug: "level-4", label: "Level 4" },
+  { slug: "level-5", label: "Level 5" },
+  { slug: "level-6", label: "Level 6" },
+  { slug: "level-7", label: "Level 7 — B2" },
+];
 export function Footer() {
   const t = useTranslations("common");
   const year = new Date().getFullYear();
@@ -45,8 +45,12 @@ export function Footer() {
             {t("footer.levels")}
           </h4>
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
-            {LEVEL_LABELS.map((label) => (
-              <li key={label}>{label}</li>
+            {LEVELS.map((level) => (
+              <li key={level.slug}>
+                <Link href={`/books/${level.slug}`} className="hover:text-primary">
+                  {level.label}
+                </Link>
+              </li>
             ))}
           </ul>
         </div>

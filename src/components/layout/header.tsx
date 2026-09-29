@@ -8,8 +8,8 @@ import { UserMenu } from "./user-menu";
 /**
  * §2.1 SiteHeader — hand-off "Classroom Warm": sticky 64px, backdrop-blur,
  * bg color-mix(background 90%), border-b-2. Brand mark 32px xoay -6° + heart.
- * Nav: Home active (bg-muted text-primary). Levels/Method/Unit bổ sung khi
- * SF-2 tạo section/route tương ứng (tránh dead links ở bản nền tảng).
+ * Nav: Home + Levels (SF-2 wire route /books — sticky RSC nên chưa có
+ * active-state theo route; cần client pathname hook thì tách SF sau).
  */
 export function Header() {
   const t = useTranslations("common");
@@ -32,9 +32,15 @@ export function Header() {
         <nav className="hidden items-center gap-1 md:flex">
           <Link
             href="/"
-            className="rounded-[12px] bg-muted px-3 py-1.5 text-[13px] font-bold text-primary"
+            className="rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-primary"
           >
             {t("nav.home")}
+          </Link>
+          <Link
+            href="/books"
+            className="rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-primary"
+          >
+            {t("nav.levels")}
           </Link>
         </nav>
 
