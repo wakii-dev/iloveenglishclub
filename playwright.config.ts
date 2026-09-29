@@ -9,6 +9,10 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 90_000,
   expect: { timeout: 15_000 },
+  // Suite đụng DB state dùng chung (unit number, lesson demo, attempts) —
+  // chạy TUẦN TỰ, không parallel (4 workers sẽ tự giẫm chân: trùng số unit,
+  // unpublish lesson đang test...)
+  workers: 1,
   globalSetup: "./e2e/global-setup.ts",
   use: {
     baseURL: "http://localhost:3000",
