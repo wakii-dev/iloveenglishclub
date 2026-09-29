@@ -25,7 +25,11 @@ test.describe("Leaderboard guest view (SF-3)", () => {
     ).toBeVisible();
 
     // Guest ẩn: không email nào render (view không expose; tầng UI phải giữ)
+    // — pattern email-specific thay vì /@/ trần (review P2: footer/social
+    // chứa "@" sẽ đỏ oan; schema assert mạnh hơn ở integration sf3-leaderboard)
     const body = await page.locator("main").innerText();
-    expect(body, "main KHÔNG được chứa email user nào").not.toMatch(/@/);
+    expect(body, "main KHÔNG được chứa email user nào").not.toMatch(
+      /[\w.+-]+@[\w-]+\.\w+/,
+    );
   });
 });

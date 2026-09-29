@@ -20,11 +20,11 @@ export function LoginForm({
   const t = useTranslations("auth");
   const searchParams = useSearchParams();
   // next chỉ nhận path nội bộ (ngăn open redirect) — loại CẢ protocol-relative
-  // //evil.com (startsWith("/") nhưng là host khác → QA-200). Khớp guard
-  // server internalNext.
+  // //evil.com lẫn backslash /\evil.com (WHATWG normalize "\"→"/" → host khác
+  // — QA-200 + review P0 VU-27). Khớp guard server internalNext.
   const nextParam = searchParams.get("next");
   const next =
-    nextParam?.startsWith("/") && !nextParam.startsWith("//")
+    nextParam?.startsWith("/") && !/^\/[/\\]/.test(nextParam)
       ? nextParam
       : undefined;
 

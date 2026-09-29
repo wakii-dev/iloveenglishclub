@@ -22,14 +22,17 @@ function parseLocale(raw: FormDataEntryValue | null): Locale {
 }
 
 /**
- * `next` hợp lệ = path-relative NỘI bộ — loại cả absolute URL lẫn
- * protocol-relative `//evil.com` (startsWith("/") nhưng browser hiểu là
- * host khác: NEXT_REDIRECT đẩy Next router vào client-side exception —
- * QA-200, e2e progress-login probe). Phải khớp guard client login-form.
+ * `next` hợp lệ = path-relative NỘI bộ — loại absolute URL, protocol-relative
+ * `//evil.com` VÀ backslash `/\evil.com` (WHATWG URL normalize "\" → "/" cho
+ * special scheme → new URL('/\evil.com', base) có host evil.com — review P0
+ * VU-27; NEXT_REDIRECT đẩy Next router vào client-side exception — QA-200,
+ * e2e progress-login probe). Phải khớp guard client login-form.
  */
 function internalNext(raw: FormDataEntryValue | null): string | null {
   const next = raw?.toString();
-  return next !== undefined && next.startsWith("/") && !next.startsWith("//")
+  return next !== undefined &&
+    next.startsWith("/") &&
+    !/^\/[/\\]/.test(next)
     ? next
     : null;
 }

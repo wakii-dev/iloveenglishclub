@@ -137,6 +137,46 @@ test.describe("Login edge (SF-3)", () => {
     await expect(page.getByText(/application error/i)).toHaveCount(0);
   });
 
+  test("probe backslash /\\evil.com — WHATWG normalize \\→/ nên phải chặn như //", async ({
+    page,
+  }) => {
+    const email = await registerUser(page, "SF3 Backslash");
+    await page.context().clearCookies();
+
+    let evilHit: string | null = null;
+    const captureEvil = (route: Route) => {
+      let host = "";
+      try {
+        host = new URL(route.request().url()).hostname;
+      } catch {
+        host = "";
+      }
+      if (host.endsWith("evil.com")) {
+        evilHit = route.request().url();
+        return route.fulfill({ status: 200, body: "EVIL-CAPTURED" });
+      }
+      return route.fallback();
+    };
+    await page.route("**/*", captureEvil);
+
+    // QA-200 review P0: "/\evil.com" qua guard startsWith("/") +
+    // !startsWith("//") NHƯNG WHATWG URL normalize "\" → "/" cho special
+    // scheme → new URL('/\evil.com', base) có host evil.com (reviewer đã
+    // verify Node). Browser điều hướng tương đương //evil.com.
+    await page.goto(`/en/login?next=/\\evil.com/pwn`, {
+      waitUntil: "domcontentloaded",
+    });
+    await submitLogin(page, email, "password123");
+
+    await page.waitForURL((u) => u.pathname === "/en", { timeout: 30_000 });
+    expect(
+      evilHit,
+      "backslash next KHÔNG được rời origin (normalize \\→/)",
+    ).toBeNull();
+    expect(new URL(page.url()).hostname).toBe("localhost");
+    await expect(page.getByText(/application error/i)).toHaveCount(0);
+  });
+
   test("?next=/en/me hợp lệ → login xong về /en/me; không next → /en", async ({
     page,
   }) => {
