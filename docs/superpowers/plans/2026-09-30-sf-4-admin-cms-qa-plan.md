@@ -59,6 +59,9 @@ lỗi = content kẹt. Hiện chưa ai test edge surface này trên code thật.
 - **Create:** `playwright.sf4.config.ts` · `e2e/admin-lib.ts` ·
   `e2e/admin-{gating,dashboard,units,lessons,split-script,upload,publish,audio-replace,users}.spec.ts`
   · unit test cho fix (co-located `*.test.ts`) · `docs/superpowers/evidence/sf-4-admin-cms-qa/test-run.txt`
+- **Modify:** `package.json` (script `test:e2e:sf4`) · `e2e/db.ts` (helper read-only
+  `adminStats()` — T3) · `.env.local` (bootstrap — gitignored, KHÔNG commit) ·
+  registry `findings-sf4.md`
 - **Modify (surgical, chỉ khi bug thật):** `src/lib/actions/admin/{units,lessons,parts,users}.ts`
   · `src/lib/admin/parts-logic.ts` · `src/components/admin/script-splitter.tsx` ·
   `src/app/api/admin/upload/route.ts` · `messages/{vi,en}/admin.json` (sửa CẢ HAI nếu thêm key)
@@ -109,6 +112,13 @@ quan sát được → fix RED→GREEN unit (mock `@/auth`+`@/db`+`next/cache` t
 `delete-revalidate.test.ts`) → e2e expansion. Mỗi task 1 atomic commit
 `<type>(sf4): …`. Chạy lane: `npx playwright test --config playwright.sf4.config.ts`.
 
+**Thực thi inline TUẦN TỰ 1 session** (DAG là external memory — tier 3 có 8 task
+NHƯNG không parallel: workers:1 + chung port 3010 + chung ilec_sf4 → song song sẽ
+tự giẫm chân). **Rolling review checkpoints cố định (FI-190):** review nhóm 1 sau
+T4 (T1-T4), nhóm 2 sau T8 (T5-T8), nhóm 3 sau T10 (T9-T10) — code-reviewer độc lập
+trên diff commit list nhóm, song song với nhóm kế. Rule 0 FLOW (T11) coi là
+sub-attempt riêng — flake flow không đốt budget sweep.
+
 - [ ] **Task 1 — e2e-config-db-bootstrap** (config + env + npm script). Files:
   `playwright.sf4.config.ts` (copy admin config; baseURL/webServer `http://localhost:3010`,
   command `npm run dev -- --port 3010`, testMatch anchored, workers 1, retries 0,
@@ -117,8 +127,11 @@ quan sát được → fix RED→GREEN unit (mock `@/auth`+`@/db`+`next/cache` t
   `test:e2e:sf4`. `.env.local` đã bootstrap (DATABASE_URL → ilec_sf4, ADMIN_EMAIL/
   ADMIN_PASSWORD generate, AUTH_SECRET có). Verify: `lsof -i :3010` trống →
   `npm run test:e2e:sf4` chạy `admin-lesson.spec.ts` 6/6 PASS trên ilec_sf4 →
-  `npx playwright test --config playwright.sf4.config.ts --list` = đúng N tests
-  admin family. Commit `test(sf4): sf4 e2e config port 3010 + ilec_sf4`.
+  `npx playwright test --config playwright.sf4.config.ts --list` = đúng **6** tests
+  (anchored regex loại dictation/i18n/progress). Ghi row **QA-3xx: baseline testMatch
+  không anchor** (repro: `--list` ở worktree tên chứa "admin-" = 17 vs 6) vào registry.
+  Commit `test(sf4): sf4 e2e config port 3010 + ilec_sf4`. Fallback `.env.local` nếu
+  thiếu: copy worktree primary rồi override (spec slice 1).
 - [ ] **Task 2 — gating-probe + admin-lib** (helpers dùng chung). Files:
   `e2e/admin-lib.ts` (`loginAsAdmin`, `createQaUnit`/`createQaLesson` — unique-per-run,
   `cleanupQaUnit(unitNumber)` FK-order, `cleanupQaAccounts(prefix)`,
@@ -142,8 +155,12 @@ quan sát được → fix RED→GREEN unit (mock `@/auth`+`@/db`+`next/cache` t
   Commit `fix(sf4): units revalidate + CRUD edge specs` (hoặc test-only nếu BY-DESIGN).
 - [ ] **Task 5 — lessons-crud-edge.** `e2e/admin-lessons.spec.ts`: tạo auto-number
   max+1; sửa meta (title/vocab) draft + published (public fresh — revalidate đã có);
-  delete lesson rỗng OK; điều hướng editor breadcrumb; vocab bắt buộc (disabled
-  submit). Commit `test(sf4): lessons CRUD edge`.
+  delete lesson rỗng OK; **delete lesson có part đã có attempt → hasAttempts**
+  (RESTRICT 23503 — e2e probe: seed attempt qua learn flow hoặc dùng demo part);
+  **unit test `lessons.test.ts`** (mock `@/auth`+`@/db` pattern
+  `delete-revalidate.test.ts`): race duplicate 23505 → `duplicateNumber` (mock db
+  ném 23505), publish blocked → missing[]; điều hướng editor breadcrumb; vocab bắt
+  buộc (disabled submit). Commit `test(sf4): lessons CRUD edge + RESTRICT/dup`.
 - [ ] **Task 6 — split-sentences-ui.** `e2e/admin-split-script.spec.ts`: paste 5 câu →
   preview 5; unicode/emoji nguyên vẹn; viết tắt "Mr. Smith…" tách sai + limitation
   note hiển thị + merge tay sửa lại (BY-DESIGN — assert behavior, không fix);
@@ -180,9 +197,13 @@ quan sát được → fix RED→GREEN unit (mock `@/auth`+`@/db`+`next/cache` t
   xóa account. Commit `test(sf4): users mgmt role + DEFERRED khóa user`.
 - [ ] **Task 11 — triage-fix-e2e-expansion.** Sweep registry: mọi row OPEN → FIXED
   (RED→GREEN) hoặc BY-DESIGN/DEFERRED có rationale; re-run toàn lane: unit (≥229 + mới)
-  · rls 18/18 · audit 15/15 · e2e sf4 lane full; assertAdmin ≥17 + list call site;
-  Rule 0 browser 3 tầng (DOM ✓ → VISUAL screenshot tự Read → FLOW trọn login→unit→
-  lesson→script→upload→publish→thấy trên public); viết
+  · rls 18/18 · audit 15/15 · e2e sf4 lane full · **baseline non-admin dictation lane
+  `npm run test:e2e:dictation` trên ilec_sf4** (T4 đổi cache behavior — public regression
+  surface §3; skip chỉ được nếu ghi rationale vào evidence); assertAdmin ≥17 + list call
+  site; Rule 0 browser 3 tầng (DOM ✓ → VISUAL screenshot tự Read → FLOW trọn login→unit→
+  lesson→script→upload→publish→thấy trên public — FLOW là sub-attempt riêng, flake
+  không đốt sweep budget); probe thêm: publish lesson 0 part → blocked? (context pack
+  slice 8 "thiếu audio/script"); viết
   `docs/superpowers/evidence/sf-4-admin-cms-qa/test-run.txt` (dòng đầu `^tdd:` + hash
   code commit cuối); post verdict review Linear. Commit
   `docs(sf4): findings registry 0 OPEN + evidence test-run`.
