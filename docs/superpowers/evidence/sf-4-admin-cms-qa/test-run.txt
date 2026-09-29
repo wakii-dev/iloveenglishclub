@@ -73,3 +73,6 @@ review-nhóm-2 fixes · 7c363db Rule 0 flow
 - Sự cố đã xử lý giữa run: upload bắn lesson NUMBER thay DB id đè audio demo L3-U1-L1
   (restore file git + durationMs 3500 từ seed constant) → guard upload path `unit-${N}/` +
   helper lessonIdByNumber chống tái diễn.
+
+== FOLLOW-UP CHAIN (post-evidence commits — convention SF-8 #7) ==
+dfeb1e3 (evidence commit) · 02ce969 (plan tick 11/11 — B2) · các hash trên đều trong chuỗi provenance; code commit cuối = 7c363db
