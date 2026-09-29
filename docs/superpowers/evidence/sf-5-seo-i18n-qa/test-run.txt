@@ -1,0 +1,26 @@
+SF-5 SEO/i18n/public pages QA — test-run evidence (qa-hardening VU-29)
+Code HEAD: 12f7d9f (task 8/10 — browse/404/error tests + testMatch anchor fix)
+Date: 2026-09-30 · Env: worktree wakii-dev/sf-5-seo-i18n-qa · DB ilec_sf5 (local :5432, template SF-1) · dev server port 3212
+tdd: RED→GREEN — QA-401: e2e/i18n-metadata.spec.ts auth suite RED 4/4 ("8 failed" run 1) → fix 7352829 (login/register buildPageMetadata) → "14 passed"; error.tsx SSR unit RED 3-4/4 (tsx parse fail → oxc jsx + messages nest + Link mock) → 4 passed
+Lanes (tất cả PASS trên HEAD 12f7d9f):
+  unit  npm test            → 233/233 (21 files; baseline 229 + 4 error.tsx SSR — 0 lane giảm, khớp convention qa-checklist #4)
+  rls   npm run test:rls    → 18/18 (không fix nào chạm auth — re-run insurance)
+  audit npm run test:audit  → 15/15
+  e2e   playwright.sf5.config.ts (port 3212, testMatch i18n suite) → 43/43 (9 files: 8 spec mới + i18n-switch baseline)
+  typecheck npx tsc --noEmit → 0 error
+Acceptance coverage (context pack #1-10):
+  1 metadata parity en/vi + canonical/hreflang cặp — e2e i18n-metadata 14 test (content 10 + auth 4 QA-401); sweep 16 route-locale
+  2 sitemap published-only + URL sống — e2e i18n-sitemap 3 (78/78 URL fetch thật 200; draft level-3/u2/l3 vắng mặt + 404 thật)
+  3 JSON-LD parse + escape + fields — e2e i18n-jsonld 2 (parse round-trip, 0 raw "<", schema.org types) + unit jsonld.test 7/7 giữ GREEN
+  4 OG images động — e2e i18n-og 5 (vi≠en bytes, book/lesson meta-URL 200 png) + VISUAL screenshot /api/og en/vi + book level-3 (đúng title/CEFR/counts)
+  5 fallback vi→en→raw — e2e i18n-fallback 4 (level-3/u1/l2 title_vi NULL → title/h1/JSON-LD rơi EN, không trang trắng); tier raw do localize.test bảo vệ (0 row tự nhiên thiếu cả hai)
+  6 robots + middleware matcher — e2e i18n-robots-middleware 6 (/admin→login?next=, /en/admin 404, api không lấn, sitemap/robots served trực tiếp)
+  7 browse flow + carousel 82bbb3b — e2e i18n-browse 3 (carousel next/prev/progress Playwright Chromium; home→books→book→unit→lesson en+vi không dead-end)
+  8 404 + error boundary — e2e i18n-404 4 (HTTP 404 + styled not-found en/vi + catch-all + CTA); error.tsx SSR unit 4 (en/vi/digest) — VISUAL 404-vi.png screenshot; dev không trigger được boundary (overlay) → prod là SF-6
+  9 messages parity theo key — src/messages.test.ts có răng: mutation xóa vi.home.hero.subtitle → RED chính xác 1 test → restore GREEN (key-level, không đếm dòng)
+  10 triage-fix + registry — findings-sf5.md: QA-401 FIXED (P2), QA-402 BY-DESIGN (P2) + 6 observations; 0 OPEN
+Rule 0 3 tầng (tôi tự thấy bằng mắt):
+  DOM — Orca browser eval: metadata sweep 16 route-locale, 404 DOM en/vi, login/register head post-fix (canonical + desc VI)
+  VISUAL — headless Chrome cùng build (CDP Orca timeout — fallback Rule 0): home en/vi, 404-vi, login-vi/register-vi post-fix, OG en/vi/book — không layout break, diacritics VI chuẩn
+  FLOW — Playwright: carousel slide/arrows/progress + browse trọn home→lesson cả en/vi (43 e2e); switch locale giữ trang (i18n-switch baseline trên ilec_sf5)
+Incidental: 1 run nhầm config (testMatch khớp path worktree chứa "i18n") đã chạy toàn bộ baseline+admin suite (54 tests) trên server 3212/ilec_sf5 — ALL PASS = cross-lane signal; đã fix testMatch anchor basename (12f7d9f).
