@@ -3,8 +3,9 @@
 import { eq, sql } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { db } from "@/db";
-import { lessons } from "@/db/schema";
+import { lessonParts, lessons } from "@/db/schema";
 import { CONTENT_TAG } from "@/lib/revalidate";
+import { validatePublish } from "@/lib/admin/publish";
 import { VOCAB_LEVELS, type VocabLevel } from "@/lib/admin/vocab-levels";
 import { assertAdmin } from "@/lib/content/guards";
 import { pgErrorCode } from "./pg-errors";
@@ -100,5 +101,49 @@ export async function deleteLessonAction(lessonId: number): Promise<LessonAction
     console.error("[deleteLessonAction] delete failed:", error);
     throw error;
   }
+  return { ok: true };
+}
+
+/**
+ * Publish gate (spec §4): ≥1 part, MỌI part có text non-empty + audio_path.
+ * duration nullable OK. Thiếu → "publishBlocked" + missing[] (số part) —
+ * KHÔNG publish (chặn broken lesson). Đạt → published=true + revalidate
+ * content (public pages stale ngay — matrix spec §5).
+ */
+export type PublishActionState =
+  | { ok?: boolean; error?: string; missing?: number[] }
+  | null;
+
+export async function publishLessonAction(
+  lessonId: number,
+): Promise<PublishActionState> {
+  await assertAdmin();
+  const parts = await db
+    .select({
+      sortOrder: lessonParts.sortOrder,
+      text: lessonParts.text,
+      audioPath: lessonParts.audioPath,
+    })
+    .from(lessonParts)
+    .where(eq(lessonParts.lessonId, lessonId));
+  const check = validatePublish(parts);
+  if (!check.ok) return { error: "publishBlocked", missing: check.missing };
+  await db
+    .update(lessons)
+    .set({ published: true })
+    .where(eq(lessons.id, lessonId));
+  revalidateTag(CONTENT_TAG);
+  return { ok: true };
+}
+
+export async function unpublishLessonAction(
+  lessonId: number,
+): Promise<PublishActionState> {
+  await assertAdmin();
+  await db
+    .update(lessons)
+    .set({ published: false })
+    .where(eq(lessons.id, lessonId));
+  revalidateTag(CONTENT_TAG);
   return { ok: true };
 }
