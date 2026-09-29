@@ -1,0 +1,95 @@
+{
+  "base": "http://localhost:3300",
+  "reportOnly": false,
+  "thresholds": {
+    "performance": 0.85,
+    "accessibility": 0.95
+  },
+  "thresholdsHard": {
+    "performance": 0.85,
+    "accessibility": 0.95
+  },
+  "runsPlanned": 3,
+  "outDir": "docs/superpowers/evidence/qa-hardening/lighthouse",
+  "perUrl": [
+    {
+      "url": "/en",
+      "performance": {
+        "median": 0.92,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/vi",
+      "performance": {
+        "median": 0.9,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books",
+      "performance": {
+        "median": 0.91,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 0.98,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3",
+      "performance": {
+        "median": 0.94,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3/units/1",
+      "performance": {
+        "median": 0.95,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3/units/1/lessons/1/listen-and-type",
+      "performance": {
+        "median": 0.92,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/vi/books/level-3/units/1/lessons/1/listen-and-type",
+      "performance": {
+        "median": 0.91,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    }
+  ],
+  "measuredRuns": 21,
+  "pass": true
+}
