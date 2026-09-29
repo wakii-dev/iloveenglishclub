@@ -1,0 +1,63 @@
+{
+  "url": "/vi",
+  "run": 2,
+  "fetchTime": "2026-09-29T10:59:25.080Z",
+  "categories": {
+    "performance": 0.91,
+    "accessibility": 1
+  },
+  "metrics": {
+    "first-contentful-paint": "1.1 s",
+    "largest-contentful-paint": "3.5 s",
+    "total-blocking-time": "10 ms",
+    "cumulative-layout-shift": "0.013",
+    "speed-index": "1.1 s"
+  },
+  "failingAudits": [
+    {
+      "id": "largest-contentful-paint",
+      "score": 0.63,
+      "title": "Largest Contentful Paint"
+    },
+    {
+      "id": "max-potential-fid",
+      "score": 0.99,
+      "title": "Max Potential First Input Delay"
+    },
+    {
+      "id": "interactive",
+      "score": 0.9,
+      "title": "Time to Interactive"
+    },
+    {
+      "id": "largest-contentful-paint-element",
+      "score": 0,
+      "title": "Largest Contentful Paint element"
+    },
+    {
+      "id": "render-blocking-resources",
+      "score": 0.5,
+      "title": "Eliminate render-blocking resources"
+    },
+    {
+      "id": "legacy-javascript",
+      "score": 0,
+      "title": "Avoid serving legacy JavaScript to modern browsers"
+    },
+    {
+      "id": "legacy-javascript-insight",
+      "score": 0,
+      "title": "Legacy JavaScript"
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "score": 0,
+      "title": "Network dependency tree"
+    },
+    {
+      "id": "render-blocking-insight",
+      "score": 0,
+      "title": "Render blocking requests"
+    }
+  ]
+}

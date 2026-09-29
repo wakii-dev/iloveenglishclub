@@ -1,0 +1,25 @@
+=== SF-2 final verify run ===
+date: 2026-09-29 09:52 +07
+HEAD: bc7d4d5 (code); evidence commit riêng sau — convention như SF-1
+
+-- lint --
+> eslint
+
+-- typecheck --
+
+-- vitest (unit, CI-safe) --
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+-- test:rls (per-role authorization, DB local) --
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+-- build no-DB (CI constraint) --
+ ✓ Compiled successfully in 2.8s
+ ✓ Generating static pages (55/55)
+-- build with DB render strategy (SSG/ISR §3) --
+7
+static routes ● (books 14 + units 28 prerendered, lesson 0-path ISR-on-demand, revalidate 5m — xem build đầu tại 28ae716/8552fb8)
+-- browser 3 tầng tại 8552fb8 (không đổi app code sau đó — chỉ scripts/test) --
+DOM+VISUAL+FLOW PASS: shots/ (Home EN/VI, books, book L3, unit, lesson placeholder, fallback vi→en) + audio play() PLAYING + VI switch
+
+tdd: skipped-tdd — pages verify bằng test:rls (17 asserts) + browser 3 tầng; localize/revalidateContent có unit test (viết cùng implementation, không red-first)

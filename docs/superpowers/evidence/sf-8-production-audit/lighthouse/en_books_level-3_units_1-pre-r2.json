@@ -1,0 +1,68 @@
+{
+  "url": "/en/books/level-3/units/1",
+  "run": 2,
+  "fetchTime": "2026-09-29T10:47:58.069Z",
+  "categories": {
+    "performance": 0.95,
+    "accessibility": 0.94
+  },
+  "metrics": {
+    "first-contentful-paint": "0.8 s",
+    "largest-contentful-paint": "2.9 s",
+    "total-blocking-time": "10 ms",
+    "cumulative-layout-shift": "0.013",
+    "speed-index": "0.8 s"
+  },
+  "failingAudits": [
+    {
+      "id": "largest-contentful-paint",
+      "score": 0.8,
+      "title": "Largest Contentful Paint"
+    },
+    {
+      "id": "interactive",
+      "score": 0.94,
+      "title": "Time to Interactive"
+    },
+    {
+      "id": "largest-contentful-paint-element",
+      "score": 0,
+      "title": "Largest Contentful Paint element"
+    },
+    {
+      "id": "color-contrast",
+      "score": 0,
+      "title": "Background and foreground colors do not have a sufficient contrast ratio."
+    },
+    {
+      "id": "heading-order",
+      "score": 0,
+      "title": "Heading elements are not in a sequentially-descending order"
+    },
+    {
+      "id": "render-blocking-resources",
+      "score": 0.5,
+      "title": "Eliminate render-blocking resources"
+    },
+    {
+      "id": "legacy-javascript",
+      "score": 0,
+      "title": "Avoid serving legacy JavaScript to modern browsers"
+    },
+    {
+      "id": "legacy-javascript-insight",
+      "score": 0,
+      "title": "Legacy JavaScript"
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "score": 0,
+      "title": "Network dependency tree"
+    },
+    {
+      "id": "render-blocking-insight",
+      "score": 0,
+      "title": "Render blocking requests"
+    }
+  ]
+}

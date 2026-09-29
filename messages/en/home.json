@@ -1,0 +1,44 @@
+{
+  "hero": {
+    "kicker": "DICTATION PRACTICE",
+    "title": "Master English listening, one sentence at a time",
+    "subtitle": "Dictation practice following the Cambridge English Prepare path — from Pre-A1 to B2 First.",
+    "ctaPrimary": "Explore all levels",
+    "ctaSecondary": "Start with Level 1",
+    "trustLevels": "7 levels",
+    "trustLessons": "{count} lessons",
+    "trustFree": "Free core",
+    "miniCard1Title": "Sample lesson",
+    "miniCard1Sub": "Level 3 · Unit 1 — Free time",
+    "miniCard1Meta": "4 sentences · ~2 minutes",
+    "miniCard2Title": "The method",
+    "miniCard2Sub": "Listen · Type · Check · Read aloud"
+  },
+  "levels": {
+    "title": "Your learning path",
+    "subtitle": "Follow the books in order, or jump to the level that fits you.",
+    "prev": "Previous levels",
+    "next": "More levels",
+    "position": "Level {current} of {count}"
+  },
+  "method": {
+    "title": "The 4-step method",
+    "subtitle": "Every lesson follows the same rhythm — hear it, write it, fix it, say it.",
+    "step1": {
+      "title": "Listen",
+      "desc": "Play the audio as many times as you need — slow it down if you want."
+    },
+    "step2": {
+      "title": "Type",
+      "desc": "Write exactly what you hear, word by word."
+    },
+    "step3": {
+      "title": "Check",
+      "desc": "See every mistake word by word and fix your sentence."
+    },
+    "step4": {
+      "title": "Read aloud",
+      "desc": "Say the correct sentence out loud to lock it in."
+    }
+  }
+}

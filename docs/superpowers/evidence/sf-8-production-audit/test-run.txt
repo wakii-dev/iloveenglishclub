@@ -1,0 +1,82 @@
+SF-8 Production + audit (VU-23) — test-run evidence
+date: 2026-09-29
+tdd: RED→GREEN (thresholds: scripts/audit-thresholds.test.ts 13 case viết TRƯỚC
+  module tại T2 — RED "Failed to load url ./audit-thresholds.mjs", GREEN 13/13;
+  test:rls xp/role assert = meta-test MUTATION RED — thêm tạm xp:999 vào .set
+  của updateRelaxedMode → assert ĐỎ (kèm leaderboard test phụ thuộc cũng đỏ),
+  revert → GREEN 18/18; Lighthouse contrast fixes: RED/GREEN = protocol đo
+  THẬT pre (a11y 94 FAIL 7/7 URL) → fix → final (PASS 7/7, exit code 1→0);
+  e2e prod-build: 4 stale assertion ĐỎ trên prod-build thật → fix → GREEN)
+code-commit: ce7e9df (HEAD khi chạy suite cuối; evidence commit ngay sau —
+  T2 30f836b · testMatch 33faf53 · a11y+runner 8d7d6d9 · security 270f250 ·
+  lighthouse evidence 1d764fc · e2e hygiene 03eeefc · ISR poll ce7e9df)
+  + follow-up: 25022ad (evidence) · 3049169 (a11y round-2 — NỘI DUNG Y HỆT
+  build đã đo final: các fix nằm working tree khi đo, commit trễ do add có
+  chọn lọc theo task) · fdff2bc (docs/deploy + .env.example — không ảnh
+  hưởng build đo) · 5f60975 (review-fix P1 fail-closed URL unmeasured + P2
+  — test:audit 15/15 · tsc 0 · lint 0 · scan PASS tại HEAD này; re-review
+  code-reviewer VERDICT: APPROVED — meta-test tự xác nhận RED trên code cũ)
+
+== Điều kiện chạy ==
+Build PRODUCTION: `npm run build` exit 0 (turbopack) → `next start -p 3110`
+(+ -p 3000 cho admin suite) — KHÔNG phải dev (guard dev-indicator trong
+runner + thủ công trước mỗi suite). DB local `ilec` (migrated + seeded).
+
+== Unit (vitest) ==
+Test Files  18 passed (18)
+Tests       218 passed (218) — 0 regression (baseline SF-7 era 179 + meta-tests
+  SF-6 review cộng thêm = 218 đã có từ trước SF-8; SF-8 KHÔNG thêm test vào
+  lane chính — thresholds test chạy lane riêng bên dưới)
+
+== Audit tooling (vitest lane riêng) ==
+npm run test:audit → 13 passed (13) — evalCategory biên == min PASS /
+  dưới FAIL / null FAIL · median odd/even/sort-in-place/null-filter/toàn-null
+  · summarize per-URL + overall fail-closed khi rỗng
+
+== Authorization (test:rls) ==
+npm run test:rls → 18 passed (18) — 17 cũ (SF-2) + 1 MỚI SF-8: profiles
+  self-write CHỈ relaxed_mode (xp=50/role=user/streak=0 nguyên vẹn sau
+  updateRelaxedMode) — mutation RED→GREEN chứng minh test có sức bắt
+
+== Security scan ==
+node scripts/security-scan.mjs → SCAN: PASS (exit 0) — env-not-in-git ·
+  no-hardcoded-secrets · env-example-no-real-values · exec-bits ·
+  npm-audit-vs-allowlist (6 vulns / 5 advisory đã allowlist tường minh:
+  postcss-trong-next build-time + esbuild dev; exit non-0 khi advisory ngoài
+  allowlist)
+
+== Lighthouse §9 (prod-build :3110, npx lighthouse@12, mobile, median/3) ==
+PRE-fix : a11y 94.0 FAIL cả 7 URL · perf 92-95 PASS (exit 1)
+FINAL   : 7/7 URL PASS (exit 0) —
+  /en 93/100 · /vi 91/100 · /en/books 95/98 · /en/books/level-3 95/100 ·
+  /en/books/level-3/units/1 95/100 · lesson en 94/100 · lesson vi 92/100
+  (perf/a11y). Raw: evidence/sf-8-production-audit/lighthouse/ (42 core +
+  2 summary + 7 full-raw final). Report: audits/lighthouse-2026-09-29.md
+
+== E2E Playwright (prod-build — 4/4 suite) ==
+Default config :3110 → 11 passed (dictation 6 + progress 3 + i18n 2)
+  — 2 lần chạy liên tiếp xanh sau fix; phát hiện + fix: workers:1 (3 file
+  song song giành DB), ISR-aware poll cho /top-users (revalidate=60 —
+  KHÁC BIỆT dev≠prod thật, app giữ nguyên)
+Admin config :3000 → 6 passed (admin 6 — flow dashboard→unit→lesson→split→
+  upload→publish→public + publish-gate + retry riêng + RESTRICT + 401/403)
+  — phát hiện + fix 4 stale assertion (chi tiết commit 03eeefc); DB E2E-unit
+  leftovers đã dọn + locator neo UNIT_NUMBER chống tái diễn
+TỔNG: 17 e2e tests xanh trên build production
+
+== Rule 0 — 3 tầng nhận thức (prod-build) ==
+T1 DOM: Lighthouse scores đo được qua JSON (bảng trên) — HỖ TRỢ
+T2 VISUAL: screenshots Read bằng mắt — audits/screenshots/final-{home-en,
+  home-vi,book-level3,lesson}.png — band sách đậm đọc rõ, pill A2 tint mới,
+  CTA primary token mới, /vi dấu tiếng Việt đủ, 0 vỡ layout — BẰNG CHỨNG
+T3 FLOW: đăng ký user thật → lesson L3-U1-L1: start gate → gõ SAI (word-diff
+  đỏ + từ đúng chồng trên — flow-3-wrong-diff.png) → sửa đúng → part 2 →
+  /me: 19 Total XP · 1 Current streak · 2 Parts practiced · 100% accuracy ·
+  heatmap ô hôm nay (flow-5-me-stats.png) — CHUẨN ĐO
+
+== Giới hạn trung thực ==
+- Audit chạy trên prod-build LOCAL: Lighthouse simulated throttling nhưng
+  KHÔNG network/TTFB thật → điểm là xấp xỉ tối ưu; prod URL chờ infra user
+  (REQUIREMENT-GAP VU-23+VU-15 — 7 mục) — KHÔNG tuyên bố prod-parity
+- Security checkpoint 9/9 verdict trên code + DB local; cấu hình prod
+  (env/Vercel/Neon) thuộc post-deploy checklist docs/deploy.md

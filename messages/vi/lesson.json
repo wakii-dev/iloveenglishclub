@@ -1,0 +1,102 @@
+{
+  "dictation": {
+    "start": {
+      "cta": "Bắt đầu",
+      "lead": "Nghe và gõ lại chính xác những gì bạn nghe được. Nghe lại bao nhiêu lần cũng được — cố lên!"
+    },
+    "facts": {
+      "sentences": "{count, plural, other {# câu}}",
+      "audio": "~{seconds, plural, other {# giây}} audio",
+      "minutes": "~{minutes, plural, other {# phút}}",
+      "xpMax": "+{xp} XP tối đa"
+    },
+    "breadcrumb": {
+      "aria": "Điều hướng"
+    },
+    "dots": {
+      "aria": "Câu {current} / {total}"
+    },
+    "tabs": {
+      "dictation": "Chính tả",
+      "transcript": "Toàn bộ bài đọc",
+      "partLabel": "Phần {current} / {total}"
+    },
+    "player": {
+      "play": "Phát",
+      "pause": "Tạm dừng",
+      "replay": "Nghe lại",
+      "speed": "Tốc độ {speed}x",
+      "noAudio": "Câu này chưa có audio — xem gợi ý và gõ theo nhớ."
+    },
+    "input": {
+      "placeholder": "Gõ những gì bạn nghe được...",
+      "aria": "Gõ những gì bạn nghe được",
+      "pasteBlocked": "Không được dán — hãy gõ bằng tai của bạn!"
+    },
+    "actions": {
+      "check": "Kiểm tra",
+      "next": "Câu tiếp",
+      "skip": "Bỏ qua",
+      "hint": "Gợi ý",
+      "skipAria": "Bỏ qua câu này",
+      "hintAria": "Lộ một từ"
+    },
+    "diff": {
+      "correct": "Chính xác!",
+      "noteStrict": "Xanh — đúng. Đỏ — từ của bạn, kèm từ đúng phía trên. Hoa/thường và dấu câu được tính.",
+      "noteRelaxed": "Xanh — đúng. Đỏ — từ của bạn, kèm từ đúng phía trên. Hoa/thường và dấu câu được bỏ qua."
+    },
+    "hintStrip": {
+      "label": "Gợi ý",
+      "xpPenalty": "XP ×0.8"
+    },
+    "partNav": {
+      "prev": "Phần trước",
+      "next": "Phần sau",
+      "label": "Phần {current} / {total}"
+    },
+    "transcript": {
+      "title": "Toàn bộ bài đọc",
+      "playAll": "Phát tất cả",
+      "stop": "Dừng",
+      "locked": "Hoàn thành phần này để mở toàn bộ bài đọc."
+    },
+    "shortcuts": {
+      "open": "Phím tắt",
+      "title": "Phím tắt",
+      "replay": "Nghe lại audio",
+      "enter": "Kiểm tra / câu tiếp",
+      "hintKey": "Lộ một từ",
+      "escape": "Tạm dừng audio",
+      "arrows": "Tua ±3s (khi không đang gõ)"
+    },
+    "relaxed": {
+      "on": "Tha thứ ×0.5",
+      "off": "Khắt khe",
+      "description": "Bỏ qua hoa/thường và dấu câu — XP ×0.5",
+      "saveFailed": "Không lưu được — thử lại"
+    },
+    "xp": {
+      "label": "+{xp} XP",
+      "unsaved": "chưa lưu",
+      "unsavedTitle": "XP chỉ nằm trong trang này — đăng nhập để lưu."
+    },
+    "banner": {
+      "login": "Đăng nhập để lưu điểm",
+      "loginCta": "Đăng nhập",
+      "ephemeral": "Kết quả của bạn chưa được lưu."
+    },
+    "results": {
+      "titleNamed": "Tuyệt vời, {name}!",
+      "title": "Tuyệt vời!",
+      "lead": "{done} hoàn thành · {skipped} bỏ qua",
+      "accuracy": "chính xác",
+      "xpEarned": "+{xp} XP nhận được",
+      "streakPlaceholder": "Streak sắp ra mắt",
+      "wordsToReview": "Từ cần ôn: {words}",
+      "tryAgain": "Làm lại",
+      "nextLesson": "Bài tiếp theo",
+      "backToUnit": "Về unit"
+    }
+  }
+}

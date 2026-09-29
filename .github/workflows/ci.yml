@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Build cần AUTH_SECRET (Auth.js v5 init) + DATABASE_URL (SSG prerender
+      # home counts / top-users / sitemap query DB lúc build)
+      - name: Build
+        run: npm run build
+        env:
+          AUTH_SECRET: ci-placeholder-secret-for-build-only
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

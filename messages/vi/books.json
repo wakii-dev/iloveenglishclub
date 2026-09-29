@@ -1,0 +1,23 @@
+{
+  "levels": {
+    "title": "Chọn cấp độ của bạn",
+    "subtitle": "Bảy cấp độ theo lộ trình Cambridge English Prepare — từ Pre-A1 đến B2 First. Chọn một cấp độ và bắt đầu luyện nghe."
+  },
+  "book": {
+    "backToLevels": "Tất cả cấp độ",
+    "cefr": "Trình độ CEFR",
+    "targetExam": "Kỳ thi mục tiêu",
+    "noExam": "Lộ trình từ từ — không nhắm một kỳ thi duy nhất",
+    "units": "Units",
+    "lessons": "Bài học",
+    "unitsCount": "{count, plural, other {# unit}}",
+    "lessonsCount": "{count, plural, other {# bài học}}"
+  },
+  "unit": {
+    "lessonsCount": "{count, plural, other {# bài học}}",
+    "lessonSentences": "{count, plural, other {# câu}}"
+  },
+  "lesson": {
+    "open": "Mở"
+  }
+}

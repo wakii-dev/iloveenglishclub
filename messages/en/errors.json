@@ -1,0 +1,16 @@
+{
+  "notFound": {
+    "title": "Page not found",
+    "code": "404",
+    "desc": "The page you're looking for may have been moved, removed, or never existed. Let's get you back on track.",
+    "backHome": "Back to home",
+    "browseLevels": "Browse all levels"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "desc": "An unexpected error occurred. Your progress is saved — try again, or head back home.",
+    "retry": "Try again",
+    "backHome": "Back to home",
+    "digest": "Error code"
+  }
+}

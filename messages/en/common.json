@@ -1,0 +1,25 @@
+{
+  "appName": "I Love English Club",
+  "nav": { "home": "Home", "levels": "Levels" },
+  "header": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "account": "Account",
+    "language": "Language",
+    "theme": "Theme",
+    "myProgress": "My progress",
+    "leaderboard": "Leaderboard"
+  },
+  "footer": {
+    "tagline": "Listen. Type. Learn.",
+    "levels": "Levels",
+    "learn": "Learn",
+    "method": "The 4-step method",
+    "support": "Support",
+    "contact": "Contact: hello@iloveenglish.club",
+    "rights": "All rights reserved.",
+    "steps": "Listen · Type · Check · Read aloud"
+  },
+  "locale": { "en": "English", "vi": "Tiếng Việt" }
+}

@@ -1,0 +1,25 @@
+{
+  "appName": "I Love English Club",
+  "nav": { "home": "Trang chủ", "levels": "Cấp độ" },
+  "header": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "account": "Tài khoản",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "myProgress": "Tiến độ của tôi",
+    "leaderboard": "Bảng xếp hạng"
+  },
+  "footer": {
+    "tagline": "Nghe. Gõ. Học.",
+    "levels": "Các level",
+    "learn": "Học",
+    "method": "Phương pháp 4 bước",
+    "support": "Hỗ trợ",
+    "contact": "Liên hệ: hello@iloveenglish.club",
+    "rights": "Mọi quyền được bảo lưu.",
+    "steps": "Nghe · Gõ · Kiểm tra · Đọc to"
+  },
+  "locale": { "en": "English", "vi": "Tiếng Việt" }
+}

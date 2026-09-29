@@ -1,0 +1,84 @@
+SF-6 Progress + Gamification (VU-21) — test-run evidence
+date: 2026-09-29
+tdd: RED→GREEN (streak.test.ts + attempt-key.test.ts viết TRƯỚC module tại
+  T1 — RED = module chưa tồn tại, GREEN 19/19; P0 review-fix có meta-test
+  riêng: e2e "P0 regression" chạy ĐỎ trên code cũ — DB hiện attempt part B
+  (U2-L1) xp=2 với typed_text của lesson A user chưa học — rồi XANH sau fix;
+  action/pages đọc DB: browser-verify Rule 0 + e2e, không unit-tautology)
+code-commit: 4bf7ffa (HEAD; vòng review 1 CHANGES-REQUESTED 1 P0 + 1 P1 →
+  fix b1b1448; vòng 2 CHANGES-REQUESTED 1 P1 dead-assert → fix 4bf7ffa;
+  reviewer xác nhận P0/P1 vòng 1 đã đóng verified + "fix 1 dòng + 3/3 → đủ
+  điều kiện APPROVED")
+
+== Unit (vitest) ==
+Test Files  11 passed (11)
+Tests       178 passed (178) — gồm 19 test mới gamification/ (vnToday TZ +07
+  3 case biên · computeStreak 3 case bắt buộc hôm qua +1 / hôm nay giữ /
+  khác reset 1 + chain/gap/dup/future · attemptIdFor dedup 5 case)
+            + 159 test cũ không regression
+
+== E2E (playwright chromium, port 3110 — đổi từ 3100 vì SF-7 song song) ==
+9 passed (21.5s) / 0 failed:
+  SF-6 (3):
+  1. User: XP đúng công thức (part sai 6/8 → 8 XP) · attempt thứ 2 log đủ
+     0 XP thêm · Enter đôi nhanh → ĐÚNG 1 attempt row (query DB thật) ·
+     tổng 38 sau 4 part · học LẠI (Try-again) 4 part → XP KHÔNG tăng ·
+     /me stats từng số (38 XP / 4 parts / 100% / heatmap ô hôm nay) ·
+     /top-users 2 bảng đều có user
+  2. Guest: học 2 câu → chip "+20 XP not saved" → banner login ?next= →
+     login giữa chừng → về lesson → commit: profiles xp=20 streak=1
+     (query DB) · header live "20 XP · 🔥1" · leaderboard có tên
+  3. P0 regression: học A → client-nav books → mở lesson B → KHÔNG
+     ghost-submit (attempt U2-L1 part 1 = 0, assert đúng target sau fix
+     dead-assert vòng 2) · StartGate render (không stale pane) · XP không đổi
+  SF-4 regression (6/6): dictation-guest happy path không vỡ
+
+== Rule 0 — Browser verify 3 tầng (screenshots trong dir này) ==
+Tầng 1 DOM: header user "Rule Zero | 20 XP | 1" sau login-commit · /me 5
+  stat card đúng giá trị (2 parts / 100% / 0.1 min / 20 XP / streak 1) ·
+  heatmap 79/84 ô có title (future rỗng) · leaderboard weekly+all-time
+  rows + /vi h1 "Bảng xếp hạng"
+Tầng 2 VISUAL (t2-*.png, đọc ảnh trực tiếp): /me — 5 card số teal Baloo +
+  heatmap 1 ô teal đúng vị trí hôm nay + 7 level color đúng bảng hand-off
+  §1.7 + progress bar muted; /top-users — 2 bảng This week (coral) /
+  All time (teal), medal vàng-bạc-đồng, avatar teal; lesson — worksheet
+  shadow-đặc, chip "+10 XP" phiên vs header "20 XP" tổng (đúng semantics),
+  banner guest biến mất khi đã login. Đúng hướng B "Classroom Warm".
+Tầng 3 FLOW: guest → học 2 câu (chip +20 not saved) → banner login
+  (?next=lesson) → login → VỀ LẠI lesson (soft-nav, SessionProvider stale)
+  → getSession() chủ động → commit 5s → header 20 XP → /me → /top-users.
+  Đi trọn, tôi thấy từng bước (t3-*.png).
+
+== Typecheck + lint (tại HEAD 4bf7ffa) ==
+tsc --noEmit: 0 errors · eslint: 0 errors 0 warnings
+attempt-key.ts: UTF-8 text (P1 vòng 1 — NUL byte thật → escape \u0000)
+
+== Review (code-reviewer độc lập, 2 vòng) ==
+Vòng 1: CHANGES-REQUESTED — P0 ghost-submit chéo lesson (store singleton
+sống qua nav, mount lesson khác map state A theo index sang partId B → XP
+sai cho part chưa học; tái hiện DB: attempt U2-L1 xp=2 text của A) + P1 NUL
+byte → fix b1b1448 với meta-test RED→GREEN. Vòng 2: CHANGES-REQUESTED — P1
+dead assert (nhắm U1-L3 không tồn tại) → fix 4bf7ffa + suite 3/3. P0/P1
+vòng 1 verified đóng. CHECKLIST-4Q 4/4 PASS cả 2 vòng.
+
+== Known deviations / notes (có chủ đích) ==
+- BỎ unmount-reset trong dictation-lesson (SF-4) — thay bằng reset theo
+  lesson-signature TRƯỚC effects submit/mirror (P0 review): guest-commit
+  sống qua nav, lesson khác reset sạch. FLAG COORDINATOR: đụng 1 điểm
+  lifecycle của player SF-4 ngoài "wire submit".
+- Guest commit dùng typedText lần check CUỐI (store read-only, không có
+  first-text) → XP committed có thể ≠ ephemeral preview nếu user sửa sau
+  check đầu (preview bank first-accuracy).
+- "Part done" suy từ accuracy ≥ 1 — extra-token (gõ thừa) không làm mất
+  done (KHÔNG đổi schema theo boundary; hiếm, chấp nhận).
+- daily_activity.parts_done = distinct parts có attempt trong ngày;
+  re-check cùng part cùng ngày không đệm; re-check part cũ NGÀY MỚI vẫn
+  +1 (giữ streak đúng "học ≥1 part/ngày").
+- usedHint là event flag từ client (trust bounded ≤25% XP/part — decision
+  plan #2); mode strict/relaxed lấy từ profiles server-side (XP economy).
+- P2 ghi nhận chưa fix (audit): submit fail ở check cuối bài chỉ log (không
+  retry queue); lesson 0-part tính DONE (publish gate chặn từ seed; vacuous
+  edge); 4 message keys chưa dùng; khe nửa đêm vnToday trước transaction.
+- SEO metadata /top-users + /me KHÔNG làm (boundary SF-7); admin SF-5;
+  KHÔNG đổi schema.
+exit 0

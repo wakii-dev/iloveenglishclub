@@ -1,0 +1,46 @@
+{
+  "header": {
+    "xp": "XP",
+    "streakAria": "{count, plural, =0 {no active streak} one {#-day streak} other {#-day streak}}",
+    "statsAria": "{xp} XP, {count, plural, =0 {no active streak} other {#-day streak}}"
+  },
+  "topUsers": {
+    "title": "Leaderboard",
+    "lead": "Weekly scores reset every Monday (Vietnam time). Keep your streak alive!",
+    "weekly": "This week",
+    "allTime": "All time",
+    "rank": "#",
+    "player": "Player",
+    "xp": "XP",
+    "empty": "No scores yet — be the first to study!",
+    "anonymous": "Anonymous",
+    "medalAria": "Rank {rank}"
+  },
+  "me": {
+    "title": "My progress",
+    "loginRequired": "Log in to see your progress, streak and stats.",
+    "loginCta": "Log in",
+    "stats": {
+      "partsPracticed": "Parts practiced",
+      "accuracy": "Average accuracy",
+      "listenTime": "Listen time",
+      "xp": "Total XP",
+      "streak": "Current streak"
+    },
+    "heatmap": {
+      "title": "Last 12 weeks",
+      "empty": "No study activity yet — complete a part to light up your first day!",
+      "legendLess": "Less",
+      "legendMore": "More",
+      "cellAria": "{date} · {parts} parts",
+      "summary": "{days} active days · {parts} parts in the last 12 weeks"
+    },
+    "books": {
+      "title": "Your books",
+      "progress": "{done}/{total} lessons · {percent}%",
+      "notStarted": "Not started",
+      "complete": "Completed 🎉"
+    },
+    "minutes": "{minutes} min"
+  }
+}
