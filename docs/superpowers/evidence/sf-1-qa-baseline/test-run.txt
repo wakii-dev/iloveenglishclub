@@ -1,0 +1,14 @@
+tdd: RED→GREEN
+code commit: 4ccf1dc (regression mutation RED→GREEN: revert 3617eed → test đỏ ngay [1 failed: @vercel/blob assertion] → restore → 3/3 xanh; lighthouse-config: RED "Cannot find module" → GREEN 8/8)
+
+Lane run trên HEAD 4ccf1dc (unit lane chạy SAU task 4+8 — gồm 2 test mới):
+- unit  (npm test):             Test Files 20 passed (20) · Tests 229 passed (229)  [218 baseline + 3 regression + 8 lighthouse-config]
+- rls   (npm run test:rls):     Tests 18 passed (18)  — re-run trên DB sạch SAU hygiene (lần đầu 17/18 do QA-1 data pollution; lần 2 18/18)
+- audit (npm run test:audit):   Tests 15 passed (15)
+- e2e admin      (port 3000):   6 passed (29.6s)  — ×3 audit: 6/6, 6/6, crash-dev-server→retry 6/6 (QA-7)
+- e2e dictation  (port 3110):   11 passed (39.2s) — ×3 audit: 11/11 ×3 (0 flaky)
+- lighthouse pre (next start):  7/7 PASS exit 0 — perf 90–95, a11y 98–100, LH_OUT_DIR=qa-hardening/lighthouse (22 file), evidence sf-8 0 dirty
+- typecheck (tsc --noEmit): exit 0 · eslint (files đổi): exit 0
+
+Chi tiết từng lane + 2 hygiene events: docs/superpowers/evidence/qa-hardening/baseline.md
+Tổng hợp artifacts SF-1: findings-sf1.md (QA-1..7) · env-matrix.md · prod-build-verify.md · qa-checklist.md · e2e-flakiness-audit.md · lighthouse-pre.md · db-template-hygiene.md · prod-smoke/*.png
