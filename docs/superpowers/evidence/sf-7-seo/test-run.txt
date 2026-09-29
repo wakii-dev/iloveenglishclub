@@ -5,14 +5,18 @@ tdd: RED→GREEN (site.test.ts + jsonld.test.ts + sitemap-data.test.ts viết TR
   browser-verify Rule 0 + e2e Playwright + JSON-LD parse assert — metadata
   layer không có unit-surface ngoài pure helpers; spec-critic 2 vòng PROCEED,
   plan-critic PROCEED 4 P1 verify-steps đã absorb)
-code-commit: (điền hash HEAD sau commit này — xem git log sf-7-seo; T1 2f947d5 ·
-  T2 2e69a8d · T3 f9f5430 · T4 d9d1146)
+code-commit: 37a8aa1 (HEAD sau re-review APPROVED vòng 2; run đầu e472a8a;
+  T1 2f947d5 · T2 2e69a8d · T3 f9f5430 · T4 d9d1146; TDD helpers RED→GREEN
+  tại T1 — test viết trước module, GREEN 18/18; metadata surfaces bằng
+  browser-verify Rule 0 + JSON-LD parse assert + e2e)
 
-== Unit (vitest) ==
+== Unit (vitest) — re-run tại HEAD 37a8aa1 ==
 Test Files  12 passed (12)
-Tests       177 passed (177) — gồm 18 test mới src/lib/seo/* (siteUrl/localePath/
+Tests       179 passed (179) — gồm 20 test mới src/lib/seo/* (siteUrl/localePath/
   buildAlternates x-default/composeDescription trimmed-fallback/JSON-LD
-  Course+LearningResource fields/path builders) + 159 SF-1/2/3/4 không regression
+  Course+LearningResource fields/path builders + jsonldScript escape meta-test
+  — RED "jsonldScript is not a function" → GREEN, assert 0 raw '<' + round-trip
+  JSON.parse) + 159 SF-1/2/3/4 không regression
   (gồm messages parity en⇄vi bắt seo.json cùng key-set)
 
 == Build + typecheck + lint (plan-critic P1-3) ==
@@ -81,9 +85,28 @@ spec-critic: vòng 1 FIX-P0-FIRST (P0 lesson desc không có data source → tem
 plan-critic: PROCEED + 4 P1 verify-steps (published-only proof — ĐÃ chứng minh
   trực tiếp với unpublished row thật; JSON-LD parse assert — PASS; npm run
   build — XANH; OG fallback test — PASS)
-code-reviewer độc lập: (điền verdict — xem comment VU-22)
+code-reviewer độc lập (2 vòng):
+  Vòng 1: CHANGES-REQUESTED — 1 P1 (JSON-LD JSON.stringify không escape '<' →
+    breakout </script> từ content admin qua dangerouslySetInnerHTML — stored-XSS
+    sink duy nhất) + 5 P2 (sitemap split(" ") re-parse · OG fallback split("—")
+    trên message · lessonAlt/bookAlt keys chết + lệch alt · lesson 404 desc
+    template vars rỗng · commit hygiene — move nằm ở docs commit, không rewrite)
+    → fix 37a8aa1: jsonldScript() escape < → \\u003c (TDD meta-test RED→GREEN,
+    live-verify 0 raw '<' trong ld+json) + 4 P2 (sitemap unitMap giữ object —
+    phát hiện thêm NUL bytes lạ trong block cũ, hexdump + sweep toàn bộ = 0 còn
+    lại · OG fallback BRAND · 404 desc homeDescription · bỏ 2 keys chết)
+    Vòng 2: APPROVED (CHECKLIST-4Q 4/4 PASS) — position-verify từng fix;
+    deterministic tự chạy tại 37a8aa1: tsc 0 · eslint 0/0 · vitest 179/179 ·
+    build exit 0 · NUL sweep 0
+  Lưu ý coordinator (không phải lỗi code): diff base..HEAD thấy 38 file SF-5
+  "bị xóa" = branch-point artifact (base đã có SF-5, worktree nhánh từ trước
+  khi merge) — per-commit verify: 0 commit sf-7 chạm file SF-5; merge base
+  vào sf-7 (hoặc merge sf-7 vào đích có SF-5) xử lý lúc merge-playbook
 
 == Known deviations (có chủ đích) ==
+- composeDescription nhận template RAW qua t.raw() — t() ICU format eager ném
+  FORMATTING_ERROR khi chưa có vars (bug tìm thấy ở T2, fix + test); JSON-LD
+  serialize qua jsonldScript() escape '<' (review P1)
 - context pack đặt tên file `metadata.ts` — Next 15 không có convention này →
   sibling `layout.tsx` (mục tiêu anti-merge-conflict giữ nguyên: 0 dòng
   page.tsx đổi; 1 git mv home → (home))
