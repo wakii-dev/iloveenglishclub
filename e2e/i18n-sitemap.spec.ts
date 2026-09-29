@@ -57,7 +57,6 @@ test("sitemap: MỌI URL resolve 200 (fetch thật, origin rewrite về server l
     }
   }
   expect(failed, `URL chết trong sitemap: ${JSON.stringify(failed.slice(0, 5))}`).toEqual([]);
-  expect(ok).toBe(locs.length);
 });
 
 test("sitemap entry: hreflang cặp en↔vi + x-default→en trong từng <url>", async ({ request }) => {

@@ -20,7 +20,7 @@ test("vi lesson thiếu title_vi → render title_en ở title tag (fallback b�
   const res = await page.goto(`/vi${L2_PATH}`);
   expect(res?.status()).toBe(200);
 
-  await expect(page).toHaveTitle(new RegExp(`${EN_FALLBACK_TITLE.replace(/[—]/g, "—")} · I Love English Club`));
+  await expect(page).toHaveTitle(`${EN_FALLBACK_TITLE} · I Love English Club`);
   // Không trang trắng
   expect((await page.locator("body").textContent())?.trim().length ?? 0).toBeGreaterThan(100);
   await expect(page.locator("h1")).toHaveText(EN_FALLBACK_TITLE);
