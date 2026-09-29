@@ -25,6 +25,8 @@ const LESSON = "/en/books/level-3/units/1/lessons/1/listen-and-type";
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /\/dictation[^/]*\.spec\.ts$/,
+  globalSetup: "./e2e/sf2-global-setup.ts",
+  globalTeardown: "./e2e/sf2-global-teardown.ts",
   timeout: 60_000,
   fullyParallel: false, // store singleton + DB seed — tuần tự như baseline
   workers: 1,
