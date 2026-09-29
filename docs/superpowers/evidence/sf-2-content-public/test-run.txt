@@ -1,6 +1,6 @@
 === SF-2 final verify run ===
-date: 2026-09-29 09:24 +07
-HEAD: 28ae716f1fbd6dbc159854c729e8c793e8664d3b
+date: 2026-09-29 09:37 +07
+HEAD: 8552fb8 (code); evidence commit riêng sau — convention như SF-1
 
 -- lint --
 > eslint
@@ -13,12 +13,10 @@ HEAD: 28ae716f1fbd6dbc159854c729e8c793e8664d3b
 -- test:rls (per-role authorization, DB local) --
  Test Files  1 passed (1)
       Tests  17 passed (17)
-rls-exit: 0
 -- build no-DB (CI constraint: env đủ trừ DATABASE_URL/BLOB/GOOGLE, AUTH_SECRET placeholder) --
- ✓ Finished writing to disk in 74ms
- ✓ Compiled successfully in 3.3s
+ ✓ Compiled successfully in 2.7s
  ✓ Generating static pages (55/55)
--- build with DB + render strategy --
+-- build with DB + render strategy (SSG/ISR §3) --
 ┌ ○ /_not-found                                                               0 B         116 kB
 ├ ● /[locale]                                                             1.22 kB         186 kB          5m      1y
 ├ ● /[locale]/books                                                           0 B         185 kB          5m      1y
@@ -28,5 +26,8 @@ rls-exit: 0
 ├ ● /[locale]/login                                                       1.82 kB         187 kB
 ├ ● /[locale]/register                                                    1.82 kB         187 kB
 └ ƒ /api/auth/[...nextauth]                                                   0 B            0 B
+-- browser smoke tại HEAD (headless Chrome) --
+home-en: h1 + 7 level cards + method 4 steps + progressFill rgb(14,148,136)=#0e9488 teal (hand-off §1.9)
+flow: Home→L3→Unit1→Lesson1 trusted-click chain + VI switch pill click + audio play() PLAYING currentTime tăng + fallback /vi lesson2 title_vi NULL → h1 EN không rỗng
 
 tdd: skipped-tdd — pages verify bằng test:rls (17 asserts) + browser 3 tầng; localize/revalidateContent có unit test (viết cùng implementation, không red-first)
