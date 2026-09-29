@@ -119,7 +119,7 @@ T4 (T1-T4), nhóm 2 sau T8 (T5-T8), nhóm 3 sau T10 (T9-T10) — code-reviewer �
 trên diff commit list nhóm, song song với nhóm kế. Rule 0 FLOW (T11) coi là
 sub-attempt riêng — flake flow không đốt budget sweep.
 
-- [ ] **Task 1 — e2e-config-db-bootstrap** (config + env + npm script). Files:
+- [x] **Task 1 — e2e-config-db-bootstrap** (config + env + npm script). Files:
   `playwright.sf4.config.ts` (copy admin config; baseURL/webServer `http://localhost:3010`,
   command `npm run dev -- --port 3010`, testMatch anchored, workers 1, retries 0,
   timeout 90s, expect 15s, locale vi-VN, globalSetup `./e2e/global-setup.ts`,
@@ -132,7 +132,7 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   không anchor** (repro: `--list` ở worktree tên chứa "admin-" = 17 vs 6) vào registry.
   Commit `test(sf4): sf4 e2e config port 3010 + ilec_sf4`. Fallback `.env.local` nếu
   thiếu: copy worktree primary rồi override (spec slice 1).
-- [ ] **Task 2 — gating-probe + admin-lib** (helpers dùng chung). Files:
+- [x] **Task 2 — gating-probe + admin-lib** (helpers dùng chung). Files:
   `e2e/admin-lib.ts` (`loginAsAdmin`, `createQaUnit`/`createQaLesson` — unique-per-run,
   `cleanupQaUnit(unitNumber)` FK-order, `cleanupQaAccounts(prefix)`,
   `seedQaUser` bcrypt insert pattern `seed-attempts.ts`, `forgeAdminJwt(userId)`),
@@ -141,11 +141,11 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   forged JWT (sub=learner id, role claim admin) → `/admin` → redirect `/`; learner
   fixture guard (role vẫn `user` đầu spec). Baseline assertAdmin trước/sau
   (`grep -c`). Commit `test(sf4): gating 2 lớp + forged-JWT + admin-lib`.
-- [ ] **Task 3 — dashboard-stats.** `e2e/admin-dashboard.spec.ts`: login → số liệu UI
+- [x] **Task 3 — dashboard-stats.** `e2e/admin-dashboard.spec.ts`: login → số liệu UI
   đối chiếu SQL trực tiếp (helper read-only `adminStats()` mới trong `e2e/db.ts` —
   lessons/published/parts/missing/users) — assert từng stat khớp; perBook row book
   level-3 khớp count DB. Commit `test(sf4): dashboard stats khớp DB`.
-- [ ] **Task 4 — units-crud-edge.** `e2e/admin-units.spec.ts`: number 0/-1/1.5 →
+- [x] **Task 4 — units-crud-edge.** `e2e/admin-units.spec.ts`: number 0/-1/1.5 →
   invalidNumber; trùng số → duplicateNumber; title rỗng → titleRequired; delete unit
   có lessons (cascade OK, public unit list mất); delete unit có attempt part →
   hasAttempts toast; **probe bug #1a** (update title unit CÓ bài published → public
@@ -153,7 +153,7 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   stale → finding QA-3xx + fix `revalidateTag(CONTENT_TAG)` unconditional (precedent
   delete) + unit test mock pattern `delete-revalidate.test.ts` RED→GREEN.
   Commit `fix(sf4): units revalidate + CRUD edge specs` (hoặc test-only nếu BY-DESIGN).
-- [ ] **Task 5 — lessons-crud-edge.** `e2e/admin-lessons.spec.ts`: tạo auto-number
+- [x] **Task 5 — lessons-crud-edge.** `e2e/admin-lessons.spec.ts`: tạo auto-number
   max+1; sửa meta (title/vocab) draft + published (public fresh — revalidate đã có);
   delete lesson rỗng OK; **delete lesson có part đã có attempt → hasAttempts**
   (RESTRICT 23503 — e2e probe: seed attempt qua learn flow hoặc dùng demo part);
@@ -161,7 +161,7 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   `delete-revalidate.test.ts`): race duplicate 23505 → `duplicateNumber` (mock db
   ném 23505), publish blocked → missing[]; điều hướng editor breadcrumb; vocab bắt
   buộc (disabled submit). Commit `test(sf4): lessons CRUD edge + RESTRICT/dup`.
-- [ ] **Task 6 — split-sentences-ui.** `e2e/admin-split-script.spec.ts`: paste 5 câu →
+- [x] **Task 6 — split-sentences-ui.** `e2e/admin-split-script.spec.ts`: paste 5 câu →
   preview 5; unicode/emoji nguyên vẹn; viết tắt "Mr. Smith…" tách sai + limitation
   note hiển thị + merge tay sửa lại (BY-DESIGN — assert behavior, không fix);
   manual split/merge/add/remove từng dòng; **probe bug #2**: 205 dòng → hiện tại chèn
@@ -169,7 +169,7 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   ăn, error key sẵn) + rewrite `parts-logic.test.ts` contract tests (TDD RED→GREEN) +
   toast đếm non-empty (`script-splitter.tsx` save()). Commit
   `fix(sf4): split >200 chặn rõ + toast count đúng`.
-- [ ] **Task 7 — upload-edge-two-drivers.** `e2e/admin-upload.spec.ts`: >4MB client
+- [x] **Task 7 — upload-edge-two-drivers.** `e2e/admin-upload.spec.ts`: >4MB client
   pre-check error + server 413 (buffer 4MB+1); MIME `text/plain` → 415
   unsupportedFormat; numeric sort: files `10.mp3`,`2.mp3`,`01.mp3` → map 2→câu2,
   10→câu10 (10 part lesson) hoặc 2 trước 10 trong list; 7 file / 5 câu → 2 unmapped
@@ -178,24 +178,24 @@ sub-attempt riêng — flake flow không đốt budget sweep.
   baseline); driver local THẬT (file xuất hiện `public/audio/...`, self-clean);
   blob: probe `BLOB_READ_WRITE_TOKEN` — không có → ghi nhận evidence (không fail).
   Commit `test(sf4): upload edge local driver + failsoft`.
-- [ ] **Task 8 — publish-gate-revalidate.** `e2e/admin-publish.spec.ts`: thiếu audio →
+- [x] **Task 8 — publish-gate-revalidate.** `e2e/admin-publish.spec.ts`: thiếu audio →
   chặn + missing[] đúng số; đủ → publish → **navigation MỚI** URL public ngay sau
   publish = 200 + thấy nội dung (retry budget 0 — revalidate thật); unpublish → 404;
   sửa title bài published → public fresh (revalidate đã có — verify); upload audio
   cho bài published → public thấy audio mới (revalidate trong upload route đã có —
   verify). Commit `test(sf4): publish gate + revalidate thật`.
-- [ ] **Task 9 — audio-replace-failsoft.** `e2e/admin-audio-replace.spec.ts`: replace
+- [x] **Task 9 — audio-replace-failsoft.** `e2e/admin-audio-replace.spec.ts`: replace
   flow UI (select part + pick file) → part path giữ convention `{NN}.{ext}`, toast
   replaced; replace file MIME khác ext (mp3→wav) → path đổi ext đúng; replace với
   buffer rác → duration null, part vẫn cập nhật audioPath (failsoft, không crash);
   durationMs invalid form value → null. Commit `test(sf4): audio replace failsoft`.
-- [ ] **Task 10 — users-mgmt.** `e2e/admin-users.spec.ts`: seed `sf4-user@test.ilec`
+- [x] **Task 10 — users-mgmt.** `e2e/admin-users.spec.ts`: seed `sf4-user@test.ilec`
   (admin-lib `seedQaUser`) → search thấy → đổi role user→admin (DB verify) → đổi
   lại → self-row select disabled + badge "(bạn)"; unit `users.test.ts` (mock auth/db):
   `invalidRole` (runtime enum), `cannotChangeSelf`, ok path. Gap khóa user → row
   DEFERRED (REQUIREMENT-GAP VU-15 trong `users.ts:11` là sign-off có sẵn). Self-clean
   xóa account. Commit `test(sf4): users mgmt role + DEFERRED khóa user`.
-- [ ] **Task 11 — triage-fix-e2e-expansion.** Sweep registry: mọi row OPEN → FIXED
+- [x] **Task 11 — triage-fix-e2e-expansion.** Sweep registry: mọi row OPEN → FIXED
   (RED→GREEN) hoặc BY-DESIGN/DEFERRED có rationale; re-run toàn lane: unit (≥229 + mới)
   · rls 18/18 · audit 15/15 · e2e sf4 lane full · **baseline non-admin dictation lane
   `npm run test:e2e:dictation` trên ilec_sf4** (T4 đổi cache behavior — public regression
