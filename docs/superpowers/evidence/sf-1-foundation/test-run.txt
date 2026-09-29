@@ -54,3 +54,11 @@ typecheck PASS · tests 14/14 · lint clean.
 Commit: xem git log "fix(auth): register transaction + 23505 qua DrizzleQueryError.cause".
 P2 dispositions (không block): //evil.com guard — Auth.js core rewrite same-origin (verified reviewer);
 /administrator match — SF-5 siết exact-match khi có dashboard; storage sanitize — BẮT BUỘC trước SF-5 upload.
+
+== FINAL TEST RUN tại HEAD 24ab706 (sau review P1 fix) ==
+      Tests  14 passed (14)
+   Start at  07:17:47
+   Duration  179ms (import 58%, transform 33%, tests 5%, worker 4%)
+typecheck PASS · lint clean · build PASS (đã chạy sau fix transaction)
+tdd: skipped-tdd: foundation scaffold — auth flow đã browser-E2E thật trên Neon (register/login/duplicate/admin-gate);
+unit tests GREEN tại HEAD 24ab706
