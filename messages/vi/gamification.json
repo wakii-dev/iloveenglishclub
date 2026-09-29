@@ -13,6 +13,7 @@
     "player": "Học viên",
     "xp": "XP",
     "empty": "Chưa có điểm nào — hãy là người đầu tiên học bài!",
+    "anonymous": "Ẩn danh",
     "medalAria": "Hạng {rank}"
   },
   "me": {
@@ -31,7 +32,8 @@
       "empty": "Chưa có ngày học nào — hoàn thành một phần để thắp sáng ngày đầu tiên!",
       "legendLess": "Ít",
       "legendMore": "Nhiều",
-      "cellAria": "{date}: đã học {parts} phần"
+      "cellAria": "{date} · {parts} phần",
+      "summary": "{days} ngày có học · {parts} phần trong 12 tuần qua"
     },
     "books": {
       "title": "Sách của bạn",

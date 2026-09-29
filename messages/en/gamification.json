@@ -13,6 +13,7 @@
     "player": "Player",
     "xp": "XP",
     "empty": "No scores yet — be the first to study!",
+    "anonymous": "Anonymous",
     "medalAria": "Rank {rank}"
   },
   "me": {
@@ -31,7 +32,8 @@
       "empty": "No study activity yet — complete a part to light up your first day!",
       "legendLess": "Less",
       "legendMore": "More",
-      "cellAria": "{date}: {parts, plural, one {# part} other {# parts}} studied"
+      "cellAria": "{date} · {parts} parts",
+      "summary": "{days} active days · {parts} parts in the last 12 weeks"
     },
     "books": {
       "title": "Your books",
@@ -39,6 +41,6 @@
       "notStarted": "Not started",
       "complete": "Completed 🎉"
     },
-    "minutes": "{minutes, plural, one {# minute} other {# minutes}}"
+    "minutes": "{minutes} min"
   }
 }
