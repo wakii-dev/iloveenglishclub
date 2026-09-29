@@ -83,6 +83,7 @@ interface PartState {
   index: number; transcript: string; status: PartStatus;
   attempts: number;           // số lần check
   usedHint: boolean; xpEarned: number;
+  firstAccuracy: number | null; // accuracy attempt ĐẦU (bank cùng XP) — cho accuracy TB
   typedText: string; lastDiff: DiffResult | null;
   revealedIndices: number[];  // index từ đã hint
 }
@@ -114,17 +115,17 @@ Chuỗi phase: `idle` → `start-gate` → `playing`/`input` (vào/ra theo isPla
 | `setSpeed(v)` | — | v ∈ `SPEEDS` (const `[0.5,0.75,1,1.25,1.5]`) → speed=v; else no-op |
 | `seek(ms)` | `ACTIVE` | seekRequest={ms, nonce:++mediaNonce} |
 | `setInput(v)` | `ACTIVE` + `PENDING-PART` | input=v; `checked`→`input` (sửa sau check, banner tắt) |
-| `check()` | `ACTIVE` + `PENDING-PART` | diff theo mode (`relaxed ? "relaxed" : "strict"`); attempts+1; **attempt đầu → xp=computeXp(accuracy, usedHint, relaxed, first=true), earnedXp+=xp, part.xpEarned=xp** (input rỗng → accuracy 0, bank 0 XP, TIÊU first attempt — hệ quả có chủ đích của "chỉ attempt đầu", SF-4 có thể guard UI); typedText/lastDiff lưu; phase `checked`; **isPlaying giữ nguyên** (quyết định SF-4) |
+| `check()` | `ACTIVE` + `PENDING-PART` | diff theo mode (`relaxed ? "relaxed" : "strict"`); attempts+1; **attempt đầu → xp=computeXp(...), earnedXp+=xp, part.xpEarned=xp, part.firstAccuracy=accuracy** — attempt sau KHÔNG ghi đè xpEarned/firstAccuracy đã bank (test phát hiện: overwrite làm mất XP đầu); input rỗng → accuracy 0, bank 0 XP, TIÊU first attempt (có chủ đích, SF-4 có thể guard UI); typedText/lastDiff lưu; phase `checked`; **isPlaying giữ nguyên** |
 | `hint()` | `ACTIVE` + `PENDING-PART` | **tự tính diff TƯƠI** từ input hiện tại vs transcript (KHÔNG phụ thuộc lastDiff — hint trước check đầu hợp lệ) → index wrong/missing đầu tiên chưa nằm trong revealedIndices → push + usedHint=true; hết từ sai → no-op (không flag) |
 | `skip()` | `ACTIVE` + `PENDING-PART` | status=`skipped` (action skip không cộng XP; **XP đã bank ở check đầu GIỮ NGUYÊN — không zero hóa**) → advance |
-| `next()` | phase `checked` | part pending: allCorrect → `done`; còn sai → **`skipped` ngầm** (XP đã bank giữ nguyên — hệ quả "chỉ attempt đầu"); part RESOLVED (đang xem lại) → advance không remark; chưa check (`playing`/`input`): no-op |
+| `next()` | `ACTIVE` ∧ (part RESOLVED ∨ attempts>0) | part pending: allCorrect **theo lần check gần nhất (lastDiff)** → `done`; còn sai → **`skipped` ngầm** (XP đã bank giữ nguyên — hệ quả "chỉ attempt đầu"); part RESOLVED (đang xem lại) → advance không remark; **chưa check lần nào (attempts=0) → no-op** (Enter = check — "Câu tiếp" chỉ hiện sau check đầu). Guard `ACTIVE` (không chỉ `checked`) vì xem lại part skipped-chưa-check có phase `input` — guard `checked`-only tạo dead-end (phát hiện qua test) |
 | `prevPart()` | currentIndex>0 + `ACTIVE` | index−1; input=typedText part đó; seekRequest={ms:0, nonce:++mediaNonce}; có lastDiff → `checked` (xem lại), không → `input`; isPlaying giữ nguyên |
 | `toggleRelaxed()` | phase ≠ `idle`/`complete` | relaxed=!relaxed (ảnh hưởng check SAU đó) |
 | `reset()` | — | về state idle ban đầu (đổi lesson — store là singleton) |
 
 `advance`: tìm part `pending` từ current+1 (hết thì quét từ 0) → chuyển đến nó (input="", phase `playing`, isPlaying=true — autoplay câu kế, seekRequest={ms:0, nonce:++mediaNonce}); **không còn pending nào → `complete`** (nhánh else duy nhất — mọi part khi đó done‖skipped theo bất biến kiến trúc: advance chỉ xảy ra sau khi part hiện tại resolve; KHÔNG dùng assert-throw reachable — giữ 100% nhánh thật).
 
-**Derived (pure, export cho SF-4):** `lessonProgress(state)` → `{done, skipped, total}` (progress bar: done/total, skip không tính); `averageAccuracyOfDone(parts)` → TB accuracy các part done (màn kết quả §5.7; không có part done → 0).
+**Derived (pure, export cho SF-4):** `lessonProgress(state)` → `{done, skipped, total}` (progress bar: done/total, skip không tính); `averageAccuracyOfDone(parts)` → TB accuracy **ATTEMPT ĐẦU** (`firstAccuracy`) các part done — done ⟹ allCorrect nên accuracy attempt-sau luôn 1 (vô nghĩa); không có part done → 0.
 
 ### 3.3 Store test không DOM
 
