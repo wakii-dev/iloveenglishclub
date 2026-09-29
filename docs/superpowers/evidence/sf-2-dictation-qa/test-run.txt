@@ -16,8 +16,10 @@ Lane run trên HEAD 4cb1345:
     6 baseline dictation-guest (regression) + 7 scoring-edges + 5 store-edge + 6 audio-controls
     + 3 start-gate + 6 nav-results + 3 mobile (iPhone 12 emulated) + 4 i18n + 5 a11y
 - spec --list: chỉ dictation-* + dictation-guest (testMatch basename-anchored — QA-101)
-- lighthouse: KHÔNG re-run ở SF-2 (baseline SF-1 7/7 còn nguyên; fix UI của SF-2 là a11y-positive:
-  maxLength/trap-bỏ/wrap — hard gate a11y ≥0.95 thuộc lane final SF-6 trên HEAD đích)
+- lighthouse (chạy SAU review P2#3, next start build prod port 3299, LH_REPORT_ONLY,
+  median/3): **7/7 PASS** — a11y 98–100 HARD ĐẠT (2 lesson page 100/100); perf 90–95
+  REPORT-ONLY (= baseline SF-1: 90–95, không sụt) — fix UI SF-2 (maxLength/trap/wrap)
+  không tụt a11y lẫn perf
 
 Rule 0 — browser verify 3 tầng (screenshots-sf2/, 9 ảnh pixel thật, 0 page error):
 - DOM: aria/slider/progressbar/aria-live assert trong dictation-a11y + store-edge (45 test)
@@ -39,5 +41,10 @@ Findings registry: findings-sf2.md — QA-101/102/103/106/107 FIXED (đủ regre
 QA-104 BY-DESIGN (relaxed mid-part, rationale + e2e pin) · QA-105/108 DEFERRED (rationale +
 sign-off PM comment epic VU-24 + Recommendations) → surface SF-2: 0 OPEN.
 Observations (không phải finding, vào Recommendations): Esc chưa đóng shortcuts panel (popover,
-backdrop + toggle button đóng được); transient flake 1 lần ở audio-controls start (không tái diễn
-full-run ×2 — theo dõi thêm).
+backdrop + toggle button đóng được); flake nav-click liền kề 1 lần ở nav-results (click rớt trong
+window re-render — workaround waitForTimeout(800) trong spec, nguyên nhân Playwright actionability
+vs React node replacement CHƯA đuổi root — reviewer P2#2 flag, theo dõi: tái diễn ≥2 lần → thành
+finding); transient flake 1 lần ở audio-controls start (không tái diễn full-run ×2).
+QA-106 residual (reviewer P2#1): Tab/Shift+Tab trong textarea vẫn replay (spec-sanctioned §5) —
+ghi block residual trong findings-sf2.md, PM sign-off batch QA-105/108.
+Lighthouse lane chạy sau review (P2#3): 7/7 PASS a11y 98–100 hard — thay waiver bằng data.
