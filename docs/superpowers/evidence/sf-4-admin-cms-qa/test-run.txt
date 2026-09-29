@@ -1,0 +1,75 @@
+tdd: RED→GREEN — QA-302 units revalidate (units.test.ts 2 fail trên code cũ → 12/12 sau fix 8bf43a1; suite 241/241) · QA-303 truncate >200 (parts-logic.test.ts rewrite 3 fail → 4/4 + e2e 205 câu chặn rõ, fix 4dfbb49) · QA-304 splitter.merge key thiếu (e2e RED locator timeout → GREEN sau khi thêm key vi+en). Coverage contracts (không fix): lessons.test 23505/23503/gate/revalidate (10/10), users.test invalidRole/cannotChangeSelf/auth-ném (4/4) — regression guard revalidateTag = mock exactly-once (red-provable).
+
+SF-4 Admin CMS + storage/upload QA (VU-28) — test-run evidence
+Worktree: sf-4-admin-cms-qa · branch wakii-dev/sf-4-admin-cms-qa · DB ilec_sf4 · port 3010
+Code commit cuối: 7c363db (Rule 0 browser flow) — evidence commit NGAY SAU
+
+== BASELINE (đo trước khi viết exit criteria) ==
+- unit (vitest): 229/229 (20 files) — khớp evidence SF-1
+- rls (ilec_sf4 trực tiếp): 18/18
+- audit: 15/15
+- e2e baseline trên ilec_sf4: 17/17 (6 admin + 6 dictation + 2 i18n + 3 progress)
+- assertAdmin: 17 call sites (upload 1 · lessons 5 · parts 7 · units 3 · users 1) — context pack ghi 16 (stale)
+
+== FINAL SWEEP (sau mọi fix) ==
+- unit: 255/255 (23 files; +26 test mới)
+- rls: 18/18 (ilec_sf4)
+- audit: 15/15
+- e2e sf4 lane (`npm run test:e2e:sf4`, port 3010): 46/46 (6 baseline admin-lesson + 40 mới:
+  gating 7 · dashboard 2 · units 5 · lessons 4 · split 5 · upload 7 · publish 3 · replace 3 · users 4 + fixtures)
+- e2e dictation lane (`npm run test:e2e:dictation`, public regression sau fix cache): 11/11
+- typecheck (tsc --noEmit): 0 errors (P1 TS2739 partOf đã fix 3005302)
+- assertAdmin: 17 call sites nguyên vẹn (list file như baseline; grep -rn "await assertAdmin()" src | wc -l = 17)
+
+== RULE 0 — BROWSER 3 TẦNG ==
+- DOM: script e2e/rule0-flow.ts asserts từng bước + 46 test e2e query DOM thật
+- VISUAL: 6 screenshots (screens/1-login → 6-public-lesson) — coordinator TỰ Read ảnh:
+  dashboard 6 stat cards + bảng Theo sách render đúng · splitter preview 3 câu + limitation
+  note · upload 3 rows "Xong" + "Mọi câu đã có audio ✓" · publish badge "Đã xuất bản" ·
+  PUBLIC /en/.../units/950/lessons/2/listen-and-type render "Rule0 Flow Lesson" + badge
+  "A2 · UNIT 950 — RULE0 FLOW UNIT" + "3 sentences" + nút Start
+- FLOW trọn: login admin → tạo unit 950 → lesson → paste script → split 3 câu → upload
+  3 file (Xong hết) → publish → public 200 NGAY thấy bài (revalidate thật). "~0 seconds
+  audio" = durationMs null failsoft ĐÚNG thiết kế (buffer không đọc được metadata)
+
+== FINDINGS (registry findings-sf4.md — 0 OPEN) ==
+- QA-300 P2 testMatch baseline không anchor (match theo tên thư mục worktree) — BY-DESIGN
+  (baseline không sửa theo boundary; config sf4 anchored /admin-[^/]*\.spec\.ts$)
+- QA-302 P1 units create/update thiếu revalidateTag — FIXED 8bf43a1 (unit RED→GREEN + e2e
+  probe #1a/#1b public fresh NGAY)
+- QA-303 P1 split >200 truncate ngắm + toast đếm raw — FIXED 4dfbb49 (sanitize bỏ truncate,
+  guard tooManySentences sống lại, toast/nút đếm non-empty)
+- QA-304 P2 splitter.merge key thiếu cả vi+en (label thô) — FIXED 4dfbb49
+- QA-305 P2 khóa user (thiếu profiles.banned) — DEFERRED (schema out-of-scope; sign-off:
+  REQUIREMENT-GAP VU-15 users.ts:11 + epic spec §4 + comment tổng kết VU-28)
+
+== CODE COMMITS (13) ==
+bc3038d config port 3010 + anchored testMatch (QA-300) · f9f5099 gating + forged-JWT +
+admin-lib · 075d186 dashboard stats · 8bf43a1 units revalidate (QA-302) · 43f88c4 review-nhóm-1
+fixes · f97eca0 lessons CRUD + RESTRICT/dup · 4dfbb49 split QA-303/304 · 78b1d5b upload edge ·
+ca8ab8b publish gate · 7dd29e3 audio replace · 3f03502 users + QA-305 DEFERRED · 3005302
+review-nhóm-2 fixes · 7c363db Rule 0 flow
+
+== REVIEWS (3 nhóm rolling — FI-190) ==
+- Nhóm 1 (T1-T4): CHANGES-REQUESTED → fix 43f88c4 → RE-REVIEW APPROVED (P1 hardcode NUM +
+  2 P2; ghi chú Linear: cascade test bỏ upload — sửa cross-unit write bằng cách loại, không
+  phải "upload vào NUM_CASCADE")
+- Nhóm 2 (T5-T8): CHANGES-REQUESTED → fix 3005302 (P1 TS2739 partOf + P1 tautology
+  replace-test — RED-probe thực nghiệm: gỡ revalidateTag route test vẫn xanh vì dev serve
+  đĩa + HMR reset cache store; guard thật = unit mock exactly-once, ISR thật = SF-6
+  prod-build) → chờ re-verify reviewer (final verdict post Linear)
+- Nhóm 3 (T9-T10): APPROVED (0 P0/P1, 5 P2 — 3 P2 nhỏ đã fix 3005302)
+- CHECKLIST-4Q từng nhóm: PASS (network-in-tx / timeout / best-effort / partial-fail)
+
+== GHI NHẮN (trung thực) ==
+- Blob driver: local KHÔNG có BLOB_READ_WRITE_TOKEN → test code-path local THẬT (file đĩa
+  public/audio/ = bằng chứng); blob ghi nhận evidence-only theo context pack slice 7 — KHÔNG
+  fail mơ hồ. Verify blob thật = SF-6/prod.
+- Dev e2e KHÔNG falsify được cache stale (HMR reset unstable_cache store) — regression guard
+  revalidateTag ở unit layer; ISR/caching thật cần prod-build (SF-6 sweep).
+- sf6-e2e* users (6) + unit "E2E Unit" leftovers = rác CỦA BASELANE lanes (progress.spec +
+  admin-lesson.spec không self-clean — out-of-scope sửa baseline); đã dọn DB rows + file sau
+  sweep; sf6-* users khớp convention @test.ilec để cleanup helper SF-6 xử lý.
+- Sự cố đã xử lý giữa run: upload bắn lesson NUMBER thay DB id đè audio demo L3-U1-L1
+  (restore file git + durationMs 3500 từ seed constant) → guard upload path `unit-${N}/` +
+  helper lessonIdByNumber chống tái diễn.
