@@ -1,0 +1,419 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import {
+  dictationStore,
+  lessonProgress,
+  SPEEDS,
+  useDictationStore,
+} from "@/lib/dictation/store";
+import { clampSeek } from "@/lib/dictation-ui/format";
+import { readRelaxedMode } from "@/lib/actions/relaxed-mode";
+import { StartGate } from "./start-gate";
+import { SentenceDots } from "./sentence-dots";
+import { DictationPlayer } from "./dictation-player";
+import { TypePanel } from "./type-panel";
+import { WordDiffDisplay } from "./word-diff-display";
+import { HintStrip } from "./hint-strip";
+import { LessonActions } from "./lesson-actions";
+import { PartNav } from "./part-nav";
+import { ProgressBar } from "./progress-bar";
+import { TranscriptTab } from "./transcript-tab";
+import { ShortcutsPanel } from "./shortcuts-panel";
+import { ResultsScreen } from "./results-screen";
+import { RelaxedToggle } from "./relaxed-toggle";
+import { LoginBanner } from "./login-banner";
+import { XpChip } from "./xp-chip";
+
+export interface DictationLessonProps {
+  bookTitle: string;
+  unitTitle: string;
+  lessonTitle: string;
+  cefrLabel: string;
+  unitNumber: number;
+  parts: readonly {
+    id: number;
+    text: string;
+    audioUrl: string | null;
+    durationMs: number | null;
+  }[];
+  nextHref: string | null;
+  unitHref: string;
+}
+
+type TabKey = "dictation" | "transcript";
+
+/**
+ * Orchestrator DUY NHẤT của route (spec §2): mọi state machine qua store SF-3;
+ * main <audio> element sống ở đây — src/currentTime/play/pause chỉ driven ở
+ * sync effect DUY NHẤT (spec §3.2: deps [isPlaying, mediaNonce, audioUrl] +
+ * appliedNonceRef consume-once, vì store KHÔNG bump nonce khi play/pause và
+ * KHÔNG clear seekRequest).
+ */
+export function DictationLesson({
+  bookTitle,
+  unitTitle,
+  lessonTitle,
+  cefrLabel,
+  unitNumber,
+  parts,
+  nextHref,
+  unitHref,
+}: DictationLessonProps) {
+  const t = useTranslations("lesson");
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
+
+  const phase = useDictationStore((s) => s.phase);
+  const currentPartIndex = useDictationStore((s) => s.currentPartIndex);
+  const input = useDictationStore((s) => s.input);
+  const relaxed = useDictationStore((s) => s.relaxed);
+  const speed = useDictationStore((s) => s.speed);
+  const isPlaying = useDictationStore((s) => s.isPlaying);
+  const mediaNonce = useDictationStore((s) => s.mediaNonce);
+  const earnedXp = useDictationStore((s) => s.earnedXp);
+  // partsState: identity đổi khi patchCurrent (check/hint/skip/next) → render
+  // đúng lúc; keystroke (setInput) KHÔNG patch parts nên không re-render thừa.
+  const partsState = useDictationStore((s) => s.parts);
+  // Part object identity ổn định giữa các patch — selector object OK với useStore
+  const currentPart = useDictationStore((s) => s.parts[s.currentPartIndex]);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const appliedNonceRef = useRef(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [audioEnded, setAudioEnded] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("dictation");
+  const activeTabRef = useRef<TabKey>("dictation");
+  activeTabRef.current = activeTab;
+
+  const audioUrl =
+    currentPartIndex >= 0 && currentPartIndex < parts.length
+      ? (parts[currentPartIndex]?.audioUrl ?? null)
+      : null;
+  const durationMs =
+    parts[currentPartIndex]?.durationMs ?? null;
+
+  // ─── Relaxed mode: đọc pref user đã login MỘT lần / mount (spec §3.8) ───
+  const relaxedPrefRef = useRef(false);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    readRelaxedMode()
+      .then((v) => {
+        if (!cancelled) relaxedPrefRef.current = v === true;
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // ─── Sync effect DUY NHẤT main audio (spec §3.2) ───
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audioUrl) {
+      if (!audio.src.endsWith(audioUrl)) {
+        audio.src = audioUrl;
+        audio.load();
+      }
+    } else {
+      audio.removeAttribute("src");
+    }
+    const sr = dictationStore.getState().seekRequest;
+    if (sr && sr.nonce !== appliedNonceRef.current) {
+      appliedNonceRef.current = sr.nonce;
+      if (Math.abs(audio.currentTime * 1000 - sr.ms) > 30) {
+        audio.currentTime = sr.ms / 1000;
+      }
+    }
+    if (isPlaying && audioUrl) {
+      audio.play().catch(() => {}); // autoplay chặn → im lặng, nút play luôn sẵn
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, mediaNonce, audioUrl]);
+
+  // PlaybackRate theo speed (sau load mới cũng phải set lại)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) audio.playbackRate = speed;
+  }, [speed, audioUrl]);
+
+  // ─── Elapsed/ended: listeners gắn MỘT lần (element tĩnh) ───
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTime = () => setElapsedMs(audio.currentTime * 1000);
+    const onEnded = () => {
+      setAudioEnded(true);
+      setElapsedMs(audio.duration ? audio.duration * 1000 : elapsedMs);
+    };
+    const onSeeked = () => {
+      setElapsedMs(audio.currentTime * 1000);
+      setAudioEnded(false);
+    };
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("seeked", onSeeked);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("seeked", onSeeked);
+      audio.removeEventListener("ended", onEnded);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
+  useEffect(() => () => dictationStore.getState().reset(), []);
+
+  const doStart = () => {
+    // Chuỗi đồng bộ 1 click (spec §3.1): nạp parts → relaxed-sync (start-gate
+    // là phase mở — idle thì guard chặn) → gesture start → playing.
+    dictationStore.getState().start(parts.map((p) => ({ transcript: p.text })));
+    if (user && relaxedPrefRef.current && !dictationStore.getState().relaxed) {
+      dictationStore.getState().toggleRelaxed();
+    }
+    dictationStore.getState().start();
+  };
+
+  /** Enter theo (attempts, allCorrect) — KHÔNG phụ thuộc phase (spec §3.3). */
+  const enterAction = () => {
+    const s = dictationStore.getState();
+    const part = s.parts[s.currentPartIndex];
+    if (!part || part.status !== "pending") return;
+    if (part.attempts === 0) s.check();
+    else if (part.lastDiff?.allCorrect) s.next();
+    else s.check();
+  };
+
+  const doSeekMs = (ms: number) => {
+    const audioDur = audioRef.current?.duration;
+    const dur =
+      durationMs ??
+      (audioDur && Number.isFinite(audioDur) ? audioDur * 1000 : 0);
+    dictationStore.getState().seek(clampSeek(ms, dur));
+  };
+
+  // ─── Shortcuts (spec §3.6) — subscribe 1 lần, đọc getState() live ───
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const s = dictationStore.getState();
+      const active =
+        (s.phase === "playing" || s.phase === "input" || s.phase === "checked") &&
+        activeTabRef.current === "dictation";
+      if (!active) return;
+      const part = s.parts[s.currentPartIndex];
+      const frozen = !part || part.status !== "pending";
+      if (e.key === "Tab") {
+        e.preventDefault(); // spec §5: Tab = replay trong exercise (a11y: review M6)
+        s.replay();
+      } else if (e.key === "Escape") {
+        s.pause();
+      } else if (
+        e.ctrlKey &&
+        e.shiftKey &&
+        (e.code === "Slash" || e.key === "?" || e.key === "/")
+      ) {
+        e.preventDefault();
+        if (!frozen) s.hint();
+      } else if (
+        (e.key === "ArrowLeft" || e.key === "ArrowRight") &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        const cur = audioRef.current?.currentTime
+          ? audioRef.current.currentTime * 1000
+          : 0;
+        doSeekMs(cur + (e.key === "ArrowLeft" ? -3000 : 3000));
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Render ───
+  if (phase === "idle" || phase === "start-gate") {
+    return (
+      <StartGate
+        eyebrow={`${cefrLabel} · Unit ${unitNumber} — ${unitTitle}`}
+        title={lessonTitle}
+        facts={parts.map((p) => ({ durationMs: p.durationMs }))}
+        onReadyToStart={doStart}
+      />
+    );
+  }
+
+  if (phase === "complete") {
+    return (
+      <ResultsScreen
+        name={user?.name ?? null}
+        isGuest={!user}
+        nextHref={nextHref}
+        unitHref={unitHref}
+        onTryAgain={doStart}
+      />
+    );
+  }
+
+  const total = parts.length;
+  const currentNo = currentPartIndex + 1;
+  const frozen = !currentPart || currentPart.status !== "pending";
+
+  return (
+    <div className="mx-auto max-w-[820px] px-6 pb-14">
+      <nav
+        aria-label={t("dictation.breadcrumb.aria")}
+        className="flex flex-wrap items-center gap-1.5 pt-6 text-[13.5px] font-bold text-muted-foreground"
+      >
+        <Link
+          href="/books"
+          className="transition-colors hover:text-primary"
+        >
+          {bookTitle}
+        </Link>
+        <span aria-hidden className="text-muted-foreground/60">/</span>
+        <span>{unitTitle}</span>
+        <span aria-hidden className="text-muted-foreground/60">/</span>
+        <b className="text-primary">{lessonTitle}</b>
+      </nav>
+
+      <SentenceDots
+        statuses={partsState.map((p) => p.status)}
+        currentIndex={currentPartIndex}
+      />
+
+      <div className="mb-3.5 flex items-center gap-2">
+        <div className="flex gap-2">
+          {(["dictation", "transcript"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              aria-pressed={activeTab === key}
+              className={
+                activeTab === key
+                  ? "rounded-[14px] border-2 border-muted-foreground bg-card px-4 py-2 text-[13.5px] font-extrabold"
+                  : "rounded-[14px] border-2 border-border bg-card px-4 py-2 text-[13.5px] font-extrabold text-muted-foreground transition-colors duration-150 hover:border-muted-foreground hover:text-foreground"
+              }
+            >
+              {key === "dictation"
+                ? t("dictation.tabs.dictation")
+                : t("dictation.tabs.transcript")}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <ShortcutsPanel />
+          <RelaxedToggle relaxed={relaxed} onToggle={() => dictationStore.getState().toggleRelaxed()} />
+          <XpChip earnedXp={earnedXp} isGuest={!user} />
+          <span className="text-[13.5px] font-extrabold text-muted-foreground tabular-nums">
+            {t("dictation.tabs.partLabel", { current: currentNo, total })}
+          </span>
+        </div>
+      </div>
+
+      {activeTab === "transcript" ? (
+        <TranscriptTab
+          sentences={parts.map((p, i) => ({
+            text: p.text,
+            status: partsState[i]?.status ?? "pending",
+          }))}
+        />
+      ) : (
+        <>
+          <div className="worksheet rounded-[24px] border-2 border-border bg-card p-[26px] pb-6 shadow-[0_10px_30px_-18px_color-mix(in_srgb,var(--primary-deep)_35%,transparent)]">
+            <DictationPlayer
+              isPlaying={isPlaying}
+              ended={audioEnded}
+              elapsedMs={elapsedMs}
+              durationMs={durationMs}
+              speed={speed}
+              disabled={!audioUrl}
+              onPlayPause={() => {
+                if (audioEnded) dictationStore.getState().replay();
+                else if (isPlaying) dictationStore.getState().pause();
+                else dictationStore.getState().play();
+              }}
+              onReplay={() => dictationStore.getState().replay()}
+              onSeekMs={doSeekMs}
+              onSpeedCycle={() => {
+                const idx = SPEEDS.indexOf(
+                  speed as (typeof SPEEDS)[number],
+                );
+                dictationStore
+                  .getState()
+                  .setSpeed(SPEEDS[(idx + 1) % SPEEDS.length]!);
+              }}
+            />
+
+            <HintStrip
+              transcript={currentPart?.transcript ?? ""}
+              revealedIndices={currentPart?.revealedIndices ?? []}
+              usedHint={currentPart?.usedHint ?? false}
+            />
+
+            <TypePanel
+              value={input}
+              onChange={(v) => dictationStore.getState().setInput(v)}
+              onEnter={enterAction}
+              readOnly={frozen}
+            />
+
+            {currentPart && currentPart.attempts > 0 && currentPart.lastDiff ? (
+              <WordDiffDisplay diff={currentPart.lastDiff} relaxed={relaxed} />
+            ) : null}
+
+            <LessonActions
+              attempts={currentPart?.attempts ?? 0}
+              allCorrect={currentPart?.lastDiff?.allCorrect === true}
+              frozen={frozen}
+              canHint={
+                !frozen &&
+                currentPart?.lastDiff?.firstIncorrectIndex != null
+              }
+              onCheck={() => dictationStore.getState().check()}
+              onNext={() => dictationStore.getState().next()}
+              onSkip={() => dictationStore.getState().skip()}
+              onHint={() => dictationStore.getState().hint()}
+            />
+          </div>
+
+          {!user ? <LoginBanner className="mt-4" /> : null}
+
+          <div className="mt-7">
+            <ProgressBar
+              done={lessonProgress({ parts: partsState }).done}
+              total={total}
+            />
+            <PartNav
+              current={currentNo}
+              total={total}
+              canPrev={currentPartIndex > 0}
+              canNext={currentPart?.status !== "pending"}
+              onPrev={() => dictationStore.getState().prevPart()}
+              onNext={() => dictationStore.getState().next()}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Main audio — src/currentTime/play/pause chỉ driven ở sync effect trên */}
+      <audio ref={audioRef} preload="auto" className="hidden" />
+      {parts[currentPartIndex + 1]?.audioUrl ? (
+        <audio
+          preload="auto"
+          src={parts[currentPartIndex + 1]!.audioUrl!}
+          className="hidden"
+        />
+      ) : null}
+      <span className="sr-only" aria-live="polite">
+        {t("dictation.tabs.partLabel", { current: currentNo, total })}
+      </span>
+    </div>
+  );
+}
