@@ -97,12 +97,16 @@ beforeAll(async () => {
   demoPartId = part.id;
 
   // XP mỗi attempt là số nguyên (spec §5: xp = round(10×acc×mods)) — fixture
-  // theo đúng contract; 9 ở tuần này + 3 cách đây 8 ngày (tuần trước)
+  // theo đúng contract; 9 ở tuần này + 3 cách đây 8 ngày (tuần trước).
+  // created_at GHỐC ĐỊNH vào đầu tuần ISO hiện tại +1h (không dùng now()) —
+  // tránh race vi mô khi beforeAll chạy sát biên Chủ nhật 23:59 (review P2)
   await sql`
     INSERT INTO attempts (user_id, part_id, typed_text, accuracy, wpm, xp, client_attempt_id, created_at)
     VALUES
-      (${ID_A}, ${demoPartId}, 'typed', 0.9, 60, 9, 'aaaaaaaa-1111-4111-8111-111111111111', now()),
-      (${ID_A}, ${demoPartId}, 'typed', 0.6, 55, 3, 'aaaaaaaa-2222-4222-8222-222222222222', now() - interval '8 days')
+      (${ID_A}, ${demoPartId}, 'typed', 0.9, 60, 9, 'aaaaaaaa-1111-4111-8111-111111111111',
+        date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') AT TIME ZONE 'Asia/Ho_Chi_Minh' + interval '1 hour'),
+      (${ID_A}, ${demoPartId}, 'typed', 0.6, 55, 3, 'aaaaaaaa-2222-4222-8222-222222222222',
+        date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh') AT TIME ZONE 'Asia/Ho_Chi_Minh' - interval '8 days')
   `;
 });
 

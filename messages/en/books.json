@@ -1,9 +1,7 @@
 {
   "levels": {
     "title": "Choose your level",
-    "subtitle": "Seven Cambridge English Prepare levels — from Pre-A1 to B2 First. Pick one and start listening.",
-    "units": "{count} units",
-    "lessons": "{count} lessons"
+    "subtitle": "Seven Cambridge English Prepare levels — from Pre-A1 to B2 First. Pick one and start listening."
   },
   "book": {
     "backToLevels": "All levels",
@@ -13,12 +11,13 @@
     "units": "Units",
     "lessons": "Lessons",
     "unitsCount": "{count, plural, one {# unit} other {# units}}",
-    "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}",
-    "yourProgress": "Your progress"
+    "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}"
   },
   "unit": {
-    "backToBook": "Back to {book}",
     "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}",
     "lessonSentences": "{count, plural, one {# sentence} other {# sentences}}"
+  },
+  "lesson": {
+    "open": "Open"
   }
 }
