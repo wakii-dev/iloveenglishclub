@@ -1,5 +1,7 @@
 tdd: RED→GREEN
-code commit: 4ccf1dc (regression mutation RED→GREEN: revert 3617eed → test đỏ ngay [1 failed: @vercel/blob assertion] → restore → 3/3 xanh; lighthouse-config: RED "Cannot find module" → GREEN 8/8)
+code commit: 479360b (cuối — gồm fix P2 review; chuỗi code commits: cb1c6e3→2d2fa31→beec0e6→47f07e0→1cb6b7f→a653980→8304636→124c37d→a29bf23→4ccf1dc→479360b)
+re-verify trên 479360b: unit lane chạy lại exit 0 — 229/229 (không đổi; P2 fix chỉ đụng docs + scripts helper ngoài lane)
+regression mutation RED→GREEN: revert 3617eed → test đỏ ngay [1 failed: @vercel/blob assertion] → restore → 3/3 xanh; lighthouse-config: RED "Cannot find module" → GREEN 8/8
 
 Lane run trên HEAD 4ccf1dc (unit lane chạy SAU task 4+8 — gồm 2 test mới):
 - unit  (npm test):             Test Files 20 passed (20) · Tests 229 passed (229)  [218 baseline + 3 regression + 8 lighthouse-config]
