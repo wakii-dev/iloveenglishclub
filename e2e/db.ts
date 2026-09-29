@@ -34,6 +34,28 @@ export async function attemptCount(
   return row?.n ?? 0;
 }
 
+/** attempt count cho lesson BẤT KỲ (book slug + unit/lesson/sort numbers). */
+export async function attemptCountFor(
+  email: string,
+  lessonNumber: number,
+  partSortOrder: number,
+  unitNumber = 1,
+): Promise<number> {
+  const [row] = await client()`
+    select count(*)::int as n
+    from attempts a
+    join users u on u.id = a.user_id
+    join lesson_parts p on p.id = a.part_id
+    join lessons l on l.id = p.lesson_id
+    join units un on un.id = l.unit_id
+    join books b on b.id = un.book_id
+    where u.email = ${email}
+      and b.slug = 'level-3' and un.number = ${unitNumber}
+      and l.number = ${lessonNumber} and p.sort_order = ${partSortOrder}
+  `;
+  return row?.n ?? 0;
+}
+
 /** profiles cache (xp, streak) theo email. */
 export async function profileOf(
   email: string,

@@ -220,6 +220,22 @@ export function DictationLesson({
     [],
   );
 
+  // ─── P0 review-fix: store singleton sống qua client-nav — khi mount một
+  // lesson KHÁC, effect submit/mirror bên dưới đọc getState() theo INDEX và
+  // map sang partId của lesson mới → ghost-submit (text A × part B, XP sai).
+  // Reset theo SIGNATURE (transcript) — cùng lesson (login giữa chừng quay
+  // lại) → giữ state để guest-commit; khác lesson → reset sạch. Effect này
+  // KHAI BÁO TRƯỚC các effect submit/mirror (thứ tự chạy = thứ tự khai báo).
+  // Bỏ unmount-reset (T6) vẫn đúng: đây là điểm reset duy nhất cần thiết. ───
+  useEffect(() => {
+    const s = dictationStore.getState();
+    const sameLesson =
+      s.parts.length === 0 ||
+      (s.parts.length === parts.length &&
+        s.parts.every((p, i) => p.transcript === parts[i]?.text));
+    if (!sameLesson) dictationStore.getState().reset();
+  }, [parts]);
+
   // ─── SF-6 persist (context pack #8): user đã login → mỗi check submit
   // server (recompute phía server). Cùng effect phủ cả guest login giữa
   // chừng qua client-nav (§5.8): khi user xuất hiện, parts có attempts từ

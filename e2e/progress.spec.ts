@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { attemptCount, profileOf } from "./db";
+import { attemptCount, attemptCountFor, profileOf } from "./db";
 
 /**
  * E2E SF-6 (context pack #9 — plan-critic P1 tách khỏi SF-4): vòng lặp
@@ -166,6 +166,52 @@ test.describe("Progress + Gamification (SF-6)", () => {
     });
     await expect(allTime.getByText("E2E Persist").first()).toBeVisible();
     await expect(weekly.getByText("38").first()).toBeVisible();
+  });
+
+  test("P0 regression: học A → nav books → mở B → KHÔNG ghost-submit part B", async ({
+    page,
+  }) => {
+    const email = await register(page, "E2E Ghost2");
+
+    // Học part 1 lesson A (L3-U1-L1) → XP 10
+    await page.goto(LESSON, { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: START }).click();
+    await doPartCorrect(page, SENT_1);
+    await expect
+      .poll(() => profileOf(email), { timeout: 60_000 })
+      .toMatchObject({ xp: 10 });
+
+    // CLIENT-NAV toàn bộ sang lesson B (L3-U2-L1 "My day") — store singleton
+    // sống qua navigation: mount B KHÔNG được submit part của B bằng state A
+    await page
+      .getByRole("link", { name: "Level 3" })
+      .first()
+      .click(); // breadcrumb → /books (danh sách)
+    await page.waitForURL((u) => u.pathname === "/en/books");
+    await page
+      .getByRole("link", { name: /Level 3 A2/ })
+      .first()
+      .click(); // level-card → book page
+    await page.waitForURL((u) => u.pathname === "/en/books/level-3");
+    await page.getByRole("link", { name: /my day/i }).first().click();
+    await page.waitForURL((u) => u.pathname === "/en/books/level-3/units/2");
+    // lesson-row: 2 link "Open" (theo thứ tự lesson) — lesson 1 là đích
+    await page.getByRole("link", { name: "Open" }).first().click();
+    await page.waitForURL((u) =>
+      u.pathname.endsWith("/units/2/lessons/1/listen-and-type"),
+    );
+
+    // Lesson B render StartGate (không Results stale)
+    await expect(page.getByRole("button", { name: START })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Part B chưa hề học → 0 attempt, XP không đổi
+    await page.waitForTimeout(4000);
+    expect(await attemptCountFor(email, 3, 1)).toBe(0);
+    await expect
+      .poll(() => profileOf(email))
+      .toMatchObject({ xp: 10 });
   });
 
   test("guest học 2 câu → login giữa chừng → commit điểm, không mất", async ({
