@@ -236,35 +236,11 @@ export function DictationLesson({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Render ───
-  if (phase === "idle" || phase === "start-gate") {
-    return (
-      <StartGate
-        eyebrow={`${cefrLabel} · Unit ${unitNumber} — ${unitTitle}`}
-        title={lessonTitle}
-        facts={parts.map((p) => ({ durationMs: p.durationMs }))}
-        onReadyToStart={doStart}
-      />
-    );
-  }
-
-  if (phase === "complete") {
-    return (
-      <ResultsScreen
-        name={user?.name ?? null}
-        isGuest={!user}
-        nextHref={nextHref}
-        unitHref={unitHref}
-        onTryAgain={doStart}
-      />
-    );
-  }
-
   const total = parts.length;
   const currentNo = currentPartIndex + 1;
   const frozen = !currentPart || currentPart.status !== "pending";
 
-  return (
+  const dictationPane = (
     <div className="mx-auto max-w-[820px] px-6 pb-14">
       <nav
         aria-label={t("dictation.breadcrumb.aria")}
@@ -339,7 +315,6 @@ export function DictationLesson({
                 else if (isPlaying) dictationStore.getState().pause();
                 else dictationStore.getState().play();
               }}
-              onReplay={() => dictationStore.getState().replay()}
               onSeekMs={doSeekMs}
               onSpeedCycle={() => {
                 const idx = SPEEDS.indexOf(
@@ -402,6 +377,42 @@ export function DictationLesson({
         </>
       )}
 
+      <span className="sr-only" aria-live="polite">
+        {t("dictation.tabs.partLabel", { current: currentNo, total })}
+      </span>
+    </div>
+  );
+
+  // ─── Render: content theo phase; <audio> VÔ ĐIỀU KIỆN ngoài cùng —
+  // listeners effect chạy 1 lần lúc mount nên element phải tồn tại từ đầu
+  // (bug T2: element trong nhánh phase → ref null → timeupdate không attach).
+  let content: React.ReactNode;
+  if (phase === "idle" || phase === "start-gate") {
+    content = (
+      <StartGate
+        eyebrow={`${cefrLabel} · Unit ${unitNumber} — ${unitTitle}`}
+        title={lessonTitle}
+        facts={parts.map((p) => ({ durationMs: p.durationMs }))}
+        onReadyToStart={doStart}
+      />
+    );
+  } else if (phase === "complete") {
+    content = (
+      <ResultsScreen
+        name={user?.name ?? null}
+        isGuest={!user}
+        nextHref={nextHref}
+        unitHref={unitHref}
+        onTryAgain={doStart}
+      />
+    );
+  } else {
+    content = dictationPane;
+  }
+
+  return (
+    <>
+      {content}
       {/* Main audio — src/currentTime/play/pause chỉ driven ở sync effect trên */}
       <audio ref={audioRef} preload="auto" className="hidden" />
       {parts[currentPartIndex + 1]?.audioUrl ? (
@@ -411,9 +422,6 @@ export function DictationLesson({
           className="hidden"
         />
       ) : null}
-      <span className="sr-only" aria-live="polite">
-        {t("dictation.tabs.partLabel", { current: currentNo, total })}
-      </span>
-    </div>
+    </>
   );
 }
