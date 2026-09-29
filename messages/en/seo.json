@@ -5,7 +5,5 @@
   "lessonDescription": "{lessonTitle} — dictation exercise · {bookTitle} (CEFR {cefr}). Listen and type to practise English listening and spelling.",
   "bookDescriptionFallback": "{bookTitle} — English dictation practice at CEFR {cefr}. Listen, type and check, level by level.",
   "unitDescriptionFallback": "{unitTitle} ({bookTitle}) — English dictation lessons. Listen and type, one sentence at a time.",
-  "ogListenType": "Listen & Type — dictation exercise",
-  "lessonAlt": "Dictation lesson illustration — I Love English Club",
-  "bookAlt": "Course level illustration — I Love English Club"
+  "ogListenType": "Listen & Type — dictation exercise"
 }

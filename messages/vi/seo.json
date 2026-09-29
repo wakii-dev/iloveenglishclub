@@ -5,7 +5,5 @@
   "lessonDescription": "{lessonTitle} — bài tập chép chính tả · {bookTitle} (CEFR {cefr}). Nghe và gõ để luyện nghe và chính tả tiếng Anh.",
   "bookDescriptionFallback": "{bookTitle} — luyện chép chính tả tiếng Anh trình độ CEFR {cefr}. Nghe, gõ và kiểm tra theo từng cấp.",
   "unitDescriptionFallback": "{unitTitle} ({bookTitle}) — các bài chép chính tả tiếng Anh. Nghe và gõ, từng câu một.",
-  "ogListenType": "Nghe & Gõ — bài tập chép chính tả",
-  "lessonAlt": "Minh họa bài học chép chính tả — I Love English Club",
-  "bookAlt": "Minh họa cấp độ khóa học — I Love English Club"
+  "ogListenType": "Nghe & Gõ — bài tập chép chính tả"
 }

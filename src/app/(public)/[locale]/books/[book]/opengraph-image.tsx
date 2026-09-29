@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { getTranslations } from "next-intl/server";
 import { getBook } from "@/lib/content/queries";
+import { BRAND } from "@/lib/seo/site";
 
 /**
  * OG image động cho book (SF-7 spec §4.5) — deviation có chủ đích: slice #4
@@ -28,16 +28,12 @@ export default async function Image({
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book } = await params;
-  const [t, bookRow] = await Promise.all([
-    getTranslations({ locale, namespace: "seo" }),
-    getBook(book, locale),
-  ]);
+  const bookRow = await getBook(book, locale);
 
-  const title = bookRow?.title ?? t("homeTitle").split("—")[0].trim();
+  const title = bookRow?.title ?? BRAND;
   const color = bookRow?.color ?? C.primary;
   const cefr = bookRow?.cefrLabel ?? "";
-  const description =
-    bookRow?.description ?? t("homeDescription").split("—")[1]?.trim() ?? "";
+  const description = bookRow?.description ?? "";
   const counts = bookRow
     ? `${bookRow.unitCount} units · ${bookRow.lessonCount} lessons`
     : "iloveenglish.club";

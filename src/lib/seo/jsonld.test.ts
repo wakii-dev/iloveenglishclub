@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { course, learningResource } from "./jsonld";
+import { course, jsonldScript, learningResource } from "./jsonld";
 
 /**
  * T1 seo-lib-foundation — JSON-LD builders (spec §4.3): LearningResource cho
@@ -54,5 +54,29 @@ describe("learningResource()", () => {
       "@type": "Organization",
       name: "I Love English Club",
     });
+  });
+});
+
+describe("jsonldScript()", () => {
+  it("escape < thành \\u003c — chống breakout </script> (review P1)", () => {
+    const evil = course({
+      name: "</script><script>alert(1)</script>",
+      description: "x",
+      url: "https://iloveenglish.club/en/books/x",
+    });
+    const script = jsonldScript(evil);
+    // Thuộc tính bảo mật: KHÔNG còn raw "<" nào trong output — parser HTML
+    // không thể thấy "</script" để đóng thẻ sớm (chỉ "<" là breakout char)
+    expect(script).not.toContain("<");
+  });
+
+  it("vẫn parse ngược được thành JSON đúng (\\u003c là escape hợp lệ)", () => {
+    const evil = course({
+      name: "a<b & c",
+      description: "x",
+      url: "https://iloveenglish.club/en/books/x",
+    });
+    const parsed = JSON.parse(jsonldScript(evil));
+    expect(parsed.name).toBe("a<b & c");
   });
 });

@@ -68,3 +68,12 @@ export function learningResource(input: {
     provider: { "@type": "Organization", name: BRAND },
   };
 }
+
+/**
+ * Serialize JSON-LD cho <script dangerouslySetInnerHTML> — escape `<` thành
+ * `<` (escape hợp lệ trong JSON string) chống breakout `</script>` từ
+ * content admin (review P1: stored-XSS sink duy nhất của app).
+ */
+export function jsonldScript(json: object): string {
+  return JSON.stringify(json).replace(/</g, "\\u003c");
+}

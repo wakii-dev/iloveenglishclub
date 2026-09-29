@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { buildPageMetadata, getSeoMessages } from "@/lib/seo/metadata";
 import { absoluteUrl, composeDescription, localePath } from "@/lib/seo/site";
-import { course } from "@/lib/seo/jsonld";
+import { course, jsonldScript } from "@/lib/seo/jsonld";
 import { getBook } from "@/lib/content/queries";
 
 /**
@@ -44,7 +44,7 @@ export default async function BookLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(
+            __html: jsonldScript(
               course({
                 name: bookRow.title,
                 description: composeDescription(

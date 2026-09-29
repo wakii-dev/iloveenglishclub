@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getTranslations } from "next-intl/server";
 import { getBook, getLesson } from "@/lib/content/queries";
+import { BRAND } from "@/lib/seo/site";
 
 /**
  * OG image động cho lesson (SF-7 spec §4.5) — palette B "Classroom Warm"
@@ -41,7 +42,7 @@ export default async function Image({
     getBook(book, locale),
   ]);
 
-  const title = lessonRow?.title ?? t("homeTitle").split("—")[0].trim();
+  const title = lessonRow?.title ?? BRAND;
   const bookTitle = bookRow?.title ?? "";
   const cefr = bookRow?.cefrLabel ?? "";
 

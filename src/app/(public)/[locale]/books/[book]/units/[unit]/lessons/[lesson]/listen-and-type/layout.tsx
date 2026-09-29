@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { buildPageMetadata, getSeoMessages } from "@/lib/seo/metadata";
 import { absoluteUrl, composeDescription, localePath } from "@/lib/seo/site";
-import { course, learningResource } from "@/lib/seo/jsonld";
+import { course, jsonldScript, learningResource } from "@/lib/seo/jsonld";
 import { getBook, getLesson } from "@/lib/content/queries";
 
 /**
@@ -29,15 +29,15 @@ export async function generateMetadata({
   ]);
   // t.raw() — template có {var}: t() format ICU eager sẽ ném FORMATTING_ERROR
   // khi chưa có vars; raw + composeDescription tự interpolate (pure, tested).
-  const description = composeDescription(
-    null,
-    String(t.raw("lessonDescription")),
-    {
-      lessonTitle: lessonRow?.title ?? "",
-      bookTitle: bookRow?.title ?? "",
-      cefr: bookRow?.cefrLabel ?? "",
-    },
-  );
+  // 404/partial (review P2): không compose template với vars rỗng — desc generic.
+  const description =
+    lessonRow && bookRow
+      ? composeDescription(null, String(t.raw("lessonDescription")), {
+          lessonTitle: lessonRow.title,
+          bookTitle: bookRow.title,
+          cefr: bookRow.cefrLabel,
+        })
+      : t("homeDescription");
   return buildPageMetadata({
     locale,
     path: `/books/${book}/units/${unit}/lessons/${lesson}/listen-and-type`,
@@ -72,7 +72,7 @@ export default async function LessonDictationLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(
+            __html: jsonldScript(
               learningResource({
                 name: lessonRow.title,
                 url: absoluteUrl(localePath(locale, path)),
