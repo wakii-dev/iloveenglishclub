@@ -24,8 +24,8 @@ const dbState = vi.hoisted(() => ({
   updateReturning: [] as unknown[],
 }));
 vi.mock("@/db", () => {
-  // where() trả Promise CÓ .limit — publishLessonAction await thẳng where(),
-  // createLessonAction (trong tx) gọi .limit(); 2 shape cùng mock cho gọn
+  // publishLessonAction await where() thẳng; createLessonAction (trong tx) gọi
+  // .limit() — 2 shape cùng mock cho gọn
   const whereResult = () => {
     const p = Promise.resolve(dbState.selectRows) as Promise<unknown[]> & {
       limit: () => Promise<unknown[]>;
