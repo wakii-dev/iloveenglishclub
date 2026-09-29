@@ -113,8 +113,6 @@ code-reviewer độc lập (2 vòng):
 - OG image book: slice #4 nói 'cho lesson' nhưng touch map pack liệt kê
   lesson+book → theo touch map (deviation ghi trong spec §4.5)
 - alt của og:image static EN (single-image convention không nhận params/locale)
-- composeDescription nhận template RAW qua t.raw() — t() ICU format eager ném
-  FORMATTING_ERROR khi chưa có vars (bug tìm thấy ở T2, fix + test)
 - JSON-LD Course rich-result (hasCourseInstance) không nhắm — chỉ
   schema-validator-valid; Rich Results test cần public URL → SF-8
 - chia-link preview thật (Facebook/Twitter debugger) cần public URL → SF-8;
