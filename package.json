@@ -14,7 +14,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "node scripts/seed.ts",
     "test:rls": "vitest run --config vitest.rls.config.ts",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "admin:create": "node scripts/create-admin.ts",
+    "test:e2e": "playwright test --config playwright.admin.config.ts",
+    "test:e2e:dictation": "playwright test"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

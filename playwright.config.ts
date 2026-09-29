@@ -4,9 +4,14 @@ import { defineConfig, devices } from "@playwright/test";
  * E2E SF-4 (context pack #13): guest + ephemeral + banner — happy path bài
  * demo L3-U1-L1 (seed SF-2). Port 3100 tránh đụng dev thường; Chromium +
  * autoplay policy nới cho headless. Env từ .env.local (DB local `ilec`).
+ *
+ * Merge sf-5: suite admin có config riêng (playwright.admin.config.ts — port
+ * 3000 + globalSetup admin). Hai config chia testMatch theo prefix spec để
+ * không nhặt spec của nhau (testDir chung ./e2e).
  */
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: /dictation-.*\.spec\.ts/,
   timeout: 60_000,
   fullyParallel: false, // store singleton + DB seed — chạy tuần tự cho ổn định
   retries: 0,

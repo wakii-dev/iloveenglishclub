@@ -1,0 +1,44 @@
+SF-5 Admin CMS (VU-20) — test-run evidence
+date: 2026-09-29
+code-commit: cf4cfe7 (review round 1 fixes — final code state; E2E + gates re-run TẠI commit này)
+prev-commit: 26b6a96 (T7 — full stack lần đầu; browser 3 tầng chạy tại đây, các fix sau chỉ thêm cache-invalidate/pre-check không đổi behavior flow)
+tdd: mixed — pure modules (publish/parts-logic/audio-mapping) test-alongside-impl cùng commit (21 test mới, không RED-first nghiêm ngặt); meta-test review P1 (delete-revalidate.test) RED 2/2 trên code cũ (stash round-trip) → GREEN; DB-coupled behavior chứng minh qua E2E failure-injection + browser 3 tầng
+
+== Gate chính thức tại HEAD cf4cfe7 ==
+lint:        0 errors, 0 warnings (npm run lint)
+typecheck:   0 errors (tsc --noEmit)
+unit tests:  12 files / 164 tests PASS (npm test — vitest, gồm SF-1/2/3 cũ không regression; +2 meta-test delete-revalidate)
+build:       exit 0 (next build --turbopack; admin routes dynamic ƒ đúng)
+E2E:         6 passed TẠI cf4cfe7 (npx playwright test — chromium, workers:1, 31.8s; re-run sau review fixes)
+review:      code-reviewer APPROVED (round 2 — P1+5 P2 đã đóng, CHECKLIST-4Q 4/4 PASS) · security-audit CLEAN (0 P0/P1, 2 P2 advisory đã fix/ghi nhận)
+
+== E2E case → ACCEPTANCE map (context pack sf-5.md) ==
+1. guest upload API → 401; learner (non-admin) → 403; guest /admin → redirect login  [AC1: chặn non-admin UI + gọi thẳng]
+2. flow chính: login → dashboard → tạo unit → tạo lesson → paste 5 câu → split →
+   upload 01..05.mp3 → auto-map đúng Câu 1..5 (DOM assert từng row) → publish →
+   /en/.../listen-and-type 200 + h1 đúng title + <audio> visible              [AC2 + AC4]
+3. thiếu audio → publish chặn: "Chưa xuất bản được — các câu sau chưa đủ: 1" + vẫn Nháp [AC4 gate]
+4. file 3 bị abort (page.route) → per-file error "Lỗi mạng" → retry RIÊNG file 3 →
+   Xong, 4 file còn lại giữ Xong                                              [AC3 retry riêng]
+5. part có attempts (fixture) → nút xóa disabled + title tooltip RESTRICT + badge
+   "1 lượt học"; unpublish → public 404; re-publish → public 200              [AC5 + revalidateTag firing]
+
+== Browser 3 tầng (Rule 0 — tự chạy, tự nhìn, tự đo) ==
+T1 DOM: bodyBg rgb(255,248,240)=#fff8f0 · bodyColor rgb(67,40,24)=#432818 · h1 font "Baloo 2" ·
+        card radius 18px · header 66px (64+border-2) · upload rows map "Câu 1..5" ·
+        public audioSrc=/audio/level-3/unit-123/lesson-1/01.mp3 (path convention seed đúng)
+T2 VISUAL: shots/01-dashboard.png (stat cards + bảng theo sách + attempts/users),
+   04-split-preview.png (manual fix UI), 05-upload-mapped.png, 06-uploaded-parts.png
+   (badge audio + preview player), 08-public-lesson.png — tự Read, khớp direction B
+   "Classroom Warm" (kem ấm/coral/teal/Baloo/badge level màu)
+T3 FLOW: 12 bước assert — login→dashboard→books→tạo unit→tạo lesson→paste→split→add 5→
+   upload 5→publish→public thấy bài+audio→unpublish(public 404)→re-publish(public 200)
+   Exit 0; fail trước đó do script verify tự đụng premature-wait (đã sửa script, app không đổi)
+
+== Điều đã nói THẬT (không xác nhận được/defer) ==
+- "Khóa" user: schema thiếu cột banned — REQUIREMENT-GAP đã ghi VU-15, không tự migrate
+- Blob cloud thật: SF-8 (abstraction sẵn sàng trong lib/storage.ts — local driver đang chạy)
+- Orphan audio file khi xóa part không-attempts: defer SF-8
+- Audio player preview hiện 0:00 (preload=none) — phát được chứng minh bằng src đúng + file tồn tại
+- 2 screenshot có Next.js dev overlay "2 Issues" (dev-mode indicator, không phải app UI)
+exit 0
