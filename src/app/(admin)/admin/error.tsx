@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { RefreshCw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -55,7 +56,7 @@ export default function AdminError({
             asChild
             className="rounded-[14px] text-[15px] font-extrabold"
           >
-            <a href="/admin">Về dashboard</a>
+            <Link href="/admin">Về dashboard</Link>
           </Button>
         </div>
       </div>
