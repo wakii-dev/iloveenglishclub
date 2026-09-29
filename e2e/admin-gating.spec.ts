@@ -88,7 +88,13 @@ test.describe("Admin gating 2 lớp (SF-4)", () => {
     });
     expect(forged.status()).toBeGreaterThanOrEqual(300);
     expect(forged.status()).toBeLessThan(400);
-    expect(forged.headers().location ?? "/").toMatch(/^\/?($|\?|en|vi)/);
+    // location BẮT BUỘC có + pathname về trang chủ locale (không chấp nhận
+    // location khác — review P2: regex prefix-only quá lỏng, fallback "/" rỗng)
+    const loc = forged.headers().location;
+    expect(loc, "redirect location phải tồn tại").toBeTruthy();
+    expect(
+      isLocaleRoot(new URL(loc!, "http://localhost:3010").pathname),
+    ).toBe(true);
   });
 
   test("forged JWT sub=user KHÔNG TỒN TẠI → getProfile null → vẫn chặn (không 500)", async ({

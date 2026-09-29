@@ -41,7 +41,7 @@ async function createUnit(page: Page, number: number, title: string): Promise<vo
 async function openLessonsPage(page: Page, number: number): Promise<string> {
   await page.goto(`/admin/books/level-3/units/${number}/lessons`);
   await page.getByRole("button", { name: "Tạo bài học" }).click();
-  await page.locator("#lesson-title-en").fill(`${NUM} probe lesson`);
+  await page.locator("#lesson-title-en").fill(`${number} probe lesson`);
   await page.locator("#lesson-vocab").click();
   await page.getByRole("option", { name: "A2", exact: true }).click();
   await page.getByRole("button", { name: "Tạo mới", exact: true }).click();
@@ -49,14 +49,17 @@ async function openLessonsPage(page: Page, number: number): Promise<string> {
   return page.url();
 }
 
-/** Thêm 1 part qua splitter + upload audio qua API (admin session) + publish. */
+/** Thêm 1 part qua splitter + upload audio qua API (admin session) + publish.
+ *  unitNumber PARAMETERIZED (review P1: hardcode NUM làm cascade test upload
+ *  vào unit NUM thay unit đang test — đúng class number-vs-id sự cố). */
 async function addPartUploadPublish(
   page: Page,
   editorUrl: string,
+  unitNumber: number,
 ): Promise<void> {
   await page
     .getByPlaceholder("Dán toàn bộ script vào đây…")
-    .fill(`Probe sentence number ${NUM}.`);
+    .fill(`Probe sentence number ${unitNumber}.`);
   await page.getByRole("button", { name: "Split câu" }).click();
   await page
     .getByRole("button", { name: "Thêm 1 câu vào bài" })
@@ -64,7 +67,7 @@ async function addPartUploadPublish(
   await expect(page.getByPlaceholder("Dán toàn bộ script vào đây…")).toBeVisible();
 
   const lessonNumber = Number(new URL(editorUrl).pathname.split("/").pop());
-  const lessonId = await lessonIdByNumber(NUM, lessonNumber);
+  const lessonId = await lessonIdByNumber(unitNumber, lessonNumber);
   const up = await page.request.post("/api/admin/upload", {
     multipart: {
       file: { name: "01.mp3", mimeType: "audio/mpeg", buffer: Buffer.from("ID3probe") },
@@ -76,7 +79,7 @@ async function addPartUploadPublish(
   // GUARD chống ô nhiễm: path phải nằm trong unit QA của run (audio demo đã bị
   // ghi đè 1 lần khi bắn nhầm lesson NUMBER thay id — sự cố 2026-09-30)
   const upBody = (await up.json()) as { path?: string };
-  expect(upBody.path).toContain(`unit-${NUM}/`);
+  expect(upBody.path).toContain(`unit-${unitNumber}/`);
 
   await page.getByRole("button", { name: "Xuất bản" }).click();
   await expect(page.locator("section").first().getByText("Đã xuất bản")).toBeVisible();
@@ -136,7 +139,7 @@ test.describe("Units CRUD edge (SF-4)", () => {
       .getByRole("link", { name: "Bài học" })
       .click();
     const editorUrl = await openLessonsPage(page, NUM);
-    await addPartUploadPublish(page, editorUrl);
+    await addPartUploadPublish(page, editorUrl, NUM);
 
     // public thấy title CŨ (lần nav đầu — cache nóng sau publish)
     const publicUrl = `/en/books/level-3/units/${NUM}`;
