@@ -52,11 +52,10 @@ describe("messages per-namespace parity EN⇄VI", () => {
     expect(missing).toEqual([]);
   });
 
-  it("namespace trống cho SF sau (admin/gamification) là object rỗng", () => {
-    // lesson được SF-2 fill (placeholder lesson page) — không còn assert rỗng
-    for (const ns of ["admin", "gamification"]) {
-      expect(en[ns]).toEqual({});
-      expect(vi[ns]).toEqual({});
-    }
+  it("namespace trống cho SF sau (admin) là object rỗng", () => {
+    // lesson được SF-2 fill, gamification được SF-6 fill — chỉ còn admin
+    // (SF-5 pending) phải rỗng
+    expect(en.admin).toEqual({});
+    expect(vi.admin).toEqual({});
   });
 });

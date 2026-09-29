@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -13,6 +14,9 @@ import {
 } from "@/lib/dictation/store";
 import { clampSeek } from "@/lib/dictation-ui/format";
 import { readRelaxedMode, updateRelaxedMode } from "@/lib/actions/relaxed-mode";
+import { submitAttempt } from "@/lib/actions/submit-attempt";
+import { attemptIdFor } from "@/lib/gamification/attempt-key";
+import { notifyStatsUpdated } from "@/lib/gamification/events";
 import { StartGate } from "./start-gate";
 import { SentenceDots } from "./sentence-dots";
 import { DictationPlayer } from "./dictation-player";
@@ -28,6 +32,14 @@ import { ResultsScreen } from "./results-screen";
 import { RelaxedToggle } from "./relaxed-toggle";
 import { LoginBanner } from "./login-banner";
 import { XpChip } from "./xp-chip";
+
+/** Key dedup submit: (partId, text, relaxed, hint) — khớp attemptIdFor. */
+const submitKey = (
+  partId: number,
+  text: string,
+  relaxed: boolean,
+  hint: boolean,
+) => `${partId} ${text} ${relaxed ? 1 : 0} ${hint ? 1 : 0}`;
 
 export interface DictationLessonProps {
   bookTitle: string;
@@ -67,6 +79,7 @@ export function DictationLesson({
   const t = useTranslations("lesson");
   const { data: session } = useSession();
   const user = session?.user ?? null;
+  const pathname = usePathname();
 
   const phase = useDictationStore((s) => s.phase);
   const currentPartIndex = useDictationStore((s) => s.currentPartIndex);
@@ -190,14 +203,63 @@ export function DictationLesson({
     };
   }, []);
 
-  // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
+  // ─── Reset store khi rời route: BỎ (SF-6 guest-commit — state in-memory
+  // phải SỐNG SÓT qua client-nav login giữa chừng; stale giữa 2 lesson vẫn
+  // được chặn bởi doStart() reset trước khi nạp parts) ───
   useEffect(
     () => () => {
-      dictationStore.getState().reset();
       if (relaxedFailTimer.current) clearTimeout(relaxedFailTimer.current);
     },
     [],
   );
+
+  // ─── SF-6 persist (context pack #8): user đã login → mỗi check submit
+  // server (recompute phía server). Cùng effect phủ cả guest login giữa
+  // chừng (§5.8): khi user xuất hiện, parts có attempts từ session guest
+  // được commit theo — attemptIdFor cho CÙNG id nên idempotent. ───
+  const userId = user?.id ?? null;
+  const sentSubmitsRef = useRef(new Set<string>());
+  useEffect(() => {
+    if (!userId) return;
+    const s = dictationStore.getState();
+    s.parts.forEach((part, i) => {
+      if (part.attempts === 0 || !part.lastDiff) return;
+      const partId = parts[i]?.id;
+      if (partId == null) return;
+      const key = submitKey(partId, part.typedText, s.relaxed, part.usedHint);
+      if (sentSubmitsRef.current.has(key)) return;
+      sentSubmitsRef.current.add(key); // add ĐỒNG BỘ trước await — chặn fire kép
+      submitAttempt({
+        partId,
+        typedText: part.typedText,
+        usedHint: part.usedHint,
+        clientAttemptId: attemptIdFor(
+          partId,
+          part.typedText,
+          s.relaxed,
+          part.usedHint,
+        ),
+      })
+        .then((r) => {
+          if (r?.ok) {
+            notifyStatsUpdated();
+          } else {
+            // lỗi server (mạng/validate) → mở khóa để submit lại ở lần
+            // partsState kế; không phá flow học
+            sentSubmitsRef.current.delete(key);
+            console.error("[dictation] submit rejected:", r?.error);
+          }
+        })
+        .catch((e) => {
+          sentSubmitsRef.current.delete(key);
+          console.error("[dictation] submit failed:", e);
+        });
+    });
+    // parts: data tĩnh theo lesson (props không đổi giữa renders) — cho vào
+    // deps sẽ chạy effect mỗi timeupdate (4x/s) vô ích; dedup set đã chống
+    // submit kép.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partsState, userId]);
 
   const doStart = async () => {
     // Chuỗi 1 click (spec §3.1): reset (Try-again từ complete) → nạp parts →
@@ -440,7 +502,7 @@ export function DictationLesson({
             />
           </div>
 
-          {!user ? <LoginBanner className="mt-4" /> : null}
+          {!user ? <LoginBanner className="mt-4" nextHref={pathname} /> : null}
 
           <div className="mt-7">
             <ProgressBar
