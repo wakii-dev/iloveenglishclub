@@ -75,4 +75,4 @@ review-nhóm-2 fixes · 7c363db Rule 0 flow
   helper lessonIdByNumber chống tái diễn.
 
 == FOLLOW-UP CHAIN (post-evidence commits — convention SF-8 #7) ==
-dfeb1e3 (evidence commit) · 02ce969 (plan tick 11/11 — B2) · các hash trên đều trong chuỗi provenance; code commit cuối = 7c363db
+dfeb1e3 (evidence commit) · 02ce969 (plan tick 11/11 — B2) · 10569e4 (P2 mock comment — review nhóm 2 cuối) · code commit cuối = 7c363db
