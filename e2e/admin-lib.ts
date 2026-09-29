@@ -131,6 +131,26 @@ export async function lessonIdByNumber(
   return row.id;
 }
 
+/**
+ * Part row theo (unit number, lesson number, sort order) — verify audio_path/
+ * duration_ms sau upload (failsoft check). Read-only.
+ */
+export async function partOf(
+  unitNumber: number,
+  lessonNumber: number,
+  sortOrder: number,
+): Promise<{ audioPath: string | null; durationMs: number | null } | null> {
+  const [row] = await db()`
+    select p.audio_path as "audioPath", p.duration_ms as "durationMs"
+    from lesson_parts p
+    join lessons l on l.id = p.lesson_id
+    join units un on un.id = l.unit_id
+    where un.number = ${unitNumber} and un.number >= ${QA_UNIT_MIN}
+      and l.number = ${lessonNumber} and p.sort_order = ${sortOrder}
+    limit 1`;
+  return row ?? null;
+}
+
 /** Forge session cookie value hợp lệ chữ ký (middleware chấp nhận) với claims tùy ý. */
 export async function forgeSessionToken(claims: {
   sub: string;
