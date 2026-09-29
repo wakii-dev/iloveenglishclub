@@ -5,13 +5,14 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
+  averageAccuracyOfDone,
   dictationStore,
   lessonProgress,
   SPEEDS,
   useDictationStore,
 } from "@/lib/dictation/store";
 import { clampSeek } from "@/lib/dictation-ui/format";
-import { readRelaxedMode } from "@/lib/actions/relaxed-mode";
+import { readRelaxedMode, updateRelaxedMode } from "@/lib/actions/relaxed-mode";
 import { StartGate } from "./start-gate";
 import { SentenceDots } from "./sentence-dots";
 import { DictationPlayer } from "./dictation-player";
@@ -171,13 +172,25 @@ export function DictationLesson({
   useEffect(() => () => dictationStore.getState().reset(), []);
 
   const doStart = () => {
-    // Chuỗi đồng bộ 1 click (spec §3.1): nạp parts → relaxed-sync (start-gate
-    // là phase mở — idle thì guard chặn) → gesture start → playing.
+    // Chuỗi đồng bộ 1 click (spec §3.1): reset (Try-again từ complete) → nạp
+    // parts → relaxed-sync (start-gate là phase mở — idle guard chặn) →
+    // gesture start → playing.
+    dictationStore.getState().reset();
     dictationStore.getState().start(parts.map((p) => ({ transcript: p.text })));
     if (user && relaxedPrefRef.current && !dictationStore.getState().relaxed) {
       dictationStore.getState().toggleRelaxed();
     }
     dictationStore.getState().start();
+  };
+
+  /** Toggle relaxed: store ngay (optimistic) + prefRef + persist nếu user. */
+  const handleToggleRelaxed = () => {
+    dictationStore.getState().toggleRelaxed();
+    const next = dictationStore.getState().relaxed;
+    relaxedPrefRef.current = next;
+    if (user) {
+      void updateRelaxedMode(next); // fire-and-forget; lỗi → state UI vẫn theo store
+    }
   };
 
   /** Enter theo (attempts, allCorrect) — KHÔNG phụ thuộc phase (spec §3.3). */
@@ -285,7 +298,7 @@ export function DictationLesson({
         </div>
         <div className="ml-auto flex items-center gap-2">
           <ShortcutsPanel />
-          <RelaxedToggle relaxed={relaxed} onToggle={() => dictationStore.getState().toggleRelaxed()} />
+          <RelaxedToggle relaxed={relaxed} onToggle={handleToggleRelaxed} />
           <XpChip earnedXp={earnedXp} isGuest={!user} />
           <span className="text-[13.5px] font-extrabold text-muted-foreground tabular-nums">
             {t("dictation.tabs.partLabel", { current: currentNo, total })}
@@ -349,8 +362,12 @@ export function DictationLesson({
               allCorrect={currentPart?.lastDiff?.allCorrect === true}
               frozen={frozen}
               canHint={
+                // Hint TRƯỚC check đầu hợp lệ (store tính diff tươi từ input);
+                // sau check: còn từ chưa đúng mới hint được.
                 !frozen &&
-                currentPart?.lastDiff?.firstIncorrectIndex != null
+                (currentPart?.lastDiff
+                  ? currentPart.lastDiff.firstIncorrectIndex != null
+                  : true)
               }
               onCheck={() => dictationStore.getState().check()}
               onNext={() => dictationStore.getState().next()}
@@ -402,6 +419,25 @@ export function DictationLesson({
       <ResultsScreen
         name={user?.name ?? null}
         isGuest={!user}
+        accuracy={averageAccuracyOfDone(partsState)}
+        earnedXp={earnedXp}
+        done={lessonProgress({ parts: partsState }).done}
+        skipped={lessonProgress({ parts: partsState }).skipped}
+        reviewWords={[
+          ...new Set(
+            partsState
+              .filter((p) => p.status === "skipped" && p.lastDiff)
+              .flatMap((p) =>
+                p.lastDiff!.words
+                  .filter(
+                    (w) =>
+                      (w.status === "wrong" || w.status === "missing") &&
+                      w.transcriptToken,
+                  )
+                  .map((w) => w.transcriptToken!),
+              ),
+          ),
+        ].slice(0, 6)}
         nextHref={nextHref}
         unitHref={unitHref}
         onTryAgain={doStart}
