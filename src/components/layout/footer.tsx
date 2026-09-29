@@ -41,9 +41,9 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
+          <h2 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
             {t("footer.levels")}
-          </h3>
+          </h2>
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {LEVELS.map((level) => (
               <li key={level.slug}>
@@ -56,9 +56,9 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
+          <h2 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
             {t("footer.learn")}
-          </h3>
+          </h2>
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             <li>
               <Link href="/" className="hover:text-primary">
@@ -69,9 +69,9 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <h3 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
+          <h2 className="text-[12.5px] font-extrabold uppercase tracking-[0.06em]">
             {t("footer.support")}
-          </h3>
+          </h2>
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             <li>{t("footer.contact")}</li>
           </ul>

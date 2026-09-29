@@ -22,7 +22,7 @@ export function StartGate({
 
   return (
     <div className="mx-auto flex max-w-[820px] flex-col items-start px-6 pb-14 pt-[26px]">
-      <span className="inline-flex items-center rounded-full bg-secondary/14 px-[13px] py-[5px] text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-secondary">
+      <span className="inline-flex items-center rounded-full bg-secondary/8 px-[13px] py-[5px] text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-secondary">
         {eyebrow}
       </span>
       <h1 className="mt-3.5 font-display text-[38px] leading-[1.1] font-bold tracking-tight">

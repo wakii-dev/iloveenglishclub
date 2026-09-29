@@ -11,7 +11,11 @@ export function BookCover({ book }: { book: LocalizedBook }) {
     <div
       aria-hidden
       className="aspect-3/4 w-full max-w-[230px] rounded-[22px] p-5 text-white shadow-[0_10px_0_color-mix(in_srgb,var(--secondary)_55%,#000)] dark:shadow-[0_10px_0_color-mix(in_srgb,var(--secondary)_35%,#000)]"
-      style={{ backgroundColor: book.color }}
+      style={{
+        // SF-8 a11y: đậm 40% như LevelCard — text trắng 90% opacity ≥4.73:1
+        // trên mọi level color (raw color + opacity-90 chỉ ~3.4:1 FAIL)
+        backgroundColor: `color-mix(in srgb, ${book.color} 60%, black)`,
+      }}
     >
       <p className="text-[12.5px] font-extrabold uppercase tracking-[0.06em] opacity-90">
         Cambridge English Prepare
