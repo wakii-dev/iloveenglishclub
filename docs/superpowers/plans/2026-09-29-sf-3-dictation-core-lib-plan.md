@@ -36,12 +36,12 @@ Người học gõ lại câu nghe được chấm đúng/thiếu/thừa + XP ch
 
 ## 5. Implementation outline
 - Tasks (DAG, deps →; plan-critic: PROCEED, max tier 2):
-  - [ ] T1 `diff-core`: tokenize + apostrophe normalize + strict/relaxed normalize (TDD)
-  - [ ] T2 `diff-match-scoring`: diffWords positional + computeAccuracy + computeWpm (deps T1)
-  - [ ] T3 `xp-score-attempt`: computeXp bảng 10/8/5/0 + scoreAttempt (deps T2)
-  - [ ] T4 `split-sentences`: scan thủ công `.?!` giữ dấu câu + known-limitation test (không deps — song song T1)
-  - [ ] T5 `player-store`: Zustand vanilla factory + 14 actions + derived helpers + state-machine tests (deps T3). *Note plan-critic P1-2: hook wrapper `useDictationStore` là function export — node smoke test assert throw-outside-render để giữ 100% function coverage (quyết tại T5, không đợi T6 đỏ); nếu RED→GREEN stall → tách store-core (state+advance) khỏi store-actions thay vì grind.*
-  - [ ] T6 `coverage-gate`: vitest.config.ts thresholds + script test:coverage + full gate run. **Exit criteria (plan-critic P1-1/P2-3): (1) `npx vitest run --coverage` exit 0 + 100% branches/statements/functions/lines; (2) `npm test` vẫn xanh (CI path không thresholds); (3) evidence `docs/superpowers/evidence/sf-3-dictation-lib/test-run.txt` đã ghi (HEAD hash + `tdd: RED→GREEN` + log coverage).** (deps T4, T5)
+  - [x] T1 `diff-core`: tokenize + apostrophe normalize + strict/relaxed normalize (TDD)
+  - [x] T2 `diff-match-scoring`: diffWords positional + computeAccuracy + computeWpm (deps T1)
+  - [x] T3 `xp-score-attempt`: computeXp bảng 10/8/5/0 + scoreAttempt (deps T2)
+  - [x] T4 `split-sentences`: scan thủ công `.?!` giữ dấu câu + known-limitation test (không deps — song song T1)
+  - [x] T5 `player-store`: Zustand vanilla factory + 14 actions + derived helpers + state-machine tests (deps T3). *Note plan-critic P1-2: hook wrapper `useDictationStore` là function export — node smoke test assert throw-outside-render để giữ 100% function coverage (quyết tại T5, không đợi T6 đỏ); nếu RED→GREEN stall → tách store-core (state+advance) khỏi store-actions thay vì grind.*
+  - [x] T6 `coverage-gate`: vitest.config.ts thresholds + script test:coverage + full gate run. **Exit criteria (plan-critic P1-1/P2-3): (1) `npx vitest run --coverage` exit 0 + 100% branches/statements/functions/lines; (2) `npm test` vẫn xanh (CI path không thresholds); (3) evidence `docs/superpowers/evidence/sf-3-dictation-lib/test-run.txt` đã ghi (HEAD hash + `tdd: RED→GREEN` + log coverage).** (deps T4, T5)
 - File structure: `src/lib/dictation/`, `src/lib/content/` (đúng touch map context pack); style theo `storage.ts` (JSDoc tiếng Việt tham chiếu § spec).
 - Testing strategy: **TDD RED→GREEN từng task** (superpowers:test-driven-development); test node-env; store qua factory `createDictationStore()` mới mỗi test; gate = `npx vitest run --coverage` exit 0 + 100% nhánh; evidence `docs/superpowers/evidence/sf-3-dictation-lib/test-run.txt` (hash HEAD + `tdd: RED→GREEN` + log coverage).
 
