@@ -17,7 +17,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: redirect chain đúng từng route.
 - [x] 7. submit-attempt-edge — integration `scripts/sf3-submit-attempt.integration.test.ts` (mock auth, DB thật): double-submit race 2 Promise.all cùng clientAttemptId → 1 row, XP 1 lần; 2 tab (2 clientAttemptId khác nhau) → 2 rows, XP 1 lần; MAX_TYPED_LEN 2000 (2000 ok / 2001 badInput); clientAttemptId non-UUID → badInput; unauthorized → error; part unpublished → partNotFound. e2e UI: MAX_TYPED_LEN qua textbox → graceful, không row thừa.
        AC: đúng bảng truth; unique constraint chứng minh bằng row count.
-- [ ] 8. xp-modifiers-truth — integration + e2e: chỉ attempt đầu XP; hint ×0.8; relaxed ×0.5 (flag profiles.relaxedMode qua updateRelaxedMode); replay 0; server value (DB) vs client preview (+chip UI) khớp.
+- [x] 8. xp-modifiers-truth — integration + e2e: chỉ attempt đầu XP; hint ×0.8; relaxed ×0.5 (flag profiles.relaxedMode qua updateRelaxedMode); replay 0; server value (DB) vs client preview (+chip UI) khớp.
        AC: Bảng 10/8/5/0 đúng từng tổ hợp accuracy×hint×relaxed.
 - [ ] 9. streak-tz — integration: seed daily_activity (hôm qua / hôm nay / 2 ngày trước) → submit → streak theo computeStreak; boundary 23:59 ICT đã phủ bởi unit streak.test.ts (giữ); cap 400 (limit query) — probe unit. e2e: header/UI phản ánh streak seeded.
        AC: không suy biến unit; integration xác nhận path submit → DB → cache.
