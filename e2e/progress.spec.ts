@@ -257,11 +257,17 @@ test.describe("Progress + Gamification (SF-6)", () => {
       page.getByRole("banner").getByText(/20 XP/),
     ).toBeVisible({ timeout: 30_000 });
 
-    // Leaderboard tuần có tên user
-    await page.goto("/en/top-users", { waitUntil: "domcontentloaded" });
-    const weekly = page.locator("section", {
-      hasText: /this week|tuần này/i,
-    });
-    await expect(weekly.getByText("E2E Guest").first()).toBeVisible();
+    // Leaderboard tuần có tên user. SF-8 (prod-build smoke): /top-users là
+    // ISR revalidate=60 — commit vừa xong chưa thấy ngay trong cache stale
+    // (dev không cache nên cũ pass); poll reload ≤75s cho SWR kịp tái sinh.
+    await expect
+      .poll(async () => {
+        await page.goto("/en/top-users", { waitUntil: "domcontentloaded" });
+        return page
+          .locator("section", { hasText: /this week|tuần này/i })
+          .getByText("E2E Guest")
+          .count();
+      }, { timeout: 75_000, intervals: [5_000] })
+      .toBeGreaterThan(0);
   });
 });
