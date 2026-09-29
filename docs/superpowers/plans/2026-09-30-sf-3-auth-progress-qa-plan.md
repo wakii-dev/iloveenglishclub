@@ -11,7 +11,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: open-redirect probe có kết luận rõ (pass hoặc finding).
 - [x] 4. session-sync-verify-regression — e2e `progress-session-sync.spec.ts`: register THẬT qua UI (không reload) → header hiện trạng thái đăng nhập ngay (XP chip / tên). Mutation-RED: tạm revert 695f0ef → spec ĐỎ → restore → GREEN. SAU ĐÓ bỏ `page.reload()` trong `e2e/progress.spec.ts:43` → re-run spec cũ GREEN.
        AC: regression GREEN cả 2 lần (trước + sau khi bỏ workaround); evidence mutation RED.
-- [ ] 5. oauth-google-probe — googleEnabled=false (không creds): /login + /register KHÔNG nút Google; `/api/auth/providers` trả `{}`; signin/google → behavior xác định (ghi nhận); findings-sf3.md ghi giới hạn env (không fail mơ hồ).
+- [x] 5. oauth-google-probe — googleEnabled=false (không creds): /login + /register KHÔNG nút Google; `/api/auth/providers` trả `{}`; signin/google → behavior xác định (ghi nhận); findings-sf3.md ghi giới hạn env (không fail mơ hồ).
        AC: findings row BY-DESIGN/ENV-LIMIT có rationale.
 - [ ] 6. session-lifecycle — logout sạch (header guest); /me guest → redirect `/{locale}/login?next=/{locale}/me`; /admin guest → redirect login?next=/admin (middleware — probe READ-ONLY); user thường vào /admin → layout chặn (probe).
        AC: redirect chain đúng từng route.
