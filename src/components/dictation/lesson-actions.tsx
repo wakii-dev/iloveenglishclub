@@ -10,7 +10,6 @@ import { useTranslations } from "next-intl";
  */
 export function LessonActions({
   attempts,
-  allCorrect,
   frozen,
   canHint,
   onCheck,
@@ -100,7 +99,6 @@ function PrimaryButton({
 
 interface Props {
   attempts: number;
-  allCorrect: boolean;
   frozen: boolean;
   canHint: boolean;
   onCheck: () => void;

@@ -369,7 +369,6 @@ export function DictationLesson({
 
             <LessonActions
               attempts={currentPart?.attempts ?? 0}
-              allCorrect={currentPart?.lastDiff?.allCorrect === true}
               frozen={frozen}
               canHint={
                 // Hint TRƯỚC check đầu hợp lệ (store tính diff tươi từ input);
@@ -405,9 +404,6 @@ export function DictationLesson({
         </>
       )}
 
-      <span className="sr-only" aria-live="polite">
-        {t("dictation.tabs.partLabel", { current: currentNo, total })}
-      </span>
     </div>
   );
 

@@ -66,7 +66,10 @@ export function TranscriptTab({
         )}
       </div>
 
-      <ul className="m-0 mt-4 list-none p-0">
+      <ul
+        aria-label={t("dictation.transcript.title")}
+        className="m-0 mt-4 list-none p-0"
+      >
         {sentences.map((s, i) => {
           const locked = s.status === "pending";
           const current = playingIdx === i;
