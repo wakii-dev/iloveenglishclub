@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { LoginForm } from "./login-form";
 
 export async function generateMetadata({
@@ -10,7 +11,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "auth" });
-  return { title: t("login.title") };
+  // buildPageMetadata (SF-5 QA-401): login là trang public — cần canonical +
+  // hreflang cặp + og như mọi route public khác; description theo locale.
+  return buildPageMetadata({
+    locale,
+    path: "/login",
+    title: { absolute: t("login.title") },
+    description: t("login.description"),
+  });
 }
 
 export default async function LoginPage({
