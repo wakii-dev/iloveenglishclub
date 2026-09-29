@@ -48,12 +48,12 @@ test.describe("Users mgmt (SF-4)", () => {
     await row.getByRole("combobox").click();
     await page.getByRole("option", { name: "Quản trị" }).click();
     // nguồn sự thật = DB (toast "Quản trị" trùng text option — không tin)
-    await expect.poll(() => roleOf(QA_EMAIL)).toBe("admin");
+    await expect.poll(() => roleOf(QA_EMAIL), { timeout: 60_000 }).toBe("admin"); // cold compile 60-115s (SF-6 lesson)
 
     // đổi ngược — action chạy cả 2 chiều
     await row.getByRole("combobox").click();
     await page.getByRole("option", { name: "Người dùng", exact: true }).click();
-    await expect.poll(() => roleOf(QA_EMAIL)).toBe("user");
+    await expect.poll(() => roleOf(QA_EMAIL), { timeout: 60_000 }).toBe("user");
     await expect(row).toContainText("Người dùng");
   });
 
