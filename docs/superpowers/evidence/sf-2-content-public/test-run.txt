@@ -1,6 +1,6 @@
 === SF-2 final verify run ===
-date: 2026-09-29 09:37 +07
-HEAD: 8552fb8 (code); evidence commit riêng sau — convention như SF-1
+date: 2026-09-29 09:52 +07
+HEAD: bc7d4d5 (code); evidence commit riêng sau — convention như SF-1
 
 -- lint --
 > eslint
@@ -13,21 +13,13 @@ HEAD: 8552fb8 (code); evidence commit riêng sau — convention như SF-1
 -- test:rls (per-role authorization, DB local) --
  Test Files  1 passed (1)
       Tests  17 passed (17)
--- build no-DB (CI constraint: env đủ trừ DATABASE_URL/BLOB/GOOGLE, AUTH_SECRET placeholder) --
- ✓ Compiled successfully in 2.7s
+-- build no-DB (CI constraint) --
+ ✓ Compiled successfully in 2.8s
  ✓ Generating static pages (55/55)
--- build with DB + render strategy (SSG/ISR §3) --
-┌ ○ /_not-found                                                               0 B         116 kB
-├ ● /[locale]                                                             1.22 kB         186 kB          5m      1y
-├ ● /[locale]/books                                                           0 B         185 kB          5m      1y
-├ ● /[locale]/books/[book]                                                    0 B         185 kB          5m      1y
-├ ● /[locale]/books/[book]/units/[unit]                                       0 B         185 kB          5m      1y
-├ ● /[locale]/books/[book]/units/[unit]/lessons/[lesson]/listen-and-type      0 B         185 kB
-├ ● /[locale]/login                                                       1.82 kB         187 kB
-├ ● /[locale]/register                                                    1.82 kB         187 kB
-└ ƒ /api/auth/[...nextauth]                                                   0 B            0 B
--- browser smoke tại HEAD (headless Chrome) --
-home-en: h1 + 7 level cards + method 4 steps + progressFill rgb(14,148,136)=#0e9488 teal (hand-off §1.9)
-flow: Home→L3→Unit1→Lesson1 trusted-click chain + VI switch pill click + audio play() PLAYING currentTime tăng + fallback /vi lesson2 title_vi NULL → h1 EN không rỗng
+-- build with DB render strategy (SSG/ISR §3) --
+7
+static routes ● (books 14 + units 28 prerendered, lesson 0-path ISR-on-demand, revalidate 5m — xem build đầu tại 28ae716/8552fb8)
+-- browser 3 tầng tại 8552fb8 (không đổi app code sau đó — chỉ scripts/test) --
+DOM+VISUAL+FLOW PASS: shots/ (Home EN/VI, books, book L3, unit, lesson placeholder, fallback vi→en) + audio play() PLAYING + VI switch
 
 tdd: skipped-tdd — pages verify bằng test:rls (17 asserts) + browser 3 tầng; localize/revalidateContent có unit test (viết cùng implementation, không red-first)
