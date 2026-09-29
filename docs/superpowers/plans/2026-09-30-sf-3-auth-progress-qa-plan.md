@@ -5,7 +5,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
 
 - [x] 1. e2e-config-db-bootstrap — `.env.local` worktree (DATABASE_URL local `ilec_sf3`, AUTH_SECRET, E2E_PORT=3211) · `playwright.sf3.config.ts` (port khớp 3 chỗ, testMatch `/progress.*\.spec\.ts/`, workers:1, retries:0, timeout rộng cho cold-compile) · `vitest.sf3.config.ts` + lane integration · verify `npx playwright test --list` (0 orphan progress spec) · dev server 3211 boot GREEN.
        AC: config mới chạy được ≥1 smoke; DB guard (connection string chứa ilec_sf3).
-- [ ] 2. register-edge — e2e `progress-register.spec.ts`: duplicate email → thông điệp emailTaken (en+vi); locale auto-set theo route (register /vi → profile locale vi + redirect /vi); validation (invalidEmail, weakPassword); transactional (user có profile — login được ngay).
+- [x] 2. register-edge — e2e `progress-register.spec.ts`: duplicate email → thông điệp emailTaken (en+vi); locale auto-set theo route (register /vi → profile locale vi + redirect /vi); validation (invalidEmail, weakPassword); transactional (user có profile — login được ngay).
        AC: mọi assert chạy xanh trên ilec_sf3.
 - [ ] 3. login-edge — e2e `progress-login.spec.ts`: sai mật khẩu → invalidCredentials; `next` guard (`//evil.com` protocol-relative probe — nếu lọt → finding QA-2xx + fix TDD); `?next=/en/me` → redirect đúng; callback redirect đăng nhập xong về `next`/`/{locale}`.
        AC: open-redirect probe có kết luận rõ (pass hoặc finding).
