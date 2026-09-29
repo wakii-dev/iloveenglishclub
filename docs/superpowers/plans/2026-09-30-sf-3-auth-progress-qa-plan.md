@@ -21,7 +21,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: Bảng 10/8/5/0 đúng từng tổ hợp accuracy×hint×relaxed.
 - [x] 9. streak-tz — integration: seed daily_activity (hôm qua / hôm nay / 2 ngày trước) → submit → streak theo computeStreak; boundary 23:59 ICT đã phủ bởi unit streak.test.ts (giữ); cap 400 (limit query) — probe unit. e2e: header/UI phản ánh streak seeded.
        AC: không suy biến unit; integration xác nhận path submit → DB → cache.
-- [ ] 10. leaderboard-boundary — integration: insert attempts created_at tuần trước (SQL trực tiếp) → weekly view KHÔNG tính; tuần này tính; all_time = profiles.xp; view chỉ expose display_name/avatar_url/xp (information_schema). e2e /top-users: 2 bảng render đúng, không lộ email.
+- [x] 10. leaderboard-boundary — integration: insert attempts created_at tuần trước (SQL trực tiếp) → weekly view KHÔNG tính; tuần này tính; all_time = profiles.xp; view chỉ expose display_name/avatar_url/xp (information_schema). e2e /top-users: 2 bảng render đúng, không lộ email.
        AC: ISO Mon–Sun TZ+07 boundary chứng minh bằng data thật 2 tuần.
 - [ ] 11. me-page-stats — integration getMyStats/getBookProgress: heatmap 84 ngày window; listenMinutes = sum duration DISTINCT parts (attempt lặp không đếm kép); accuracy TB = best-per-part; books progress done=all-parts-accuracy≥1. e2e /me render số khớp DB.
        AC: số UI = số SQL trực tiếp.
