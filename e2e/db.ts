@@ -87,3 +87,78 @@ export async function userCountByEmail(email: string): Promise<number> {
   const [row] = await client()`select count(*)::int as n from users where email = ${email}`;
   return row?.n ?? 0;
 }
+
+/**
+ * Admin dashboard stats — nguồn SQL TRỰC TIẾP để đối chiếu UI (SF-4 QA,
+ * ACCEPTANCE "dashboard đúng số liệu"). Read-only. Cùng định nghĩa với
+ * getAdminDashboard() (src/lib/admin/queries.ts): users = count profiles,
+ * newUsers7d theo profiles.created_at, parts/missing gộp toàn books.
+ */
+export type AdminStats = {
+  lessons: number;
+  publishedLessons: number;
+  parts: number;
+  partsMissingAudio: number;
+  users: number;
+  newUsers7d: number;
+  books: {
+    slug: string;
+    title: string;
+    units: number;
+    lessons: number;
+    published: number;
+    parts: number;
+    missing: number;
+  }[];
+};
+
+export async function adminStats(): Promise<AdminStats> {
+  const [totals] = await client()<[
+    {
+      lessons: number;
+      published: number;
+      parts: number;
+      missing: number;
+      users: number;
+      new7d: number;
+    },
+  ]>`
+    select
+      (select count(*)::int from lessons) as lessons,
+      (select count(*)::int from lessons where published) as published,
+      (select count(*)::int from lesson_parts) as parts,
+      (select count(*)::int from lesson_parts where audio_path is null) as missing,
+      (select count(*)::int from profiles) as users,
+      (select count(*)::int from profiles where created_at > now() - interval '7 days') as "new7d"
+  `;
+  const bookRows = await client()<[
+    {
+      slug: string;
+      title: string;
+      units: number;
+      lessons: number;
+      published: number;
+      parts: number;
+      missing: number;
+    },
+  ]>`
+    select b.slug,
+           coalesce(b.title_vi, b.title_en) as title,
+           (select count(*)::int from units un where un.book_id = b.id) as units,
+           (select count(*)::int from lessons l join units un on un.id = l.unit_id where un.book_id = b.id) as lessons,
+           (select count(*)::int from lessons l join units un on un.id = l.unit_id where un.book_id = b.id and l.published) as published,
+           (select count(*)::int from lesson_parts p join lessons l on l.id = p.lesson_id join units un on un.id = l.unit_id where un.book_id = b.id) as parts,
+           (select count(*)::int from lesson_parts p join lessons l on l.id = p.lesson_id join units un on un.id = l.unit_id where un.book_id = b.id and p.audio_path is null) as missing
+    from books b
+    order by b.sort_order
+  `;
+  return {
+    lessons: totals?.lessons ?? 0,
+    publishedLessons: totals?.published ?? 0,
+    parts: totals?.parts ?? 0,
+    partsMissingAudio: totals?.missing ?? 0,
+    users: totals?.users ?? 0,
+    newUsers7d: totals?.new7d ?? 0,
+    books: bookRows,
+  };
+}
