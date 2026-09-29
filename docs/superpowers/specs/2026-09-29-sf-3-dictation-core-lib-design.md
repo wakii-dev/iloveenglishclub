@@ -123,7 +123,7 @@ Chuỗi phase: `idle` → `start-gate` → `playing`/`input` (vào/ra theo isPla
 | `toggleRelaxed()` | phase ≠ `idle`/`complete` | relaxed=!relaxed (ảnh hưởng check SAU đó) |
 | `reset()` | — | về state idle ban đầu (đổi lesson — store là singleton) |
 
-`advance`: tìm part `pending` từ current+1 (hết thì quét từ 0) → chuyển đến nó (input="", phase `playing`, isPlaying=true — autoplay câu kế, seekRequest={ms:0, nonce:++mediaNonce}); **không còn pending nào → `complete`** (nhánh else duy nhất — mọi part khi đó done‖skipped theo bất biến kiến trúc: advance chỉ xảy ra sau khi part hiện tại resolve; KHÔNG dùng assert-throw reachable — giữ 100% nhánh thật).
+`advance`: tìm part `pending` từ current+1 (scan một chiều — **không wrap từ 0**: bất biến kiến trúc "part trước current đều resolved" giữ vững vì advance chỉ chạy sau khi part hiện tại resolve và prevPart chỉ đi xuống; nếu SF-4 sau này thêm jump-to-part tùy ý phải giữ bất biến này hoặc thêm wrap) → chuyển đến nó (input="", phase `playing`, isPlaying=true — autoplay câu kế, seekRequest={ms:0, nonce:++mediaNonce}); **không còn pending nào → `complete`** (nhánh else duy nhất — mọi part khi đó done‖skipped; KHÔNG dùng assert-throw reachable — giữ 100% nhánh thật).
 
 **Derived (pure, export cho SF-4):** `lessonProgress(state)` → `{done, skipped, total}` (progress bar: done/total, skip không tính); `averageAccuracyOfDone(parts)` → TB accuracy **ATTEMPT ĐẦU** (`firstAccuracy`) các part done — done ⟹ allCorrect nên accuracy attempt-sau luôn 1 (vô nghĩa); không có part done → 0.
 

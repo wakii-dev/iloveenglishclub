@@ -247,7 +247,7 @@ describe("check — attempts + XP bank ở attempt ĐẦU (spec §1.4(2))", () =
     const st = s.getState();
     expect(st.parts[0]!.attempts).toBe(2);
     expect(st.parts[0]!.xpEarned).toBe(5); // giữ XP attempt đầu
-    expect(st.earnedXp).toBe(5);
+    expect(s.getState().earnedXp).toBe(5); // fresh — earnedXp tổng cũng không đổi
     expect(st.parts[0]!.lastDiff?.allCorrect).toBe(true);
   });
 

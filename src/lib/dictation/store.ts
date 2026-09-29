@@ -339,7 +339,11 @@ export function averageAccuracyOfDone(parts: PartState[]): number {
 /** Singleton cho SF-4 (module-level); test dùng factory. */
 export const dictationStore = createDictationStore();
 
-/** Hook wrapper (spec §3.1) — selector-based, render trong React component. */
+/**
+ * Hook wrapper (spec §3.1) — selector-based, render trong React component.
+ * ⚠ Convention SF-4: selector trả PRIMITIVE (hoặc dùng `useShallow`) —
+ * selector tạo object mới mỗi lần sẽ khiến useSyncExternalStore re-render vô hạn.
+ */
 export const useDictationStore = <T,>(
   selector: (s: DictationState) => T,
 ): T => useStore(dictationStore, selector);
