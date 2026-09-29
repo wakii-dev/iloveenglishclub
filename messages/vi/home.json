@@ -16,7 +16,10 @@
   },
   "levels": {
     "title": "Lộ trình của bạn",
-    "subtitle": "Học lần lượt theo sách, hoặc nhảy tới cấp độ phù hợp với bạn."
+    "subtitle": "Học lần lượt theo sách, hoặc nhảy tới cấp độ phù hợp với bạn.",
+    "prev": "Cấp độ trước",
+    "next": "Cấp độ tiếp theo",
+    "position": "Cấp độ {current} trên {count}"
   },
   "method": {
     "title": "Phương pháp 4 bước",

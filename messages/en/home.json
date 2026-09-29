@@ -16,7 +16,10 @@
   },
   "levels": {
     "title": "Your learning path",
-    "subtitle": "Follow the books in order, or jump to the level that fits you."
+    "subtitle": "Follow the books in order, or jump to the level that fits you.",
+    "prev": "Previous levels",
+    "next": "More levels",
+    "position": "Level {current} of {count}"
   },
   "method": {
     "title": "The 4-step method",

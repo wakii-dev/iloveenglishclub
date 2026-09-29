@@ -130,3 +130,19 @@
     }
   }
 }
+
+/* === Motion polish (user 2026-09-29) — entrance + float; reduced-motion tự tắt bởi global rule === */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.anim-fade-up {
+  animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.anim-float {
+  animation: float 7s ease-in-out infinite;
+}
