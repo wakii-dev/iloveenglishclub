@@ -43,3 +43,14 @@ T3 FLOW (Orca browser, trusted input):
 
 tdd: skipped-tdd: foundation scaffold — logic rủi ro là auth flow + config (browser E2E thật trên Neon đã chạy);
 unit tests bảo vệ convention (routing/parity/path) viết cùng commit, GREEN tại HEAD 4268f69
+
+== REVIEW FIX ROUND (2026-09-29 sau code-reviewer APPROVED w/ condition) ==
+P1 fix (condition): src/app/actions/auth.ts — register user+profiles trong db.transaction()
+(nguyên tử, hết orphan-user edge) + bắt riêng PG 23505 (xuyên DrizzleQueryError.cause —
+Drizzle wrap PostgresError, error.code là undefined) → i18n "emailTaken"; lỗi khác log+rethrow.
+Re-verify E2E browser: register mới tx-test@ilec.dev → 303 + DB user+profile nguyên tử locale='vi' ✓ ·
+duplicate email → role=alert "Email này đã được dùng cho một tài khoản khác." (không còn 500) ✓ ·
+typecheck PASS · tests 14/14 · lint clean.
+Commit: xem git log "fix(auth): register transaction + 23505 qua DrizzleQueryError.cause".
+P2 dispositions (không block): //evil.com guard — Auth.js core rewrite same-origin (verified reviewer);
+/administrator match — SF-5 siết exact-match khi có dashboard; storage sanitize — BẮT BUỘC trước SF-5 upload.

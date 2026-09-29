@@ -57,26 +57,36 @@ export async function registerAction(
   // profiles.locale = locale của route đăng ký (spec §8 — ACCEPTANCE SF-1)
   const passwordHash = await bcrypt.hash(password, 10);
   try {
-    const [user] = await db
-      .insert(users)
-      .values({
-        name: displayName || null,
-        email,
-        passwordHash,
-      })
-      .returning({ id: users.id });
+    // Transaction: user + profiles phải nguyên tử — tránh orphan user không
+    // profile (review P1: partial-fail vi phạm ACCEPTANCE locale + role)
+    await db.transaction(async (tx) => {
+      const [user] = await tx
+        .insert(users)
+        .values({
+          name: displayName || null,
+          email,
+          passwordHash,
+        })
+        .returning({ id: users.id });
 
-    await db
-      .insert(profiles)
-      .values({
+      await tx.insert(profiles).values({
         id: user.id,
         displayName: displayName || null,
         locale,
-      })
-      .onConflictDoNothing();
-  } catch {
-    // users.email unique — race hoặc trùng email
-    return { error: "emailTaken" };
+      });
+    });
+  } catch (error) {
+    // Drizzle wrap PostgresError trong DrizzleQueryError (code ở .cause);
+    // 23505 unique_violation trên users.email — race hoặc trùng email
+    const pgCode =
+      (error as { code?: string })?.code ??
+      (error as { cause?: { code?: string } })?.cause?.code;
+    if (pgCode === "23505") {
+      return { error: "emailTaken" };
+    }
+    // Lỗi khác: không nuốt — log + rethrow để thấy lỗi gốc
+    console.error("[registerAction] insert failed:", error);
+    throw error;
   }
 
   // Tự đăng nhập sau đăng ký
