@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * E2E SF-4 (context pack #13): guest + ephemeral + banner — happy path bài
- * demo L3-U1-L1 (seed SF-2). Port 3100 tránh đụng dev thường; Chromium +
+ * demo L3-U1-L1 (seed SF-2). Port 3110 (SF-6 đổi từ 3100 — SF-7 song song
+ * đang dùng 3100, 2 suite giành port kill server của nhau); Chromium +
  * autoplay policy nới cho headless. Env từ .env.local (DB local `ilec`).
  */
 export default defineConfig({
@@ -12,7 +13,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:3100",
+    baseURL: "http://localhost:3110",
     trace: "retain-on-failure",
   },
   projects: [
@@ -22,8 +23,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --port 3100",
-    url: "http://localhost:3100/en/books/level-3/units/1/lessons/1/listen-and-type",
+    command: "npm run dev -- --port 3110",
+    url: "http://localhost:3110/en/books/level-3/units/1/lessons/1/listen-and-type",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -17,6 +18,12 @@ import { readRelaxedMode, updateRelaxedMode } from "@/lib/actions/relaxed-mode";
 import { submitAttempt } from "@/lib/actions/submit-attempt";
 import { attemptIdFor } from "@/lib/gamification/attempt-key";
 import { notifyStatsUpdated } from "@/lib/gamification/events";
+import {
+  hasPendingAttempts,
+  savePendingAttempts,
+  takePendingAttempts,
+  type PendingAttempt,
+} from "@/lib/gamification/pending-commit";
 import { StartGate } from "./start-gate";
 import { SentenceDots } from "./sentence-dots";
 import { DictationPlayer } from "./dictation-player";
@@ -215,10 +222,35 @@ export function DictationLesson({
 
   // ─── SF-6 persist (context pack #8): user đã login → mỗi check submit
   // server (recompute phía server). Cùng effect phủ cả guest login giữa
-  // chừng (§5.8): khi user xuất hiện, parts có attempts từ session guest
-  // được commit theo — attemptIdFor cho CÙNG id nên idempotent. ───
+  // chừng qua client-nav (§5.8): khi user xuất hiện, parts có attempts từ
+  // session guest được commit theo — attemptIdFor cho CÙNG id nên idempotent. ───
   const userId = user?.id ?? null;
   const sentSubmitsRef = useRef(new Set<string>());
+  const submitOne = (partId: number, text: string, relaxed: boolean, hint: boolean) => {
+    const key = submitKey(partId, text, relaxed, hint);
+    if (sentSubmitsRef.current.has(key)) return;
+    sentSubmitsRef.current.add(key); // add ĐỒNG BỘ trước await — chặn fire kép
+    submitAttempt({
+      partId,
+      typedText: text,
+      usedHint: hint,
+      clientAttemptId: attemptIdFor(partId, text, relaxed, hint),
+    })
+      .then((r) => {
+        if (r?.ok) {
+          notifyStatsUpdated();
+        } else {
+          // lỗi server (mạng/validate) → mở khóa để submit lại ở lần
+          // partsState kế; không phá flow học
+          sentSubmitsRef.current.delete(key);
+          console.error("[dictation] submit rejected:", r?.error);
+        }
+      })
+      .catch((e) => {
+        sentSubmitsRef.current.delete(key);
+        console.error("[dictation] submit failed:", e);
+      });
+  };
   useEffect(() => {
     if (!userId) return;
     const s = dictationStore.getState();
@@ -226,40 +258,56 @@ export function DictationLesson({
       if (part.attempts === 0 || !part.lastDiff) return;
       const partId = parts[i]?.id;
       if (partId == null) return;
-      const key = submitKey(partId, part.typedText, s.relaxed, part.usedHint);
-      if (sentSubmitsRef.current.has(key)) return;
-      sentSubmitsRef.current.add(key); // add ĐỒNG BỘ trước await — chặn fire kép
-      submitAttempt({
-        partId,
-        typedText: part.typedText,
-        usedHint: part.usedHint,
-        clientAttemptId: attemptIdFor(
-          partId,
-          part.typedText,
-          s.relaxed,
-          part.usedHint,
-        ),
-      })
-        .then((r) => {
-          if (r?.ok) {
-            notifyStatsUpdated();
-          } else {
-            // lỗi server (mạng/validate) → mở khóa để submit lại ở lần
-            // partsState kế; không phá flow học
-            sentSubmitsRef.current.delete(key);
-            console.error("[dictation] submit rejected:", r?.error);
-          }
-        })
-        .catch((e) => {
-          sentSubmitsRef.current.delete(key);
-          console.error("[dictation] submit failed:", e);
-        });
+      submitOne(partId, part.typedText, s.relaxed, part.usedHint);
     });
     // parts: data tĩnh theo lesson (props không đổi giữa renders) — cho vào
     // deps sẽ chạy effect mỗi timeupdate (4x/s) vô ích; dedup set đã chống
     // submit kép.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partsState, userId]);
+
+  // ─── SF-6 guest-commit FULL-RELOAD leg (§5.8): login redirect về lesson là
+  // hard nav → store chết. Guest: mirror kết quả in-memory vào sessionStorage
+  // liên tục; user quay lại (mount, store idle): commit snapshot rồi xóa.
+  // Trùng snapshot với đường client-nav → cùng attemptIdFor → idempotent. ───
+  useEffect(() => {
+    if (userId) return;
+    const s = dictationStore.getState();
+    const pend: PendingAttempt[] = [];
+    s.parts.forEach((part, i) => {
+      if (part.attempts === 0) return;
+      const partId = parts[i]?.id;
+      if (partId == null) return;
+      pend.push({
+        partId,
+        typedText: part.typedText,
+        usedHint: part.usedHint,
+        relaxed: s.relaxed,
+      });
+    });
+    if (pend.length > 0) savePendingAttempts(pend);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partsState, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const pend = takePendingAttempts();
+    if (pend.length === 0) return;
+    pend.forEach((p) => submitOne(p.partId, p.typedText, p.relaxed, p.usedHint));
+  }, [userId]);
+
+  // ─── Session stale sau login SOFT-nav (§5.8): redirect về lesson bằng RSC
+  // redirect → SessionProvider giữ session cũ (guest), header layout không
+  // remount → không tự refetch. Có snapshot trong tay = user vừa login quay
+  // lại → fetch session chủ động; provider cập nhật → userId flip → commit
+  // effect chạy + header hiện user/XP. Guest thường (không snapshot) không
+  // bị đụng. ───
+  useEffect(() => {
+    if (userId) return;
+    if (hasPendingAttempts()) {
+      void getSession().catch(() => {});
+    }
+  }, [userId]);
 
   const doStart = async () => {
     // Chuỗi 1 click (spec §3.1): reset (Try-again từ complete) → nạp parts →
