@@ -73,7 +73,7 @@ if (users === 0) {
 }
 
 // users là gốc cascade duy nhất (profiles + 3 bảng con đều CASCADE)
-await sql.unsafe(`DELETE FROM users WHERE email LIKE '${PATTERN}'`);
+await sql`DELETE FROM users WHERE email LIKE ${PATTERN}`;
 
 const [leftUsers, leftAttempts, leftProgress, leftActivity] = await Promise.all([
   count(`SELECT count(*) AS n FROM users WHERE email LIKE '${PATTERN}'`),

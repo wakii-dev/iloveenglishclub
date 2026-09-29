@@ -27,4 +27,4 @@ Mọi BY-DESIGN/DEFERRED bắt buộc rationale (chống misclassify — spec-cr
 
 ## Chưa có finding nào khác ở surface SF-1
 
-Baseline matrix (baseline.md): unit 221/221 (218 gốc + 3 regression) · rls 18/18 · audit 15/15 · e2e 6+11/17 — toàn xanh sau 2 phép hygiene. Prod-build + smoke PASS (prod-build-verify.md). Flakiness audit (e2e-flakiness-audit.md): dictation 3/3, admin 3/3 test-level — duy nhất QA-7 còn OPEN (infra, owner tier-1, chờ PM triage: DEFERRED sign-off hoặc fix route).
+Baseline matrix (baseline.md): unit 229/229 (218 gốc + 3 regression + 8 lighthouse-config) · rls 18/18 · audit 15/15 · e2e 6+11/17 — toàn xanh sau 2 phép hygiene. Prod-build + smoke PASS (prod-build-verify.md). Flakiness audit (e2e-flakiness-audit.md): dictation 3/3, admin 3/3 test-level — duy nhất QA-7 còn OPEN (infra, owner tier-1, chờ PM triage: DEFERRED sign-off hoặc fix route).
