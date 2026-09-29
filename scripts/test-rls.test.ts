@@ -31,6 +31,7 @@ vi.mock("@/auth", () => ({
 }));
 
 import { assertAdmin, ForbiddenError } from "@/lib/content/guards";
+import { updateRelaxedMode } from "@/lib/actions/relaxed-mode";
 import {
   getBook,
   getBooks,
@@ -184,6 +185,26 @@ describe("ROLE user (authenticated non-admin) — bị chặn ghi, không lộ d
       SELECT count(*)::int AS n FROM attempts WHERE user_id = ${ID_B}
     `;
     expect(row.n).toBe(0); // userB không attempts; userA có — chỉ owner đọc được qua SF-6
+  });
+
+  it("profiles self-write CHỈ relaxed_mode — xp/role/streak không thể đụng qua action user-facing (SF-8 audit P0-critic #2)", async () => {
+    // Write surface DUY NHẤT của user thường lên profiles là updateRelaxedMode
+    // (drizzle .set column-whitelist). Assert: chỉ relaxed_mode đổi — mọi cột
+    // gamification/vai trò nguyên vẹn. Meta-test mutation (plan T4 Step 1):
+    // thêm `xp: 999` vào .set → assert xp=50 phải ĐỎ → chứng minh test có sức
+    // bắt (không tautology).
+    sessionState.session = { user: { id: ID_A } };
+    const result = await updateRelaxedMode(true);
+    expect(result.ok).toBe(true);
+    const [row] = await sql<{ relaxed_mode: boolean; xp: number; role: string; streak_count: number }[]>`
+      SELECT relaxed_mode, xp, role, streak_count FROM profiles WHERE id = ${ID_A}
+    `;
+    expect(row.relaxed_mode).toBe(true);
+    expect(row.xp).toBe(50); // fixture beforeAll — action KHÔNG được đụng
+    expect(row.role).toBe("user");
+    expect(row.streak_count).toBe(0);
+    // dọn state: trả relaxed_mode về mặc định cho các run sau
+    await sql`UPDATE profiles SET relaxed_mode = false WHERE id = ${ID_A}`;
   });
 });
 
