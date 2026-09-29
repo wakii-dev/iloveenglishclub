@@ -27,6 +27,6 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: số UI = số SQL trực tiếp.
 - [x] 12. guest-mid-commit — e2e: guest học → login giữa chừng → commit đúng XP (mở rộng spec cũ: modifier hint/relaxed trong preview guest; sessionStorage 1-tab BY-DESIGN probe 2 tab → không leak).
        AC: commit idempotent, không cộng kép khi quay lại lesson.
-- [ ] 13. triage-fix-e2e-expansion — fix TDD mọi finding findings-sf3.md (RED→GREEN, meta-test: test ĐỎ trên code cũ); re-run `npm run test:rls` 18/18 sau fix chạm auth/actions; giữ coverage streak/submit-attempt; messages sửa CẢ en+vi nếu chạm; e2e expansion hoàn thiện; evidence `test-run.txt` (unit/rls/audit/e2e + tdd line); Rule 0 browser 3 tầng; code-reviewer APPROVED; findings 0 OPEN (hoặc DEFERRED có rationale).
+- [x] 13. triage-fix-e2e-expansion — fix TDD mọi finding findings-sf3.md (RED→GREEN, meta-test: test ĐỎ trên code cũ); re-run `npm run test:rls` 18/18 sau fix chạm auth/actions; giữ coverage streak/submit-attempt; messages sửa CẢ en+vi nếu chạm; e2e expansion hoàn thiện; evidence `test-run.txt` (unit/rls/audit/e2e + tdd line); Rule 0 browser 3 tầng; code-reviewer APPROVED; findings 0 OPEN (hoặc DEFERRED có rationale).
 
 Exit: registry surface auth/progress 0 OPEN · papercut reload FIXED có regression · AC user-visible từng dòng verify được.
