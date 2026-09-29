@@ -7,12 +7,18 @@ import { cn } from "cn";
 
 /**
  * §3.4 WordDiffDisplay (design §2.2 token spec): matched → tint success;
- * wrong → tint destructive + line-through + chip từ đúng absolute -top-6;
- * missing → thân "—" + chip; extra → không chip. Diff PERSIST trong lúc sửa
- * (spec-critic P1). Banner "Chính xác!" khi allCorrect; diff-note theo mode.
+ * wrong → tint destructive + line-through + chip từ đúng absolute; missing →
+ * thân "—" + chip; extra → không chip. Diff PERSIST trong lúc sửa (spec-critic
+ * P1). Banner "Chính xác!" khi allCorrect; diff-note theo mode.
+ *
+ * Fix overlay (user 2026-09-29): chip -top-6 của các từ sai LIÊN TIẾP chồng
+ * nhau + dòng đầu tràn lên đè khu vực phía trên → (1) container có pt-14
+ * làm headroom 2 tầng chip, (2) chip so le 2 tầng theo index từ sai, (3) chip
+ * max-width + truncate, (4) z-10 nổi trên token.
  */
 export function WordDiffDisplay({ diff, relaxed }: Props) {
   const t = useTranslations("lesson");
+  let wrongIndex = -1;
 
   return (
     <div className="mt-4" aria-live="polite">
@@ -24,10 +30,11 @@ export function WordDiffDisplay({ diff, relaxed }: Props) {
       ) : null}
 
       {diff.words.length > 0 ? (
-        <p className="max-w-[60ch] text-[20px] leading-[2.1] font-semibold">
-          {diff.words.map((w, i) => (
-            <Word key={i} word={w} />
-          ))}
+        <p className="max-w-[60ch] pt-14 text-[20px] leading-[2.1] font-semibold">
+          {diff.words.map((w, i) => {
+            if (w.status !== "matched") wrongIndex += 1;
+            return <Word key={i} word={w} wrongIndex={wrongIndex} />;
+          })}
         </p>
       ) : null}
 
@@ -40,7 +47,7 @@ export function WordDiffDisplay({ diff, relaxed }: Props) {
   );
 }
 
-function Word({ word }: { word: DiffWord }) {
+function Word({ word, wrongIndex }: { word: DiffWord; wrongIndex: number }) {
   if (word.status === "matched") {
     return (
       <span className="mx-[2px] my-[3px] inline-block rounded-xl bg-[color-mix(in_srgb,var(--success)_16%,transparent)] px-[9px] py-[2px] text-success">
@@ -48,7 +55,10 @@ function Word({ word }: { word: DiffWord }) {
       </span>
     );
   }
-  // wrong | missing | extra — đỏ gạch; chip từ đúng chỉ khi có transcriptToken
+  // wrong | missing | extra — đỏ gạch; chip từ đúng chỉ khi có transcriptToken.
+  // Chip so le 2 tầng (-top-6 / -top-[3.5rem]) theo thứ tự từ sai để chip liền
+  // kề không đè nhau khi nhiều từ sai liên tiếp.
+  const chipRow = wrongIndex % 2;
   return (
     <span
       className={cn(
@@ -58,7 +68,13 @@ function Word({ word }: { word: DiffWord }) {
     >
       {word.typedToken ?? "—"}
       {word.transcriptToken ? (
-        <i className="absolute -top-6 left-1/2 -translate-x-1/2 rounded-full bg-success px-2.5 py-0.5 text-[12.5px] font-extrabold text-success-foreground not-italic line-through no-underline whitespace-nowrap">
+        <i
+          className={cn(
+            "absolute left-1/2 z-10 -translate-x-1/2 rounded-full bg-success px-2.5 py-0.5 text-[12.5px] font-extrabold text-success-foreground not-italic line-through no-underline whitespace-nowrap",
+            chipRow === 0 ? "-top-6" : "-top-[3.6rem]",
+            "max-w-[160px] overflow-hidden text-ellipsis",
+          )}
+        >
           {word.transcriptToken}
         </i>
       ) : null}

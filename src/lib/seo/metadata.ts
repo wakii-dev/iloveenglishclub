@@ -28,6 +28,13 @@ export async function buildPageMetadata(options: {
       siteName: BRAND,
       locale,
       type: "website",
+      // OG image mặc định (/api/og — user 2026-09-29: link preview thiếu
+      // image). Book/lesson có file-convention riêng tự override.
+      images: [{ url: `/api/og?locale=${locale}`, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [`/api/og?locale=${locale}`],
     },
   };
 }
