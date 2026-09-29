@@ -23,7 +23,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: không suy biến unit; integration xác nhận path submit → DB → cache.
 - [x] 10. leaderboard-boundary — integration: insert attempts created_at tuần trước (SQL trực tiếp) → weekly view KHÔNG tính; tuần này tính; all_time = profiles.xp; view chỉ expose display_name/avatar_url/xp (information_schema). e2e /top-users: 2 bảng render đúng, không lộ email.
        AC: ISO Mon–Sun TZ+07 boundary chứng minh bằng data thật 2 tuần.
-- [ ] 11. me-page-stats — integration getMyStats/getBookProgress: heatmap 84 ngày window; listenMinutes = sum duration DISTINCT parts (attempt lặp không đếm kép); accuracy TB = best-per-part; books progress done=all-parts-accuracy≥1. e2e /me render số khớp DB.
+- [x] 11. me-page-stats — integration getMyStats/getBookProgress: heatmap 84 ngày window; listenMinutes = sum duration DISTINCT parts (attempt lặp không đếm kép); accuracy TB = best-per-part; books progress done=all-parts-accuracy≥1. e2e /me render số khớp DB.
        AC: số UI = số SQL trực tiếp.
 - [ ] 12. guest-mid-commit — e2e: guest học → login giữa chừng → commit đúng XP (mở rộng spec cũ: modifier hint/relaxed trong preview guest; sessionStorage 1-tab BY-DESIGN probe 2 tab → không leak).
        AC: commit idempotent, không cộng kép khi quay lại lesson.
