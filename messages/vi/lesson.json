@@ -1,1 +1,13 @@
-{}
+{
+  "placeholder": {
+    "parts": "{count, plural, other {# câu}}",
+    "vocabLevel": "Trình độ từ vựng",
+    "audioDemoLabel": "Audio demo",
+    "audioDemoNote": "Âm thanh tự sinh — giọng đọc thật sẽ có khi đội nội dung thu âm xong.",
+    "playerTitle": "Trình dictation",
+    "playerNote": "Trình phát tương tác (nghe → gõ → kiểm tra) đang trên đường hoàn thiện.",
+    "ctaDisabled": "Bắt đầu bài học",
+    "ctaSoon": "Sẽ mở ở bản kế tiếp",
+    "backToUnit": "Quay lại unit"
+  }
+}

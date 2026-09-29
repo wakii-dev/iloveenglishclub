@@ -1,1 +1,13 @@
-{}
+{
+  "placeholder": {
+    "parts": "{count, plural, one {# sentence} other {# sentences}}",
+    "vocabLevel": "Vocabulary level",
+    "audioDemoLabel": "Demo audio",
+    "audioDemoNote": "Auto-generated tone — real voice-over arrives with the content team.",
+    "playerTitle": "Dictation player",
+    "playerNote": "The interactive player (listen → type → check) is on its way.",
+    "ctaDisabled": "Start lesson",
+    "ctaSoon": "Available in the next release",
+    "backToUnit": "Back to unit"
+  }
+}

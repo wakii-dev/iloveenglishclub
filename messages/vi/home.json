@@ -1,7 +1,41 @@
 {
   "hero": {
-    "title": "Luyện nghe tiếng Anh, từng câu một",
+    "kicker": "LUYỆN NGHE DICTATION",
+    "title": "Nghe thật kỹ. Gõ lại thật đúng.",
     "subtitle": "Luyện dictation theo lộ trình Cambridge English Prepare — từ Pre-A1 đến B2 First.",
-    "comingSoon": "Sách và các level đang trên đường hoàn thiện — đây là bản nền tảng."
+    "ctaPrimary": "Khám phá 7 cấp độ",
+    "ctaSecondary": "Bắt đầu với Cấp độ 1",
+    "trustLevels": "7 cấp độ",
+    "trustLessons": "{count} bài học",
+    "trustFree": "Miễn phí phần lõi",
+    "miniCard1Title": "Bài học mẫu",
+    "miniCard1Sub": "Cấp độ 3 · Unit 1 — Thời gian rảnh",
+    "miniCard1Meta": "4 câu · ~2 phút",
+    "miniCard2Title": "Phương pháp",
+    "miniCard2Sub": "Nghe · Gõ · Kiểm tra · Đọc to"
+  },
+  "levels": {
+    "title": "Lộ trình của bạn",
+    "subtitle": "Học lần lượt theo sách, hoặc nhảy tới cấp độ phù hợp với bạn."
+  },
+  "method": {
+    "title": "Phương pháp 4 bước",
+    "subtitle": "Mỗi bài học đều theo cùng một nhịp — nghe, gõ, sửa, đọc to.",
+    "step1": {
+      "title": "Nghe",
+      "desc": "Bật audio bao nhiêu lần tùy bạn — có thể phát chậm lại."
+    },
+    "step2": {
+      "title": "Gõ",
+      "desc": "Gõ lại chính xác những gì bạn nghe được, từng từ một."
+    },
+    "step3": {
+      "title": "Kiểm tra",
+      "desc": "Xem từng từ sai được đánh dấu và sửa lại câu của bạn."
+    },
+    "step4": {
+      "title": "Đọc to",
+      "desc": "Đọc to câu đúng một lần để ghi nhớ lâu hơn."
+    }
   }
 }

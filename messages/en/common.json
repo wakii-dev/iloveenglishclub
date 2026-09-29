@@ -1,6 +1,6 @@
 {
   "appName": "I Love English Club",
-  "nav": { "home": "Home" },
+  "nav": { "home": "Home", "levels": "Levels" },
   "header": {
     "login": "Log in",
     "register": "Sign up",

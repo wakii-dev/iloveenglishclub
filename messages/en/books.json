@@ -1,0 +1,24 @@
+{
+  "levels": {
+    "title": "Choose your level",
+    "subtitle": "Seven Cambridge English Prepare levels — from Pre-A1 to B2 First. Pick one and start listening.",
+    "units": "{count} units",
+    "lessons": "{count} lessons"
+  },
+  "book": {
+    "backToLevels": "All levels",
+    "cefr": "CEFR level",
+    "targetExam": "Target exam",
+    "noExam": "Gradual path — no single target exam",
+    "units": "Units",
+    "lessons": "Lessons",
+    "unitsCount": "{count, plural, one {# unit} other {# units}}",
+    "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}",
+    "yourProgress": "Your progress"
+  },
+  "unit": {
+    "backToBook": "Back to {book}",
+    "lessonsCount": "{count, plural, one {# lesson} other {# lessons}}",
+    "lessonSentences": "{count, plural, one {# sentence} other {# sentences}}"
+  }
+}
