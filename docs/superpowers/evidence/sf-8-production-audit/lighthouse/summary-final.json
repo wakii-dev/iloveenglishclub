@@ -1,0 +1,88 @@
+{
+  "base": "http://localhost:3110",
+  "thresholds": {
+    "performance": 0.85,
+    "accessibility": 0.95
+  },
+  "runs": 3,
+  "perUrl": [
+    {
+      "url": "/en",
+      "performance": {
+        "median": 0.93,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/vi",
+      "performance": {
+        "median": 0.91,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books",
+      "performance": {
+        "median": 0.95,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 0.98,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3",
+      "performance": {
+        "median": 0.95,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3/units/1",
+      "performance": {
+        "median": 0.95,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/en/books/level-3/units/1/lessons/1/listen-and-type",
+      "performance": {
+        "median": 0.94,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    },
+    {
+      "url": "/vi/books/level-3/units/1/lessons/1/listen-and-type",
+      "performance": {
+        "median": 0.92,
+        "pass": true
+      },
+      "accessibility": {
+        "median": 1,
+        "pass": true
+      }
+    }
+  ],
+  "pass": true
+}
