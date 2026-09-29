@@ -14,9 +14,9 @@
   --foreground: #432818; /* nâu đậm */
   --card: #ffffff;
   --card-foreground: #432818;
-  --primary: #e85d3d; /* coral */
+  --primary: #c2482e; /* coral đậm — SF-8 a11y: 4.68:1 trên kem (was #e85d3d 3.29:1 FAIL Lighthouse) */
   --primary-foreground: #fff8f0;
-  --secondary: #0e9488; /* teal — fill progress + accents */
+  --secondary: #0b756d; /* teal đậm — SF-8 a11y: 5.27:1 trên kem (was #0e9488 3.55:1 FAIL) */
   --secondary-foreground: #ffffff;
   --muted: #fbeedd;
   --muted-foreground: #8a6b52;

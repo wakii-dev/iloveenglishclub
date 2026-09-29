@@ -17,12 +17,16 @@ export async function LevelCard({ book }: { book: LocalizedBook }) {
     >
       <div
         className="flex h-16 items-center justify-between gap-2 rounded-t-[18px] px-4 text-white"
-        style={{ backgroundColor: book.color }}
+        style={{
+          // SF-8 a11y: band đậm 40% (color-mix) — chữ trắng ≥5.4:1 trên mọi
+          // level color (raw #f59e0b chỉ 2.1:1 — FAIL Lighthouse color-contrast)
+          backgroundColor: `color-mix(in srgb, ${book.color} 60%, black)`,
+        }}
       >
         <span className="font-display text-[15px] font-bold leading-tight">
           {book.title}
         </span>
-        <span className="rounded-full bg-white/[0.22] px-2.5 py-0.5 text-[12px] font-extrabold whitespace-nowrap">
+        <span className="rounded-full bg-black/30 px-2.5 py-0.5 text-[12px] font-extrabold whitespace-nowrap">
           {book.cefrLabel}
         </span>
       </div>
