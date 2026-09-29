@@ -75,4 +75,4 @@ review-nhóm-2 fixes · 7c363db Rule 0 flow
   helper lessonIdByNumber chống tái diễn.
 
 == FOLLOW-UP CHAIN (post-evidence commits — convention SF-8 #7) ==
-dfeb1e3 (evidence commit) · 02ce969 (plan tick 11/11 — B2) · 10569e4 (P2 mock comment — review nhóm 2 cuối) · a5070ee (self-clean file-level 3 spec — sweep bắt gap) · code commit cuối = 7c363db
+dfeb1e3 (evidence commit) · 02ce969 (plan tick 11/11 — B2) · 10569e4 (P2 mock comment — review nhóm 2 cuối) · a5070ee (self-clean file-level 3 spec) · ac49975 (poll 60s — verifier P2) · code commit cuối = 7c363db
