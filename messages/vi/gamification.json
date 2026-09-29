@@ -1,1 +1,46 @@
-{}
+{
+  "header": {
+    "xp": "XP",
+    "streakAria": "{count, plural, =0 {chưa có chuỗi} other {chuỗi # ngày}}",
+    "statsAria": "{xp} XP, {count, plural, =0 {chưa có chuỗi} other {chuỗi # ngày}}"
+  },
+  "topUsers": {
+    "title": "Bảng xếp hạng",
+    "lead": "Điểm tuần reset vào mỗi sáng thứ Hai (giờ Việt Nam). Giữ chuỗi học của bạn!",
+    "weekly": "Tuần này",
+    "allTime": "Toàn thời gian",
+    "rank": "#",
+    "player": "Học viên",
+    "xp": "XP",
+    "empty": "Chưa có điểm nào — hãy là người đầu tiên học bài!",
+    "anonymous": "Ẩn danh",
+    "medalAria": "Hạng {rank}"
+  },
+  "me": {
+    "title": "Tiến độ của tôi",
+    "loginRequired": "Đăng nhập để xem tiến độ, chuỗi ngày học và thống kê của bạn.",
+    "loginCta": "Đăng nhập",
+    "stats": {
+      "partsPracticed": "Phần đã luyện",
+      "accuracy": "Độ chính xác TB",
+      "listenTime": "Thời gian nghe",
+      "xp": "Tổng XP",
+      "streak": "Chuỗi hiện tại"
+    },
+    "heatmap": {
+      "title": "12 tuần gần nhất",
+      "empty": "Chưa có ngày học nào — hoàn thành một phần để thắp sáng ngày đầu tiên!",
+      "legendLess": "Ít",
+      "legendMore": "Nhiều",
+      "cellAria": "{date} · {parts} phần",
+      "summary": "{days} ngày có học · {parts} phần trong 12 tuần qua"
+    },
+    "books": {
+      "title": "Sách của bạn",
+      "progress": "{done}/{total} bài học · {percent}%",
+      "notStarted": "Chưa bắt đầu",
+      "complete": "Hoàn thành 🎉"
+    },
+    "minutes": "{minutes} phút"
+  }
+}

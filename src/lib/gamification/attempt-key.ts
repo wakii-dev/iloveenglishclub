@@ -1,0 +1,29 @@
+/**
+ * Client stable attempt-id SF-6 (ACCEPTANCE: Enter đôi nhanh → 1 attempt).
+ * UUID cache theo (partId, typedText, relaxed, usedHint) — cùng input check
+ * lại (kể cả re-submit sau mount mới) → CÙNG client_attempt_id → unique
+ * constraint attempts_user_part_client_unique chặn row kép; đổi text/flags →
+ * id mới → attempt mới (attempts log đầy đủ theo spec §5.5).
+ *
+ * Module-level Map sống theo SPA session (client-nav giữ, reload mất —
+ * server vẫn idempotent nhờ first-attempt-XP nên khôngSide-effect kinh tế).
+ */
+
+const ids = new Map<string, string>();
+
+export function attemptIdFor(
+  partId: number,
+  typedText: string,
+  relaxed: boolean,
+  usedHint: boolean,
+): string {
+  const key = `${partId}\u0000${typedText}\u0000${relaxed ? 1 : 0}\u0000${
+    usedHint ? 1 : 0
+  }`;
+  let id = ids.get(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    ids.set(key, id);
+  }
+  return id;
+}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -13,6 +15,15 @@ import {
 } from "@/lib/dictation/store";
 import { clampSeek } from "@/lib/dictation-ui/format";
 import { readRelaxedMode, updateRelaxedMode } from "@/lib/actions/relaxed-mode";
+import { submitAttempt } from "@/lib/actions/submit-attempt";
+import { attemptIdFor } from "@/lib/gamification/attempt-key";
+import { notifyStatsUpdated } from "@/lib/gamification/events";
+import {
+  hasPendingAttempts,
+  savePendingAttempts,
+  takePendingAttempts,
+  type PendingAttempt,
+} from "@/lib/gamification/pending-commit";
 import { StartGate } from "./start-gate";
 import { SentenceDots } from "./sentence-dots";
 import { DictationPlayer } from "./dictation-player";
@@ -28,6 +39,14 @@ import { ResultsScreen } from "./results-screen";
 import { RelaxedToggle } from "./relaxed-toggle";
 import { LoginBanner } from "./login-banner";
 import { XpChip } from "./xp-chip";
+
+/** Key dedup submit: (partId, text, relaxed, hint) — khớp attemptIdFor. */
+const submitKey = (
+  partId: number,
+  text: string,
+  relaxed: boolean,
+  hint: boolean,
+) => `${partId} ${text} ${relaxed ? 1 : 0} ${hint ? 1 : 0}`;
 
 export interface DictationLessonProps {
   bookTitle: string;
@@ -67,6 +86,7 @@ export function DictationLesson({
   const t = useTranslations("lesson");
   const { data: session } = useSession();
   const user = session?.user ?? null;
+  const pathname = usePathname();
 
   const phase = useDictationStore((s) => s.phase);
   const currentPartIndex = useDictationStore((s) => s.currentPartIndex);
@@ -190,14 +210,120 @@ export function DictationLesson({
     };
   }, []);
 
-  // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
+  // ─── Reset store khi rời route: BỎ (SF-6 guest-commit — state in-memory
+  // phải SỐNG SÓT qua client-nav login giữa chừng; stale giữa 2 lesson vẫn
+  // được chặn bởi doStart() reset trước khi nạp parts) ───
   useEffect(
     () => () => {
-      dictationStore.getState().reset();
       if (relaxedFailTimer.current) clearTimeout(relaxedFailTimer.current);
     },
     [],
   );
+
+  // ─── P0 review-fix: store singleton sống qua client-nav — khi mount một
+  // lesson KHÁC, effect submit/mirror bên dưới đọc getState() theo INDEX và
+  // map sang partId của lesson mới → ghost-submit (text A × part B, XP sai).
+  // Reset theo SIGNATURE (transcript) — cùng lesson (login giữa chừng quay
+  // lại) → giữ state để guest-commit; khác lesson → reset sạch. Effect này
+  // KHAI BÁO TRƯỚC các effect submit/mirror (thứ tự chạy = thứ tự khai báo).
+  // Bỏ unmount-reset (T6) vẫn đúng: đây là điểm reset duy nhất cần thiết. ───
+  useEffect(() => {
+    const s = dictationStore.getState();
+    const sameLesson =
+      s.parts.length === 0 ||
+      (s.parts.length === parts.length &&
+        s.parts.every((p, i) => p.transcript === parts[i]?.text));
+    if (!sameLesson) dictationStore.getState().reset();
+  }, [parts]);
+
+  // ─── SF-6 persist (context pack #8): user đã login → mỗi check submit
+  // server (recompute phía server). Cùng effect phủ cả guest login giữa
+  // chừng qua client-nav (§5.8): khi user xuất hiện, parts có attempts từ
+  // session guest được commit theo — attemptIdFor cho CÙNG id nên idempotent. ───
+  const userId = user?.id ?? null;
+  const sentSubmitsRef = useRef(new Set<string>());
+  const submitOne = (partId: number, text: string, relaxed: boolean, hint: boolean) => {
+    const key = submitKey(partId, text, relaxed, hint);
+    if (sentSubmitsRef.current.has(key)) return;
+    sentSubmitsRef.current.add(key); // add ĐỒNG BỘ trước await — chặn fire kép
+    submitAttempt({
+      partId,
+      typedText: text,
+      usedHint: hint,
+      clientAttemptId: attemptIdFor(partId, text, relaxed, hint),
+    })
+      .then((r) => {
+        if (r?.ok) {
+          notifyStatsUpdated();
+        } else {
+          // lỗi server (mạng/validate) → mở khóa để submit lại ở lần
+          // partsState kế; không phá flow học
+          sentSubmitsRef.current.delete(key);
+          console.error("[dictation] submit rejected:", r?.error);
+        }
+      })
+      .catch((e) => {
+        sentSubmitsRef.current.delete(key);
+        console.error("[dictation] submit failed:", e);
+      });
+  };
+  useEffect(() => {
+    if (!userId) return;
+    const s = dictationStore.getState();
+    s.parts.forEach((part, i) => {
+      if (part.attempts === 0 || !part.lastDiff) return;
+      const partId = parts[i]?.id;
+      if (partId == null) return;
+      submitOne(partId, part.typedText, s.relaxed, part.usedHint);
+    });
+    // parts: data tĩnh theo lesson (props không đổi giữa renders) — cho vào
+    // deps sẽ chạy effect mỗi timeupdate (4x/s) vô ích; dedup set đã chống
+    // submit kép.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partsState, userId]);
+
+  // ─── SF-6 guest-commit FULL-RELOAD leg (§5.8): login redirect về lesson là
+  // hard nav → store chết. Guest: mirror kết quả in-memory vào sessionStorage
+  // liên tục; user quay lại (mount, store idle): commit snapshot rồi xóa.
+  // Trùng snapshot với đường client-nav → cùng attemptIdFor → idempotent. ───
+  useEffect(() => {
+    if (userId) return;
+    const s = dictationStore.getState();
+    const pend: PendingAttempt[] = [];
+    s.parts.forEach((part, i) => {
+      if (part.attempts === 0) return;
+      const partId = parts[i]?.id;
+      if (partId == null) return;
+      pend.push({
+        partId,
+        typedText: part.typedText,
+        usedHint: part.usedHint,
+        relaxed: s.relaxed,
+      });
+    });
+    if (pend.length > 0) savePendingAttempts(pend);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partsState, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const pend = takePendingAttempts();
+    if (pend.length === 0) return;
+    pend.forEach((p) => submitOne(p.partId, p.typedText, p.relaxed, p.usedHint));
+  }, [userId]);
+
+  // ─── Session stale sau login SOFT-nav (§5.8): redirect về lesson bằng RSC
+  // redirect → SessionProvider giữ session cũ (guest), header layout không
+  // remount → không tự refetch. Có snapshot trong tay = user vừa login quay
+  // lại → fetch session chủ động; provider cập nhật → userId flip → commit
+  // effect chạy + header hiện user/XP. Guest thường (không snapshot) không
+  // bị đụng. ───
+  useEffect(() => {
+    if (userId) return;
+    if (hasPendingAttempts()) {
+      void getSession().catch(() => {});
+    }
+  }, [userId]);
 
   const doStart = async () => {
     // Chuỗi 1 click (spec §3.1): reset (Try-again từ complete) → nạp parts →
@@ -440,7 +566,7 @@ export function DictationLesson({
             />
           </div>
 
-          {!user ? <LoginBanner className="mt-4" /> : null}
+          {!user ? <LoginBanner className="mt-4" nextHref={pathname} /> : null}
 
           <div className="mt-7">
             <ProgressBar

@@ -7,7 +7,9 @@
     "logout": "Đăng xuất",
     "account": "Tài khoản",
     "language": "Ngôn ngữ",
-    "theme": "Giao diện"
+    "theme": "Giao diện",
+    "myProgress": "Tiến độ của tôi",
+    "leaderboard": "Bảng xếp hạng"
   },
   "footer": {
     "tagline": "Nghe. Gõ. Học.",

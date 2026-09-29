@@ -52,12 +52,7 @@ describe("messages per-namespace parity EN⇄VI", () => {
     expect(missing).toEqual([]);
   });
 
-  it("namespace trống cho SF sau (gamification) là object rỗng", () => {
-    // lesson được SF-2 fill (placeholder lesson page) — không còn assert rỗng
-    // admin được SF-5 fill (Admin CMS VU-20) — bỏ khỏi assert rỗng
-    for (const ns of ["gamification"]) {
-      expect(en[ns]).toEqual({});
-      expect(vi[ns]).toEqual({});
-    }
-  });
+  // Merge sf-6: test "namespace trống cho SF sau" bỏ — mọi namespace đã có
+  // chủ (lesson=SF-2, admin=SF-5, gamification=SF-6, seo đặt file riêng),
+  // premise rỗng của cả hai phía conflict đều hết hạn.
 });
