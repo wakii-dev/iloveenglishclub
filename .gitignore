@@ -36,8 +36,14 @@ yarn-error.log*
 # vercel
 .vercel
 
-# storage local driver (SF-5) — upload dev ghi vào public/uploads
+# storage local driver (SF-5) — driver local ghi upload vào public/{path};
+# demo audio public/audio là COMMITTED, upload test (public/audio/unit->=90…)
+# dọn tay — không gitignore được cả cây public/audio
 /public/uploads
+
+# playwright (SF-5) — trace/artifact của test runs
+/test-results
+/playwright-report
 
 # typescript
 *.tsbuildinfo

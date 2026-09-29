@@ -246,6 +246,7 @@ export function AudioUploader({
           {items.map((item) => (
             <div
               key={item.id}
+              data-upload-row={item.name}
               className="flex items-center gap-3 rounded-[14px] border border-border bg-muted/30 px-3.5 py-2.5"
             >
               <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">
