@@ -1,1 +1,28 @@
-{}
+{
+  "nav": {
+    "dashboard": "Tổng quan",
+    "books": "Sách",
+    "users": "Người dùng"
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "lead": "Toàn bộ nội dung platform — bài học, audio và người học.",
+    "publishedLessons": "Bài đã xuất bản",
+    "draftLessons": "Bài nháp",
+    "parts": "Câu hỏi (parts)",
+    "partsMissingAudio": "Câu thiếu audio",
+    "users": "Người dùng",
+    "newUsers7d": "Người mới (7 ngày)",
+    "perBook": "Theo sách",
+    "colBook": "Sách",
+    "colUnits": "Units",
+    "colLessons": "Bài (XB/tổng)",
+    "colParts": "Câu",
+    "colMissing": "Thiếu audio",
+    "recentAttempts": "Lần học gần đây",
+    "attemptsEmpty": "Chưa có ai học — attempts sẽ hiện ở đây.",
+    "newUsers": "Người dùng mới nhất",
+    "usersEmpty": "Chưa có người dùng nào đăng ký.",
+    "viewBook": "Mở sách"
+  }
+}

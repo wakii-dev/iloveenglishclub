@@ -1,1 +1,28 @@
-{}
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "books": "Books",
+    "users": "Users"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "lead": "All platform content — lessons, audio and learners.",
+    "publishedLessons": "Published lessons",
+    "draftLessons": "Draft lessons",
+    "parts": "Parts",
+    "partsMissingAudio": "Parts missing audio",
+    "users": "Users",
+    "newUsers7d": "New users (7 days)",
+    "perBook": "Per book",
+    "colBook": "Book",
+    "colUnits": "Units",
+    "colLessons": "Lessons (pub/total)",
+    "colParts": "Parts",
+    "colMissing": "Missing audio",
+    "recentAttempts": "Recent attempts",
+    "attemptsEmpty": "No attempts yet — they will show up here.",
+    "newUsers": "Newest users",
+    "usersEmpty": "No users have registered yet.",
+    "viewBook": "Open book"
+  }
+}
