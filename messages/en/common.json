@@ -7,7 +7,9 @@
     "logout": "Log out",
     "account": "Account",
     "language": "Language",
-    "theme": "Theme"
+    "theme": "Theme",
+    "myProgress": "My progress",
+    "leaderboard": "Leaderboard"
   },
   "footer": {
     "tagline": "Listen. Type. Learn.",
