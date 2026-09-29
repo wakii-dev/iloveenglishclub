@@ -5,7 +5,7 @@ tdd: RED→GREEN (site.test.ts + jsonld.test.ts + sitemap-data.test.ts viết TR
   browser-verify Rule 0 + e2e Playwright + JSON-LD parse assert — metadata
   layer không có unit-surface ngoài pure helpers; spec-critic 2 vòng PROCEED,
   plan-critic PROCEED 4 P1 verify-steps đã absorb)
-code-commit: 37a8aa1 (HEAD sau re-review APPROVED vòng 2; run đầu e472a8a;
+code-commit: 37a8aa1 (code HEAD sau re-review APPROVED vòng 2; docs final 70a16c8; run đầu e472a8a;
   T1 2f947d5 · T2 2e69a8d · T3 f9f5430 · T4 d9d1146; TDD helpers RED→GREEN
   tại T1 — test viết trước module, GREEN 18/18; metadata surfaces bằng
   browser-verify Rule 0 + JSON-LD parse assert + e2e)
