@@ -24,3 +24,6 @@ Rule 0 3 tầng (tôi tự thấy bằng mắt):
   VISUAL — headless Chrome cùng build (CDP Orca timeout — fallback Rule 0): home en/vi, 404-vi, login-vi/register-vi post-fix, OG en/vi/book — không layout break, diacritics VI chuẩn
   FLOW — Playwright: carousel slide/arrows/progress + browse trọn home→lesson cả en/vi (43 e2e); switch locale giữ trang (i18n-switch baseline trên ilec_sf5)
 Incidental: 1 run nhầm config (testMatch khớp path worktree chứa "i18n") đã chạy toàn bộ baseline+admin suite (54 tests) trên server 3212/ilec_sf5 — ALL PASS = cross-lane signal; đã fix testMatch anchor basename (12f7d9f).
+
+Re-verify sau review P2 (292d861 — no-op regex + redundant assertion, 2 spec files):
+  unit  npm test → 233/233 (unchanged) · e2e sf5 → 43/43 (44.0s) — 0 lane đổi, khớp convention SF-1 (test-run re-verify sau P2 fix)
