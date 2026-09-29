@@ -13,7 +13,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: regression GREEN cả 2 lần (trước + sau khi bỏ workaround); evidence mutation RED.
 - [x] 5. oauth-google-probe — googleEnabled=false (không creds): /login + /register KHÔNG nút Google; `/api/auth/providers` trả `{}`; signin/google → behavior xác định (ghi nhận); findings-sf3.md ghi giới hạn env (không fail mơ hồ).
        AC: findings row BY-DESIGN/ENV-LIMIT có rationale.
-- [ ] 6. session-lifecycle — logout sạch (header guest); /me guest → redirect `/{locale}/login?next=/{locale}/me`; /admin guest → redirect login?next=/admin (middleware — probe READ-ONLY); user thường vào /admin → layout chặn (probe).
+- [x] 6. session-lifecycle — logout sạch (header guest); /me guest → redirect `/{locale}/login?next=/{locale}/me`; /admin guest → redirect login?next=/admin (middleware — probe READ-ONLY); user thường vào /admin → layout chặn (probe).
        AC: redirect chain đúng từng route.
 - [ ] 7. submit-attempt-edge — integration `scripts/sf3-submit-attempt.integration.test.ts` (mock auth, DB thật): double-submit race 2 Promise.all cùng clientAttemptId → 1 row, XP 1 lần; 2 tab (2 clientAttemptId khác nhau) → 2 rows, XP 1 lần; MAX_TYPED_LEN 2000 (2000 ok / 2001 badInput); clientAttemptId non-UUID → badInput; unauthorized → error; part unpublished → partNotFound. e2e UI: MAX_TYPED_LEN qua textbox → graceful, không row thừa.
        AC: đúng bảng truth; unique constraint chứng minh bằng row count.
