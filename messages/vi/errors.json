@@ -1,0 +1,16 @@
+{
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "code": "404",
+    "desc": "Trang bạn tìm có thể đã bị di chuyển, xóa bỏ, hoặc chưa từng tồn tại. Quay lại lộ trình học nhé.",
+    "backHome": "Về trang chủ",
+    "browseLevels": "Xem các cấp độ"
+  },
+  "error": {
+    "title": "Có lỗi xảy ra",
+    "desc": "Đã xảy ra lỗi ngoài dự kiến. Tiến độ của bạn vẫn được lưu — thử lại, hoặc về trang chủ.",
+    "retry": "Thử lại",
+    "backHome": "Về trang chủ",
+    "digest": "Mã lỗi"
+  }
+}
