@@ -67,3 +67,23 @@ export async function profileOf(
   `;
   return rows[0] ?? null;
 }
+
+/** profiles meta (locale, display_name) — register edge SF-3 (locale theo route). */
+export async function profileMetaOf(
+  email: string,
+): Promise<{ locale: string; displayName: string | null } | null> {
+  const rows = await client()<[
+    { locale: string; displayName: string | null },
+  ]>`
+    select p.locale::text as locale, p.display_name as "displayName"
+    from profiles p join users u on u.id = p.id
+    where u.email = ${email}
+  `;
+  return rows[0] ?? null;
+}
+
+/** Đếm user rows theo email — duplicate register không được tạo row thứ 2. */
+export async function userCountByEmail(email: string): Promise<number> {
+  const [row] = await client()`select count(*)::int as n from users where email = ${email}`;
+  return row?.n ?? 0;
+}

@@ -21,6 +21,22 @@ function parseLocale(raw: FormDataEntryValue | null): Locale {
   return raw === "vi" ? "vi" : "en";
 }
 
+/**
+ * `next` hợp lệ = path-relative NỘI bộ — loại absolute URL, protocol-relative
+ * `//evil.com` VÀ backslash `/\evil.com` (WHATWG URL normalize "\" → "/" cho
+ * special scheme → new URL('/\evil.com', base) có host evil.com — review P0
+ * VU-27; NEXT_REDIRECT đẩy Next router vào client-side exception — QA-200,
+ * e2e progress-login probe). Phải khớp guard client login-form.
+ */
+function internalNext(raw: FormDataEntryValue | null): string | null {
+  const next = raw?.toString();
+  return next !== undefined &&
+    next.startsWith("/") &&
+    !/^\/[/\\]/.test(next)
+    ? next
+    : null;
+}
+
 export async function loginAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -28,8 +44,7 @@ export async function loginAction(
   const email = formData.get("email")?.toString().trim().toLowerCase();
   const password = formData.get("password")?.toString() ?? "";
   const locale = parseLocale(formData.get("locale"));
-  const next = formData.get("next")?.toString();
-  const redirectTo = next?.startsWith("/") ? next : `/${locale}`;
+  const redirectTo = internalNext(formData.get("next")) ?? `/${locale}`;
 
   try {
     await signIn("credentials", { email, password, redirectTo });
