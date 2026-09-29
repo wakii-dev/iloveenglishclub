@@ -1,0 +1,44 @@
+SF-4 Dictation UI lesson page (VU-19) — test-run evidence
+date: 2026-09-29
+code-commit: 57663b3 (HEAD; TDD helpers RED→GREEN tại T1 — test viết trước module, GREEN 16/16; UI flow TDD-ghi-đè bằng browser-verify Rule 0 từng task + e2e)
+
+== Unit (vitest) ==
+Test Files  9 passed (9)
+Tests       159 passed (159) — gồm 16 test mới src/lib/dictation-ui/format.test.ts
+              (formatTime/clampSeek/waveformFillCount/lessonFacts/accuracyRingDash)
+              + 143 test SF-1/2/3 không regression
+
+== E2E (npx playwright test, chromium headless, port 3100) ==
+6 passed (9.6s) / 0 failed:
+  1. Start gate → player → gõ sai → Enter check → diff đỏ + chip 'friends' →
+     sửa → check lại → "Exactly right!" → Enter next (Part 2)
+  2. Hint lộ 1 từ + pill XP ×0.8; check-đúng-hint → chip +8 XP guest 'not saved'
+  3. Skip không cộng progress (1 done + 1 skip → 25%); part-nav ‹ review readOnly;
+     › thuần điều hướng; › disabled khi pending (không nhảy tới)
+  4. Paste chặn + note; autocapitalize=none/autocorrect=off/spellcheck=false
+  5. Hết bài → Results 100% (TB part done) / +27 XP earned (8 hint + 10 + 9
+     banked-qua-skip) / 'not saved' ×2 / banner login / streak placeholder /
+     Try-again → Part 1 lại
+  6. Transcript: pending blur + lock-note; Play all highlight câu đầu
+
+== Rule 0 — Browser verify 3 tầng (thủ công, screenshots /tmp/sf4-shots) ==
+Tầng 1 DOM: audio.currentTime chạy (0.2→1.8s) + slider aria-valuenow 0→1→2;
+  seek 90% → 3.38s; Esc pause; Tab replay (t reset + playing); speed cycle
+  1x→1.25x; textarea readOnly khi review; profile.relaxed_mode=t qua action.
+Tầng 2 VISUAL: t1-start/t2-player/t3-correct/t4-transcript/t5-results.png so
+  prototype b.html — tokens/radius/shadow-đặc/worksheet/dots/ring khớp hand-off
+  B "Classroom Warm" (đọc ảnh trực tiếp, không chỉ DOM).
+Tầng 3 FLOW: open lesson → Start → play → type → check → fix → hint → skip →
+  nav → results → try-again đi trọn (scripts + e2e); user-login relaxed persist
+  2 hướng (auto-ON từ profile; off→reload strict; on→reload relaxed).
+
+== Typecheck + lint ==
+tsc --noEmit: 0 errors · eslint: 0 errors 0 warnings
+
+== Known deviations (có chủ đích, ghi trong spec §1/§6) ==
+- KHÔNG jsdom/Testing-Library component tests (infra mới ngoài scope) — flow do
+  e2e phủ; state machine do SF-3 phủ 100% nhánh
+- speed "nghe khác" verify bằng DOM (playbackRate set) + screenshot — headless
+  không có tiếng; chưa probe iOS Safari thật (context pack: "nếu có thiết bị")
+- context pack touch-map path stale (thiếu route group (public)) — theo path thật
+exit 0
