@@ -1,6 +1,6 @@
 SF-3 Dictation core lib (VU-18) — test-run evidence
 date: 2026-09-29
-code-commit: bd678a3 (HEAD tại lúc chạy)
+code-commit: f3e041e (re-run sau review-P2 fixes; run đầu tại bd678a3 — cùng số liệu)
 tdd: RED→GREEN (mỗi task: test viết trước — RED 11/16/15/9/46 fail trên stub → GREEN; T6 gap hint-relaxed branch bắt bởi coverage threshold)
 
 == Gate chính thức: npx vitest run --coverage (spec §4) ==
@@ -25,3 +25,6 @@ Test Files  6 passed (6) / Tests  136 passed (136) — bao gồm test SF-1 sẵn
 - skip không cộng done (lessonProgress); next-sai → skipped ngầm
 - complete ⟺ mọi part done-or-skipped (part cuối done/skip → complete)
 exit 0
+
+== Re-run sau code-review P2 fixes (f3e041e) ==
+vitest --coverage: 136 passed, 100%×4, exit 0; typecheck ok; lint 0 errors
