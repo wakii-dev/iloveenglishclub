@@ -188,7 +188,6 @@ export function DictationLesson({
       audio.removeEventListener("seeked", onSeeked);
       audio.removeEventListener("ended", onEnded);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
@@ -207,6 +206,8 @@ export function DictationLesson({
     // → đọc live getSession(); pref null → await (sticky activation vẫn hợp
     // lệ cho play() sau await).
     dictationStore.getState().reset();
+    appliedSrcRef.current = null; // 1-part lesson: start() không bump nonce —
+    // buộc src load lại từ đầu, né audio kẹt cuối (review P2, side SF-4)
     dictationStore.getState().start(parts.map((p) => ({ transcript: p.text })));
     const sessionUser =
       user ?? ((await getSession())?.user ?? null);
