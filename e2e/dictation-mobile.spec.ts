@@ -49,6 +49,12 @@ test.describe("Dictation mobile (iPhone 12 emulated)", () => {
     expect(box!.y + box!.height).toBeLessThan(844 - 20);
     expect(box!.x).toBeGreaterThanOrEqual(0);
 
+    // QA-107 regression: tabs row (XP chip + part label) KHÔNG bị clip mép phải
+    const vp = await page.evaluate(() => window.innerWidth);
+    const xpChip = await page.locator("span", { hasText: /\+\s?\d+ XP/ }).first().boundingBox();
+    expect(xpChip).toBeTruthy();
+    expect(xpChip!.x + xpChip!.width).toBeLessThanOrEqual(vp + 1);
+
     // Audio thật phát sau 1 tap (autoplay policy mobile emulated — gesture)
     await expect
       .poll(

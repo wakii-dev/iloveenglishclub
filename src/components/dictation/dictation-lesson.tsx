@@ -463,7 +463,7 @@ export function DictationLesson({
         currentIndex={currentPartIndex}
       />
 
-      <div className="mb-3.5 flex items-center gap-2">
+      <div className="mb-3.5 flex flex-wrap items-center gap-2 gap-y-2">
         <div className="flex gap-2">
           {(["dictation", "transcript"] as const).map((key) => (
             <button
