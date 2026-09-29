@@ -96,4 +96,34 @@ describe("summarize — per-URL median so ngưỡng + overall pass", () => {
     expect(r.perUrl).toHaveLength(0);
     expect(r.pass).toBe(false);
   });
+  it("expectedUrls: URL mất HẾT run (0 entry) vẫn xuất hiện pass:false — fail-closed, không false-PASS (review P1)", () => {
+    // 1/3 URL mất hết run → perUrl phải ĐỦ expected (row null pass:false),
+    // overall false. Trên code cũ (bỏ qua tham số 3) test này ĐỎ: perUrl
+    // thiếu URL, pass=true — bug false-PASS thật của runner gate.
+    const entries = [
+      { url: "/ok", scores: { performance: 0.9, accessibility: 0.96 } },
+      { url: "/ok", scores: { performance: 0.9, accessibility: 0.96 } },
+      { url: "/ok", scores: { performance: 0.9, accessibility: 0.96 } },
+      // /lost không có entry nào — cả 3 run fail
+    ];
+    const r = summarize(entries, TH, ["/ok", "/lost"]) as Summary & {
+      measuredRuns: number;
+    };
+    expect(r.perUrl).toHaveLength(2);
+    const lost = r.perUrl.find((x: { url: string }) => x.url === "/lost");
+    expect(lost).toBeDefined();
+    expect(lost!.performance.pass).toBe(false);
+    expect(lost!.accessibility.pass).toBe(false);
+    expect(r.pass).toBe(false);
+    expect(r.measuredRuns).toBe(3);
+  });
+  it("expectedUrls: đủ URL → pass theo median như thường", () => {
+    const entries = [
+      { url: "/a", scores: { performance: 0.9, accessibility: 0.96 } },
+      { url: "/b", scores: { performance: 0.9, accessibility: 0.96 } },
+    ];
+    const r = summarize(entries, TH, ["/a", "/b"]) as Summary;
+    expect(r.perUrl).toHaveLength(2);
+    expect(r.pass).toBe(true);
+  });
 });

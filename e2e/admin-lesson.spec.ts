@@ -256,9 +256,9 @@ test.describe("Admin CMS E2E", () => {
     // lesson demo L3-U1-L1 — part 1 có attempt (globalSetup seed)
     await page.goto("/admin/books/level-3/units/1/lessons/1");
     const part1 = page.locator("ol li").first();
-    // SF-8: assertion cũ /1 lượt học/ là digit-substring brittle trên DB dùng
-    // chung (count 58 → không match; 21 → match). Intent: attemptsCount > 0.
-    await expect(part1.getByText(/\d+ lượt học/)).toBeVisible();
+    // SF-8: assertion cũ /1 lượt học/ digit-substring brittle VÀ match cả "0" —
+    // chung (58 không match, 21 match, 0 lượt học cũng match). Intent: count ≥ 1.
+    await expect(part1.getByText(/[1-9]\d* lượt học/)).toBeVisible();
     const deleteBtn = part1.getByRole("button", { name: "Xóa câu" });
     await expect(deleteBtn).toBeDisabled();
     await expect(deleteBtn).toHaveAttribute("title", /không xóa được/);

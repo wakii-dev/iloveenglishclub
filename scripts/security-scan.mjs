@@ -35,7 +35,11 @@ function check(name, fn) {
 }
 
 const sh = (cmd, args) =>
-  execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  execFileSync(cmd, args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    timeout: 120_000, // npm audit gọi network — treo không được giữ scan
+  });
 // npm audit exit≠0 khi CÓ vulns (chuẩn npm) — đọc stdout dù rc≠0
 const shSoft = (cmd, args) => {
   try {
@@ -116,7 +120,7 @@ check("npm-audit-vs-allowlist", () => {
     1139510, // PostCSS source map path traversal — build-time
     1102341, // esbuild dev-server request forgery — dev tooling (drizzle-kit)
   ]);
-  const audit = JSON.parse(shSoft("npm", ["audit", "--json"]));
+  const audit = JSON.parse(shSoft("npm", ["audit", "--json"])); // timeout ở sh()
   const outside = [];
   for (const [pkg, v] of Object.entries(audit.vulnerabilities ?? {})) {
     for (const via of v.via ?? []) {

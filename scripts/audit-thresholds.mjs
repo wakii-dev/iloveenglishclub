@@ -40,11 +40,18 @@ export function median(scores) {
  * Tổng hợp entries (1 entry = 1 run: {url, scores: {performance, accessibility}})
  * theo URL → median per category so thresholds ({performance, accessibility})
  * → { perUrl: [{url, performance: {median, pass}, accessibility: {median, pass}}],
- *     pass: boolean } (pass === false khi entries rỗng — không có gì để PASS).
+ *     measuredRuns, pass: boolean } (pass === false khi entries rỗng — không có
+ * gì để PASS).
+ *
+ * expectedUrls (review P1 — fail-closed): khi cung cấp, URL trong danh sách mà
+ * KHÔNG có entry nào (mất hết run) vẫn xuất hiện trong perUrl với median null
+ * + pass:false → runner không thể false-PASS vì "URL vắng mặt". measuredRuns
+ * = số entry đo được THẬT (không phải số run kế hoạch).
  * @param {Array<{url: string, scores: Record<string, number|null>}>} entries
  * @param {Record<string, number>} thresholds
+ * @param {string[]} [expectedUrls]
  */
-export function summarize(entries, thresholds) {
+export function summarize(entries, thresholds, expectedUrls) {
   const byUrl = new Map();
   for (const entry of entries ?? []) {
     const list = byUrl.get(entry.url) ?? [];
@@ -53,7 +60,9 @@ export function summarize(entries, thresholds) {
   }
   const perUrl = [];
   let pass = true;
-  for (const [url, scoreList] of byUrl) {
+  const urls = expectedUrls ?? [...byUrl.keys()];
+  for (const url of urls) {
+    const scoreList = byUrl.get(url) ?? [];
     const row = { url };
     for (const category of Object.keys(thresholds)) {
       const med = median(scoreList.map((s) => s[category]));
@@ -64,5 +73,5 @@ export function summarize(entries, thresholds) {
     perUrl.push(row);
   }
   if (perUrl.length === 0) pass = false;
-  return { perUrl, pass };
+  return { perUrl, measuredRuns: (entries ?? []).length, pass };
 }

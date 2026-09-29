@@ -52,7 +52,10 @@ if (LABEL !== "pre" && LABEL !== "final") {
 async function guard() {
   let res;
   try {
-    res = await fetch(`${BASE}/en`, { redirect: "manual" });
+    res = await fetch(`${BASE}/en`, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(10_000),
+    });
   } catch {
     console.error(`ABORT: server ${BASE} không truy cập được — spawn \`next start\` trước (build prod, KHÔNG dev).`);
     process.exit(2);
@@ -163,11 +166,21 @@ for (const url of URLS) {
 }
 rmSync(tmp, { force: true });
 
-const result = summarize(entries, THRESHOLDS);
+const result = summarize(entries, THRESHOLDS, URLS);
 writeFileSync(
   `${OUT_DIR}/summary-${LABEL}.json`,
-  `${JSON.stringify({ base: BASE, thresholds: THRESHOLDS, runs: RUNS, ...result }, null, 2)}\n`,
+  `${JSON.stringify({ base: BASE, thresholds: THRESHOLDS, runsPlanned: RUNS, ...result }, null, 2)}\n`,
 );
+// review P1 — URL mất HẾT run ≠ PASS (fail-closed tường minh, exit 2 riêng)
+const unmeasured = result.perUrl
+  .filter((row) => row.performance.median === null && row.accessibility.median === null)
+  .map((row) => row.url);
+if (unmeasured.length) {
+  console.error(
+    `URL UNMEASURED (mất hết run — không được tính PASS): ${unmeasured.join(", ")}`,
+  );
+  process.exit(2);
+}
 
 console.log(`\n== KẾT QUẢ (${LABEL}) — median/${RUNS} runs, ngưỡng a11y≥${THRESHOLDS.accessibility} perf≥${THRESHOLDS.performance} ==`);
 for (const row of result.perUrl) {

@@ -66,5 +66,5 @@ Chạy local một lần; creds không lưu vào Vercel env. Đăng nhập `/adm
 Next.js 15 App Router trên Vercel là **zero-config**: middleware, ISR/revalidateTag,
 route handlers, OG image (next/og) đều chạy native. Không có cron job, không custom header,
 không region pin, không rewrite đáng kể. Thêm vercel.json rỗng chỉ tăng bề mặt cấu hình
-lệch giữa docs và thực chạy — không thêm gì. Đ reconsider khi: cần cron (top-users snapshot?),
+lệch giữa docs và thực chạy — không thêm gì. Reconsider khi: cần cron (top-users snapshot?),
 cần header bảo mật tùy chỉnh (CSP), hoặc tách region DB/app.
