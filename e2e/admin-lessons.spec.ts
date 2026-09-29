@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import {
   cleanupQaAccount,
@@ -55,6 +56,7 @@ test.describe("Lessons CRUD edge (SF-4)", () => {
     await cleanupQaUnit(NUM);
     await cleanupQaUnit(NUM + 1); // unit riêng của delete test
     await cleanupQaAccount("sf4-lesson@test.ilec");
+    fs.rmSync(`public/audio/level-3/unit-${NUM}`, { recursive: true, force: true });
   });
 
   test("auto-number 1,2,3 (max+1) + breadcrumb điều hướng", async ({ page }) => {

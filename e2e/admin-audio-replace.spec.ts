@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import {
   cleanupQaUnit,
@@ -80,6 +81,7 @@ async function openEditor(page: Page): Promise<string> {
 test.describe("Audio replace + failsoft (SF-4)", () => {
   test.afterAll(async () => {
     await cleanupQaUnit(NUM);
+    fs.rmSync(`public/audio/level-3/unit-${NUM}`, { recursive: true, force: true });
   });
 
   test("replace UI: select câu + pick file → path giữ convention, badge tên mới, durationMs update", async ({

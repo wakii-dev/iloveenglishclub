@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import {
   cleanupQaUnit,
@@ -53,6 +54,7 @@ async function addPart(page: Page, text: string): Promise<void> {
 test.describe("Publish gate + revalidate (SF-4)", () => {
   test.afterAll(async () => {
     await cleanupQaUnit(NUM);
+    fs.rmSync(`public/audio/level-3/unit-${NUM}`, { recursive: true, force: true });
   });
 
   test("publish lesson 0 part → blocked missing=[0]; 1 part thiếu audio → blocked missing=[1]", async ({
