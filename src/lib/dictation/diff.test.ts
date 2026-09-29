@@ -201,3 +201,104 @@ describe("computeWpm — theo duration audio GỐC (context pack mục 6)", () =
     expect(computeWpm(d, 60000)).toBe(0);
   });
 });
+
+import { computeXp, scoreAttempt } from "./diff";
+
+describe("computeXp — bảng chốt 10/8/5/0 (spec §5.5, context pack ACCEPTANCE)", () => {
+  it("accuracy 1.0, không modifier, attempt đầu → 10", () => {
+    expect(computeXp({ accuracy: 1, usedHint: false, relaxed: false, isFirstAttempt: true })).toBe(10);
+  });
+
+  it("hint ×0.8 → 8 (float 10×0.8 = 8 exact)", () => {
+    expect(computeXp({ accuracy: 1, usedHint: true, relaxed: false, isFirstAttempt: true })).toBe(8);
+  });
+
+  it("relaxed ×0.5 → 5", () => {
+    expect(computeXp({ accuracy: 1, usedHint: false, relaxed: true, isFirstAttempt: true })).toBe(5);
+  });
+
+  it("hint + relaxed → 4", () => {
+    expect(computeXp({ accuracy: 1, usedHint: true, relaxed: true, isFirstAttempt: true })).toBe(4);
+  });
+
+  it("attempt lại → 0 (kể cả accuracy 1.0)", () => {
+    expect(computeXp({ accuracy: 1, usedHint: false, relaxed: false, isFirstAttempt: false })).toBe(0);
+  });
+
+  it("attempt lại + mọi modifier → vẫn 0", () => {
+    expect(computeXp({ accuracy: 1, usedHint: true, relaxed: true, isFirstAttempt: false })).toBe(0);
+  });
+
+  it("accuracy 0.3, không modifier → 3", () => {
+    expect(computeXp({ accuracy: 0.3, usedHint: false, relaxed: false, isFirstAttempt: true })).toBe(3);
+  });
+
+  it("accuracy 0.55 → round(5.5) = 6 (Math.round chốt nguyên)", () => {
+    expect(computeXp({ accuracy: 0.55, usedHint: false, relaxed: false, isFirstAttempt: true })).toBe(6);
+  });
+
+  it("accuracy 0 → 0", () => {
+    expect(computeXp({ accuracy: 0, usedHint: false, relaxed: false, isFirstAttempt: true })).toBe(0);
+  });
+});
+
+describe("scoreAttempt — wrapper recompute SF-6 (một công tắc = mode)", () => {
+  const P = {
+    transcript: "The cat sat.",
+    typed: "The cat sat.",
+    mode: "strict",
+    durationMs: 30000,
+    usedHint: false,
+    isFirstAttempt: true,
+  } as const;
+
+  it("perfect: accuracy 1, wpm 6, xp 10, allCorrect", () => {
+    const s = scoreAttempt(P);
+    expect(s.accuracy).toBe(1);
+    expect(s.wpm).toBe(6);
+    expect(s.xp).toBe(10);
+    expect(s.diff.allCorrect).toBe(true);
+  });
+
+  it("relaxed mode DERIVE xp modifier ×0.5 (không có param relaxed riêng)", () => {
+    const s = scoreAttempt({
+      transcript: "The Cat.",
+      typed: "the cat",
+      mode: "relaxed",
+      durationMs: 60000,
+      usedHint: false,
+      isFirstAttempt: true,
+    });
+    expect(s.accuracy).toBe(1);
+    expect(s.xp).toBe(5);
+  });
+
+  it("cùng input ở strict → accuracy 0 → xp 0", () => {
+    const s = scoreAttempt({
+      transcript: "The Cat.",
+      typed: "the cat",
+      mode: "strict",
+      durationMs: 60000,
+      usedHint: false,
+      isFirstAttempt: true,
+    });
+    expect(s.accuracy).toBe(0);
+    expect(s.xp).toBe(0);
+  });
+
+  it("durationMs null (fail-soft admin) → wpm 0, phần khác nguyên", () => {
+    const s = scoreAttempt({ ...P, durationMs: null });
+    expect(s.wpm).toBe(0);
+    expect(s.xp).toBe(10);
+  });
+
+  it("không phải attempt đầu → xp 0 dù accuracy 1", () => {
+    const s = scoreAttempt({ ...P, isFirstAttempt: false });
+    expect(s.xp).toBe(0);
+  });
+
+  it("usedHint → xp 8 (×0.8)", () => {
+    const s = scoreAttempt({ ...P, usedHint: true });
+    expect(s.xp).toBe(8);
+  });
+});

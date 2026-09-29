@@ -146,3 +146,56 @@ export function computeWpm(diff: DiffResult, durationMs: number): number {
   if (durationMs <= 0) return 0;
   return diff.matchedCount / (durationMs / 60000);
 }
+
+export interface AttemptScore {
+  accuracy: number;
+  wpm: number;
+  xp: number;
+  diff: DiffResult;
+}
+
+/**
+ * XP = round(10 × accuracy × hintModifier × relaxedModifier), CHỈ attempt đầu
+ * của part (spec §5.5 — attempts sau xp=0; check first-attempt trong DB là
+ * việc SF-6, lib chỉ tính thuần). Bảng chốt: 10 / 8 (hint ×0.8) / 5
+ * (relaxed ×0.5) / 0.
+ */
+export function computeXp(params: {
+  accuracy: number;
+  usedHint: boolean;
+  relaxed: boolean;
+  isFirstAttempt: boolean;
+}): number {
+  if (!params.isFirstAttempt) return 0;
+  return Math.round(
+    10 *
+      params.accuracy *
+      (params.usedHint ? 0.8 : 1) *
+      (params.relaxed ? 0.5 : 1),
+  );
+}
+
+/**
+ * Wrapper recompute DUY NHẤT SF-6 gọi khi submit attempt (spec §1.3 — một
+ * công tắc là `mode`: XP relaxedModifier derive từ mode, không có param
+ * relaxed riêng → client/server không thể lệch nhau).
+ */
+export function scoreAttempt(params: {
+  transcript: string;
+  typed: string;
+  mode: CompareMode;
+  durationMs: number | null;
+  usedHint: boolean;
+  isFirstAttempt: boolean;
+}): AttemptScore {
+  const diff = diffWords(params.transcript, params.typed, params.mode);
+  const accuracy = computeAccuracy(diff);
+  const wpm = computeWpm(diff, params.durationMs ?? 0);
+  const xp = computeXp({
+    accuracy,
+    usedHint: params.usedHint,
+    relaxed: params.mode === "relaxed",
+    isFirstAttempt: params.isFirstAttempt,
+  });
+  return { accuracy, wpm, xp, diff };
+}
