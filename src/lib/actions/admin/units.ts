@@ -50,6 +50,9 @@ export async function createUnitAction(
     console.error("[createUnitAction] insert failed:", error);
     throw error;
   }
+  // revalidate matrix (QA-302): getBook/getUnits public đếm TẤT CẢ units (kể cả
+  // draft-only) — unit mới đổi unitCount book page NGAY, stale tới 300s nếu thiếu
+  revalidateTag(CONTENT_TAG);
   return { ok: true };
 }
 
@@ -68,6 +71,9 @@ export async function updateUnitAction(
       descVi: input.descVi?.trim() || null,
     })
     .where(eq(units.id, unitId));
+  // revalidate matrix (QA-302): title/desc unit render trên public unit page +
+  // units list — mutation xong public phải fresh (deleteUnit cùng precedent)
+  revalidateTag(CONTENT_TAG);
   return { ok: true };
 }
 

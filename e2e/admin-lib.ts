@@ -91,6 +91,46 @@ export async function cleanupQaUnit(unitNumber: number): Promise<void> {
   await db()`delete from units where number = ${unitNumber} and number >= ${QA_UNIT_MIN}`;
 }
 
+/**
+ * Seed 1 attempt trên part ĐẦU TIÊN của unit [QA-SF4] (RESTRICT delete test) —
+ * attempts RESTRICT lesson_parts nên phải xóa tay trong cleanupQaUnit.
+ */
+export async function seedAttemptOnUnitPart(
+  unitNumber: number,
+  userId: string,
+): Promise<void> {
+  const [part] = await db()`
+    select p.id, p.text from lesson_parts p
+    join lessons l on l.id = p.lesson_id
+    join units un on un.id = l.unit_id
+    where un.number = ${unitNumber} and un.number >= ${QA_UNIT_MIN}
+    order by p.sort_order limit 1`;
+  if (!part) throw new Error(`unit ${unitNumber} chưa có part — thêm part trước khi seed attempt`);
+  await db()`
+    insert into attempts (user_id, part_id, typed_text, accuracy, wpm, xp, client_attempt_id)
+    values (${userId}, ${part.id}, ${part.text}, 1, 20, 10, ${crypto.randomUUID()})
+    on conflict do nothing`;
+}
+
+/**
+ * lesson ID (PK) theo số unit + số lesson — editor URL dùng NUMBER-based routing
+ * ([lesson] = number) NHƯNG upload API expects DB id: bắn number vào lessonId
+ * sẽ trúng lesson khác có id trùng (sự cố 2026-09-30: audio demo bị ghi đè).
+ * Luôn resolve qua SQL + guard response path chứa unit-N.
+ */
+export async function lessonIdByNumber(
+  unitNumber: number,
+  lessonNumber: number,
+): Promise<number> {
+  const [row] = await db()`
+    select l.id from lessons l
+    join units un on un.id = l.unit_id
+    where un.number = ${unitNumber} and un.number >= ${QA_UNIT_MIN} and l.number = ${lessonNumber}
+    limit 1`;
+  if (!row) throw new Error(`lesson ${lessonNumber} trong unit ${unitNumber} không tồn tại`);
+  return row.id;
+}
+
 /** Forge session cookie value hợp lệ chữ ký (middleware chấp nhận) với claims tùy ý. */
 export async function forgeSessionToken(claims: {
   sub: string;
