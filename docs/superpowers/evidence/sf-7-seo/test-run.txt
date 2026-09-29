@@ -1,0 +1,129 @@
+SF-7 SEO (VU-22) — test-run evidence
+date: 2026-09-29
+tdd: RED→GREEN (site.test.ts + jsonld.test.ts + sitemap-data.test.ts viết TRƯỚC
+  module tại T1 — RED 3 files fail "module chưa tồn tại", GREEN 18/18; T2-T4:
+  browser-verify Rule 0 + e2e Playwright + JSON-LD parse assert — metadata
+  layer không có unit-surface ngoài pure helpers; spec-critic 2 vòng PROCEED,
+  plan-critic PROCEED 4 P1 verify-steps đã absorb)
+code-commit: 37a8aa1 (code HEAD sau re-review APPROVED vòng 2; docs final 70a16c8; run đầu e472a8a;
+  T1 2f947d5 · T2 2e69a8d · T3 f9f5430 · T4 d9d1146; TDD helpers RED→GREEN
+  tại T1 — test viết trước module, GREEN 18/18; metadata surfaces bằng
+  browser-verify Rule 0 + JSON-LD parse assert + e2e)
+
+== Unit (vitest) — re-run tại HEAD 37a8aa1 ==
+Test Files  12 passed (12)
+Tests       179 passed (179) — gồm 20 test mới src/lib/seo/* (siteUrl/localePath/
+  buildAlternates x-default/composeDescription trimmed-fallback/JSON-LD
+  Course+LearningResource fields/path builders + jsonldScript escape meta-test
+  — RED "jsonldScript is not a function" → GREEN, assert 0 raw '<' + round-trip
+  JSON.parse) + 159 SF-1/2/3/4 không regression
+  (gồm messages parity en⇄vi bắt seo.json cùng key-set)
+
+== Build + typecheck + lint (plan-critic P1-3) ==
+npm run build: XANH — /sitemap.xml + /robots.txt prerendered static ○; lesson
+  route ● SSG (generateStaticParams [] → ISR on-demand đúng §3); OG image route
+  ƒ; R5 đóng: top-users layout-only KHÔNG tạo route, không lỗi build
+tsc --noEmit: 0 errors · eslint: 0 errors 0 warnings
+
+== E2E (npx playwright test toàn bộ, chromium headless, :3100) ==
+8 passed (17.5s) / 0 failed — 2 test SF-7 mới (e2e/i18n-switch.spec.ts):
+  1. lesson EN→VI→EN: URL giữ nguyên path (waitForURL predicate pathname),
+     html lang vi/en, title VI từ DB (title_vi), meta description VI template
+     ("chép chính tả"), quay lại EN đúng title cũ
+  2. home VI→EN: title absolute theo locale (Luyện chép chính tả ⇄ Free
+     English Dictation Practice)
+  + 6 test SF-4 dictation-guest — 0 regression
+  (2 dev server chung 1 .next gây manifest stale → chạy tuần tự; lesson learned)
+
+== Rule 0 — Browser verify 3 tầng (screenshots /tmp/sf7-shots) ==
+Tầng 1 DOM (curl/python đo tại HEAD, so BEFORE):
+  BEFORE: desc EN tĩnh cả 2 locale · 0 canonical/hreflang/JSON-LD · sitemap/robots 404
+  AFTER (từng dòng ACCEPTANCE):
+  - ACCEPT-1 en: title 'Vocabulary — Free time activities · I Love English
+    Club' (page SF-4 giữ) + desc template composed + canonical
+    localhost:3000/en/... + hreflang en/vi/x-default (=en)
+  - ACCEPT-1 vi: title 'Từ vựng — Hoạt động thời gian rảnh · I Love English
+    Club' + desc '...bài tập chép chính tả · Cấp độ 3 (CEFR A2)...' + canonical
+    /vi/... + cùng bộ hreflang
+  - ACCEPT-2: DB published=16, unpublished=1 (CÓ row thật để test) → sitemap
+    32 lesson locs = 16×2 (unpublished BỊ LOẠI — chứng minh trực tiếp, không
+    phải derive-only); tổng 78 locs = 4 static + 2×(16L+14U+7B), unit/book 0
+    published bị lọc tự nhiên (derive từ tập rows); robots.txt đúng body
+    pinned (Allow / · Disallow /admin /api · Sitemap absolute)
+  - ACCEPT-3: og:title + og:locale=en/vi + og:url; og:image GET → 200
+    image/png (4 ảnh nhìn bằng mắt)
+  - ACCEPT-4: JSON-LD lesson = 2 block [Course, LearningResource] (book layout
+    segment cha + lesson layout) — json.loads parse OK + assert fields
+    (@type/inLanguage=en/learningResourceType/educationalLevel=A2/isPartOf
+    Course/provider Organization); book page 1 block Course; books index 0
+  - ACCEPT-5: e2e i18n-switch 2/2 PASS (flow thật client-side)
+Tầng 2 VISUAL (đọc ảnh trực tiếp):
+  - OG lesson EN: palette B (bg kem/card trắng border/badge A2 teal/title nâu/
+    label coral) + ♥ glyph; OG lesson VI: DẤU TIẾNG VIỆT ĐỦ (R3 đóng) —
+    'Từ vựng — Hoạt động thời gian rảnh', 'Nghe & Gõ — bài tập chép chính tả'
+  - OG book: header màu level (teal L3) + A2 + '2 units · 4 lessons' đúng DB
+  - OG fallback (P1-4): slug không tồn tại → 200 generic brand — nhánh chạy thật
+  - after-home-vi.png / after-lesson-vi.png so BEFORE: layout SF-1/SF-4 giữ
+    nguyên (route-group move + metadata layer không phá render)
+Tầng 3 FLOW: e2e i18n-switch (switcher → cùng path → UI đổi ngữ → quay lại);
+  fallback chain đi qua trang thật (dưới đây)
+
+== Fallback chain vi→en→raw (slice #6, qua trang thật + DB so) ==
+- vi: L3-U1-L1 title_vi='Từ vựng — Hoạt động thời gian rảnh' → trang VI hiện VI
+  (title + desc template VI + og:image VI)
+- en (vi null): L3-U1-L2 title_vi NULL (row thật trong DB) → unit VI list hiện
+  'Dialogue — After school' (EN) + lesson VI <title> EN + desc template VI với
+  lessonTitle EN — chain vi→en đúng qua mọi surface (localize SF-2 KHÔNG cần sửa)
+- raw: KHÔNG có data thật (unit titles đủ; publish bắt buộc title_en) — code
+  path fallbackRaw `Unit N` chỉ chạy khi cả title_en+title_vi null → known
+  deviation, không fake
+
+== Spec-critic / plan-critic / review ==
+spec-critic: vòng 1 FIX-P0-FIRST (P0 lesson desc không có data source → template
+  seo.lessonDescription; 3 P1: books title contradiction/OG localize qua
+  params/fallback desc rỗng) → vòng 2 PROCEED
+plan-critic: PROCEED + 4 P1 verify-steps (published-only proof — ĐÃ chứng minh
+  trực tiếp với unpublished row thật; JSON-LD parse assert — PASS; npm run
+  build — XANH; OG fallback test — PASS)
+code-reviewer độc lập (2 vòng):
+  Vòng 1: CHANGES-REQUESTED — 1 P1 (JSON-LD JSON.stringify không escape '<' →
+    breakout </script> từ content admin qua dangerouslySetInnerHTML — stored-XSS
+    sink duy nhất) + 5 P2 (sitemap split(" ") re-parse · OG fallback split("—")
+    trên message · lessonAlt/bookAlt keys chết + lệch alt · lesson 404 desc
+    template vars rỗng · commit hygiene — move nằm ở docs commit, không rewrite)
+    → fix 37a8aa1: jsonldScript() escape < → \\u003c (TDD meta-test RED→GREEN,
+    live-verify 0 raw '<' trong ld+json) + 4 P2 (sitemap unitMap giữ object —
+    phát hiện thêm NUL bytes lạ trong block cũ, hexdump + sweep toàn bộ = 0 còn
+    lại · OG fallback BRAND · 404 desc homeDescription · bỏ 2 keys chết)
+    Vòng 2: APPROVED (CHECKLIST-4Q 4/4 PASS) — position-verify từng fix;
+    deterministic tự chạy tại 37a8aa1: tsc 0 · eslint 0/0 · vitest 179/179 ·
+    build exit 0 · NUL sweep 0
+  Lưu ý coordinator (không phải lỗi code): diff base..HEAD thấy 38 file SF-5
+  "bị xóa" = branch-point artifact (base đã có SF-5, worktree nhánh từ trước
+  khi merge) — per-commit verify: 0 commit sf-7 chạm file SF-5; merge base
+  vào sf-7 (hoặc merge sf-7 vào đích có SF-5) xử lý lúc merge-playbook
+
+== Known deviations (có chủ đích) ==
+- composeDescription nhận template RAW qua t.raw() — t() ICU format eager ném
+  FORMATTING_ERROR khi chưa có vars (bug tìm thấy ở T2, fix + test); JSON-LD
+  serialize qua jsonldScript() escape '<' (review P1)
+- context pack đặt tên file `metadata.ts` — Next 15 không có convention này →
+  sibling `layout.tsx` (mục tiêu anti-merge-conflict giữ nguyên: 0 dòng
+  page.tsx đổi; 1 git mv home → (home))
+- OG image book: slice #4 nói 'cho lesson' nhưng touch map pack liệt kê
+  lesson+book → theo touch map (deviation ghi trong spec §4.5)
+- alt của og:image static EN (single-image convention không nhận params/locale)
+- JSON-LD Course rich-result (hasCourseInstance) không nhắm — chỉ
+  schema-validator-valid; Rich Results test cần public URL → SF-8
+- chia-link preview thật (Facebook/Twitter debugger) cần public URL → SF-8;
+  local chứng minh bằng og:* meta + og:image 200 PNG
+- ISR revalidate 300: page exports giữ nguyên (layout không set revalidate);
+  header cache kiểm ở prod (dev không emit x-Nextjs-Cache) → SF-8
+- NEXT_PUBLIC_SITE_URL chưa có ở prod → canonical/hreflang/sitemap rơi
+  localhost — BẮT BUỘC set env khi deploy (SF-8 checkpoint; surface theo §4.2)
+- raw tier fallback chain: không có seed data both-null (không fake evidence)
+- top-users layout chỉ alternates+metadataBase — title/description do SF-6
+  bổ sung khi page tồn tại (plan-critic P2)
+- sitemap không gồm /login /register (auth pages) và /top-users (page chưa
+  tồn tại — thêm khi SF-6 merge)
+exit 0

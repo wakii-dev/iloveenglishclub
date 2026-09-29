@@ -1,0 +1,9 @@
+{
+  "homeTitle": "I Love English Club — Luyện chép chính tả tiếng Anh miễn phí",
+  "homeDescription": "Luyện chép chính tả tiếng Anh theo lộ trình Cambridge English Prepare — từ Pre-A1 đến B2 First. Nghe, gõ và kiểm tra, từng câu một.",
+  "booksDescription": "Cả 7 cấp độ Cambridge English Prepare — chọn trình độ và luyện chép chính tả tiếng Anh, từ Pre-A1 Starter đến B2 First.",
+  "lessonDescription": "{lessonTitle} — bài tập chép chính tả · {bookTitle} (CEFR {cefr}). Nghe và gõ để luyện nghe và chính tả tiếng Anh.",
+  "bookDescriptionFallback": "{bookTitle} — luyện chép chính tả tiếng Anh trình độ CEFR {cefr}. Nghe, gõ và kiểm tra theo từng cấp.",
+  "unitDescriptionFallback": "{unitTitle} ({bookTitle}) — các bài chép chính tả tiếng Anh. Nghe và gõ, từng câu một.",
+  "ogListenType": "Nghe & Gõ — bài tập chép chính tả"
+}

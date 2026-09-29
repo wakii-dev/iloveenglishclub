@@ -1,0 +1,9 @@
+{
+  "homeTitle": "I Love English Club — Free English Dictation Practice",
+  "homeDescription": "Free English dictation practice following the Cambridge English Prepare path — from Pre-A1 to B2 First. Listen, type and check, one sentence at a time.",
+  "booksDescription": "All 7 Cambridge English Prepare levels — choose your level and practise English dictation, from Pre-A1 Starter to B2 First.",
+  "lessonDescription": "{lessonTitle} — dictation exercise · {bookTitle} (CEFR {cefr}). Listen and type to practise English listening and spelling.",
+  "bookDescriptionFallback": "{bookTitle} — English dictation practice at CEFR {cefr}. Listen, type and check, level by level.",
+  "unitDescriptionFallback": "{unitTitle} ({bookTitle}) — English dictation lessons. Listen and type, one sentence at a time.",
+  "ogListenType": "Listen & Type — dictation exercise"
+}
