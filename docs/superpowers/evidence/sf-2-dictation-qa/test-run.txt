@@ -1,5 +1,7 @@
 tdd: RED→GREEN
-code commit: 4cb1345 (cuối — chuỗi code commits: ab5ed12→0d85841→34abadc→5f74c12→7f8bfc6→6ca64b2→2873357→bacf396→0909615→4cb1345)
+code commit: abad8b4 (cuối — chuỗi code commits: ab5ed12→0d85841→34abadc→5f74c12→7f8bfc6→6ca64b2→2873357→bacf396→0909615→4cb1345→abad8b4)
+re-verify trên abad8b4 (sau review P2 follow-ups — drop gap-y-2, src đổi 1 class):
+typecheck exit 0 · unit 234/234 · coverage dictation Branches 100% (122/122) · e2e sf2 45/45 (1.7m)
 regression RED→GREEN (4 fix, mỗi cái kèm test bắt lại đúng bug):
 - QA-102 maxLength: RED value 2001 ký tự (server MAX_TYPED_LEN reject êm, XP mất âm thầm) → GREEN clamp 2000 + attempt row ghi DB (dictation-store-edge case QA-102)
 - QA-103 PartNav ›: RED nhảy advance-to-pending (expect Part 2/4 nhận Part 3/4; trace test.trace actions 3788→4715) + unit nextPart chưa tồn tại (TypeError ×5) → GREEN unit 5 test adjacent + e2e › → part kề bên
