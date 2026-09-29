@@ -1,20 +1,22 @@
 /**
  * Parts pure logic (SF-5) — tách khỏi server actions để unit test 100% nhánh.
- * Cap 200 câu/batch: chống paste file khổng lồ (đủ dùng — 1 bài dictation
- * vài chục câu); cũng giữ lesson < 1000 parts để shift bump-offset +1000
- * trong actions/parts.ts luôn an toàn (comment ở đó).
+ *
+ * QA-303 (SF-4 2026-09-30): KHÔNG truncate nữa — trả TOÀN BỘ câu đã clean.
+ * Bản cũ slice còn lại 200 + trả `dropped` mà addPartsFromScriptAction hủy
+ * cấu trúc → paste 300 câu bị chèn 200 câu IM LẶNG (data loss + toast đếm
+ * sai). Chặn >200 là việc của guard `tooManySentences` trong action (trước
+ * đây dead-branch vì sanitize cắt trước) — admin thấy lỗi rõ, tự chia lô.
+ * Cap 200/batch vẫn giữ (chống paste khổng lồ; 1 bài dictation vài chục câu)
+ * và giữ lesson < 1000 parts cho shift bump-offset +1000 an toàn.
  */
 export const MAX_SENTENCES_PER_BATCH = 200;
 
 export function sanitizeSentences(raw: string[]): {
   sentences: string[];
-  dropped: number;
 } {
-  const cleaned = raw
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
   return {
-    sentences: cleaned.slice(0, MAX_SENTENCES_PER_BATCH),
-    dropped: cleaned.length - Math.min(cleaned.length, MAX_SENTENCES_PER_BATCH),
+    sentences: raw
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0),
   };
 }

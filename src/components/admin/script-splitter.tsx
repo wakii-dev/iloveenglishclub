@@ -24,6 +24,8 @@ export function ScriptSplitter({ lessonId }: { lessonId: number }) {
   const router = useRouter();
   const [script, setScript] = useState("");
   const [lines, setLines] = useState<string[] | null>(null);
+  // số câu THẬT sẽ chèn (bỏ dòng rỗng — QA-303: toast/nút cũ đếm raw)
+  const nonEmptyCount = lines?.filter((l) => l.trim().length > 0).length ?? 0;
   const [pending, startTransition] = useTransition();
 
   function doSplit() {
@@ -37,13 +39,16 @@ export function ScriptSplitter({ lessonId }: { lessonId: number }) {
 
   function save() {
     if (!lines) return;
+    // đếm câu non-empty — toast/nút dùng số THẬT sẽ chèn (QA-303: bản cũ đếm
+    // raw lines.length gồm dòng rỗng, lệch với số server chèn)
+    if (nonEmptyCount === 0) return;
     startTransition(async () => {
       const result = await addPartsFromScriptAction(lessonId, lines);
       if (result?.error) {
         toast.error(te(result.error));
         return;
       }
-      toast.success(t("add", { count: lines.length }));
+      toast.success(t("add", { count: nonEmptyCount }));
       reset();
       router.refresh();
     });
@@ -179,7 +184,9 @@ export function ScriptSplitter({ lessonId }: { lessonId: number }) {
           </ol>
           <div className="flex gap-2">
             <Button onClick={save} disabled={pending} className="rounded-[14px]">
-              {pending ? tc("saving") : t("add", { count: lines.length })}
+              {pending
+                ? tc("saving")
+                : t("add", { count: nonEmptyCount })}
             </Button>
             <Button variant="ghost" disabled={pending} onClick={reset}>
               <X aria-hidden className="size-4" />
