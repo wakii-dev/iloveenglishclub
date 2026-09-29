@@ -48,18 +48,18 @@ Người học thật chỉ được nhận sản phẩm khi: điểm Lighthouse
   - [ ] Step 5: commit `feat(audit): thresholds module TDD + test:audit lane (T2)`
 
 - [ ] **T3 `lighthouse-audit` — đo + fix ngưỡng:**
-  - [ ] Step 1: fix testMatch 1 dòng `/(dictation|progress|i18n).*\.spec\.ts/` — verify `npx playwright test --list` đủ 3 file (dictation 6 + progress + i18n), admin không lọt; commit kèm
-  - [ ] Step 2: `scripts/lighthouse.mjs` — loop 7 URL × 3 runs, raw JSON lưu `docs/superpowers/evidence/sf-8-production-audit/lighthouse/` (path chốt critic-P2; report md chỉ link tổng hợp), gọi summarize → md table + exit code
-  - [ ] Step 3: chạy thật trên prod build (server 3110 đang chạy từ T1)
+  - [ ] Step 1: fix testMatch 1 dòng `/(dictation|progress|i18n).*\.spec\.ts/` — verify `npx playwright test --list` đủ 3 file (dictation 6 + progress + i18n), admin không lọt; **commit riêng** `fix(test): restore progress+i18n suites (T3)` (fix thật, không trộn audit-tooling)
+  - [ ] Step 2: `scripts/lighthouse.mjs` — loop 7 URL × 3 runs, raw JSON lưu `docs/superpowers/evidence/sf-8-production-audit/lighthouse/` với **suffix lượt đo** (`*-pre.json` trước fix / `*-final.json` sau fix — chống ghi đè mất baseline; report md link bộ final), gọi summarize → md table + exit code; eyeball tổng size trước commit
+  - [ ] Step 3: chạy thật trên prod build (server 3110 đang chạy từ T1) — lượt **pre-fix**
   - [ ] Step 4: fix contrast ngưỡng (globals.css 2 token + level-card 2 dòng + footer h4→h3 ×3 — contrast đã verify số học: 4.68 / 5.27 / 5.41-19.3 ≥ 4.5)
-  - [ ] Step 5: re-build + re-chạy 3-run protocol → `docs/superpowers/audits/lighthouse-2026-09-29.md` (median từng trang, điều kiện đo, raw JSON paths, rationale locale lệch)
+  - [ ] Step 5: re-build → **kill + re-spawn `next start :3110`** (`next start` load build lúc khởi động — server cũ đo nhầm build cũ, plan-critic P1) → re-chạy 3-run protocol (lượt **final**) → `docs/superpowers/audits/lighthouse-2026-09-29.md` (median từng trang, điều kiện đo, raw JSON paths, rationale locale lệch)
   - [ ] Step 6: verify visual sau fix token (screenshot home/lesson — Rule 0 VISUAL)
   - [ ] Step 7: commit `fix(a11y): contrast tokens + level-card band + footer heading (T3)` + `audit(sf8): lighthouse runner + report (T3)`
 
 - [ ] **T4 `security-checkpoint`:**
   - [ ] Step 1 (meta-test RED): test mới `scripts/test-rls.test.ts` — `updateRelaxedMode` với session user → assert chỉ `relaxed_mode` đổi (xp/role/streak nguyên vẹn); mutation tạm: thêm `xp: 999` vào `.set` → test phải ĐỎ → revert
   - [ ] Step 2 (GREEN): revert mutation → 18/18 PASS `npm run test:rls`
-  - [ ] Step 3: `scripts/security-scan.mjs` — secrets (`.env*` không trong git ls-files, grep secret patterns trong src), exec-bit (ngoài node_modules/.git/.next), `.env.example` không giá trị thật, npm audit summary → exit non-0 khi FAIL thật
+  - [ ] Step 3: `scripts/security-scan.mjs` — secrets (`.env*` không trong git ls-files, grep secret patterns trong src), exec-bit (ngoài node_modules/.git/.next), `.env.example` không giá trị thật, npm audit summary; **script mang allowlist accepted-risk tường minh** (6 vulns postcss-in-next + ID/range + comment lý do — plan-critic P1: nếu không, script không bao giờ tự đạt exit criterion) → exit non-0 CHỈ khi finding NGOÀI allowlist
   - [ ] Step 4: role-check code-read 8 Server Action files + trust boundary + admin 2 lớp + SQLi/XSS grep → checklist 9 mục verdict từng dòng
   - [ ] Step 5: `docs/superpowers/audits/security-checkpoint-2026-09-29.md` — PASS/FAIL/ACCEPTED từng mục + bằng chứng (lệnh + output)
   - [ ] Step 6: commit `feat(audit): security-scan + test:rls xp/role assert + checkpoint report (T4)`
@@ -67,7 +67,7 @@ Người học thật chỉ được nhận sản phẩm khi: điểm Lighthouse
 - [ ] **T5 `deploy-docs-e2e`:**
   - [ ] Step 1: `docs/deploy.md` — pre-req REQUIREMENT-GAP (remote Git/Vercel project, Neon prod branch, AUTH_SECRET, Google OAuth, BLOB token, domain), các bước env/migrate/seed/admin:create (creds KHÔNG vào Vercel env), post-deploy checklist (AC #1-4 + admin tạo+publish lesson), quyết định vercel.json KHÔNG cần + lý do
   - [ ] Step 2: `.env.example` +ADMIN_EMAIL/ADMIN_PASSWORD (comment: local dev/e2e only)
-  - [ ] Step 3: smoke E2E trên prod-build — spawn `next start` 3110 + 3000, guard dev-indicator (HTML không chứa `__nextDevIndicator`), chạy `npx playwright test` (dictation+progress+i18n) và `npm run test:e2e` (admin+global-setup) → 4 suite exit 0
+  - [ ] Step 3: smoke E2E trên prod-build — **kill holder cũ rồi spawn tươi `next start` 3110 + 3000** (chống EADDRINUSE + stale build, plan-critic P1), guard dev-indicator (HTML không chứa `__nextDevIndicator`), chạy `npx playwright test` (dictation+progress+i18n) và `npm run test:e2e` (admin+global-setup) → 4 suite exit 0
   - [ ] Step 4: REQUIREMENT-GAP comment VU-23 + VU-15 (liệt kê: remote Git + Vercel project, Neon prod branch DATABASE_URL, AUTH_SECRET, GOOGLE_CLIENT_ID/SECRET, BLOB_READ_WRITE_TOKEN, domain/NEXT_PUBLIC_SITE_URL)
   - [ ] Step 5: commit `docs(deploy): deploy guide + env example sync + smoke prod-build evidence (T5)`
 
