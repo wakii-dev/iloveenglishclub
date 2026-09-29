@@ -34,7 +34,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --port 3110",
+    // QA-7 (SF-6 fix): bypass `npm run dev` (--turbopack) — race Turbopack dev
+    // next/font/google (NextFontGoogleFontFileReplacer "exactly one entry",
+    // 1/4-1/7 lần start theo audit SF-1) KHÔNG tồn tại trên webpack. Script
+    // `dev` dùng chung KHÔNG đổi (team giữ HMR turbopack).
+    command: "npx next dev --port 3110",
     url: "http://localhost:3110/en/books/level-3/units/1/lessons/1/listen-and-type",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
