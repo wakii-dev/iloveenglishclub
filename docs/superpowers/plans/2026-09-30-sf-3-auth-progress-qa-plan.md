@@ -19,7 +19,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: đúng bảng truth; unique constraint chứng minh bằng row count.
 - [x] 8. xp-modifiers-truth — integration + e2e: chỉ attempt đầu XP; hint ×0.8; relaxed ×0.5 (flag profiles.relaxedMode qua updateRelaxedMode); replay 0; server value (DB) vs client preview (+chip UI) khớp.
        AC: Bảng 10/8/5/0 đúng từng tổ hợp accuracy×hint×relaxed.
-- [ ] 9. streak-tz — integration: seed daily_activity (hôm qua / hôm nay / 2 ngày trước) → submit → streak theo computeStreak; boundary 23:59 ICT đã phủ bởi unit streak.test.ts (giữ); cap 400 (limit query) — probe unit. e2e: header/UI phản ánh streak seeded.
+- [x] 9. streak-tz — integration: seed daily_activity (hôm qua / hôm nay / 2 ngày trước) → submit → streak theo computeStreak; boundary 23:59 ICT đã phủ bởi unit streak.test.ts (giữ); cap 400 (limit query) — probe unit. e2e: header/UI phản ánh streak seeded.
        AC: không suy biến unit; integration xác nhận path submit → DB → cache.
 - [ ] 10. leaderboard-boundary — integration: insert attempts created_at tuần trước (SQL trực tiếp) → weekly view KHÔNG tính; tuần này tính; all_time = profiles.xp; view chỉ expose display_name/avatar_url/xp (information_schema). e2e /top-users: 2 bảng render đúng, không lộ email.
        AC: ISO Mon–Sun TZ+07 boundary chứng minh bằng data thật 2 tuần.
