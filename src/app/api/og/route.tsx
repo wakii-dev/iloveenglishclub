@@ -8,10 +8,6 @@ import { ImageResponse } from "next/og";
  * lib/seo/metadata.ts; book/lesson giữ file-convention riêng (override).
  * Palette B Classroom Warm (hand-off §1.1) + motif waveform.
  */
-export const alt = "I Love English Club — Free English Dictation Practice";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
-
 const C = {
   bg: "#fff8f0",
   fg: "#432818",
@@ -173,6 +169,6 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    { ...size },
+    { width: 1200, height: 630 },
   );
 }
