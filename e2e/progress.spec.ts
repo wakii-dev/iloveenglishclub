@@ -37,11 +37,9 @@ async function register(page: Page, displayName: string): Promise<string> {
     .getByRole("button", { name: /sign up|đăng ký/i })
     .click();
   await page.waitForURL(/\/en$/);
-  // SessionProvider stale sau soft-redirect của server-action signIn (cookie
-  // đã set nhưng useSession chưa refetch — header còn guest). Reload = user
-  // thật F5; papercut SF-1 report coordinator, không fix trong SF-6.
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForURL(/\/en$/);
+  // Header cập nhật session NGAY sau redirect — fix 695f0ef (SessionSync
+  // refetch trên pathname change); regression: progress-session-sync.spec.ts.
+  // Workaround page.reload() đã BỎ (SF-3 task 4 — test trước, bỏ sau).
   return email;
 }
 

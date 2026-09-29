@@ -9,7 +9,7 @@ DB: `ilec_sf3` (LOCAL template) · Port 3211 · Findings: `findings-sf3.md` QA-2
        AC: mọi assert chạy xanh trên ilec_sf3.
 - [x] 3. login-edge — e2e `progress-login.spec.ts`: sai mật khẩu → invalidCredentials; `next` guard (`//evil.com` protocol-relative probe — nếu lọt → finding QA-2xx + fix TDD); `?next=/en/me` → redirect đúng; callback redirect đăng nhập xong về `next`/`/{locale}`.
        AC: open-redirect probe có kết luận rõ (pass hoặc finding).
-- [ ] 4. session-sync-verify-regression — e2e `progress-session-sync.spec.ts`: register THẬT qua UI (không reload) → header hiện trạng thái đăng nhập ngay (XP chip / tên). Mutation-RED: tạm revert 695f0ef → spec ĐỎ → restore → GREEN. SAU ĐÓ bỏ `page.reload()` trong `e2e/progress.spec.ts:43` → re-run spec cũ GREEN.
+- [x] 4. session-sync-verify-regression — e2e `progress-session-sync.spec.ts`: register THẬT qua UI (không reload) → header hiện trạng thái đăng nhập ngay (XP chip / tên). Mutation-RED: tạm revert 695f0ef → spec ĐỎ → restore → GREEN. SAU ĐÓ bỏ `page.reload()` trong `e2e/progress.spec.ts:43` → re-run spec cũ GREEN.
        AC: regression GREEN cả 2 lần (trước + sau khi bỏ workaround); evidence mutation RED.
 - [ ] 5. oauth-google-probe — googleEnabled=false (không creds): /login + /register KHÔNG nút Google; `/api/auth/providers` trả `{}`; signin/google → behavior xác định (ghi nhận); findings-sf3.md ghi giới hạn env (không fail mơ hồ).
        AC: findings row BY-DESIGN/ENV-LIMIT có rationale.
