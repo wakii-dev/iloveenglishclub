@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -97,8 +97,9 @@ export function DictationLesson({
   const durationMs =
     parts[currentPartIndex]?.durationMs ?? null;
 
-  // ─── Relaxed mode: đọc pref user đã login MỘT lần / mount (spec §3.8) ───
-  const relaxedPrefRef = useRef(false);
+  // ─── Relaxed mode: đọc pref user đã login MỘT lần / mount (spec §3.8).
+  // null = chưa biết (fetch dang dở) — doStart await rồi mới decide. ───
+  const relaxedPrefRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -171,13 +172,22 @@ export function DictationLesson({
   // ─── Reset store khi rời route (spec §4 — tránh stale giữa 2 lesson) ───
   useEffect(() => () => dictationStore.getState().reset(), []);
 
-  const doStart = () => {
-    // Chuỗi đồng bộ 1 click (spec §3.1): reset (Try-again từ complete) → nạp
-    // parts → relaxed-sync (start-gate là phase mở — idle guard chặn) →
-    // gesture start → playing.
+  const doStart = async () => {
+    // Chuỗi 1 click (spec §3.1): reset (Try-again từ complete) → nạp parts →
+    // relaxed-sync (start-gate phase mở — idle guard chặn) → gesture start →
+    // playing. Session/pref có thể chưa hydrate lúc click (closure user null)
+    // → đọc live getSession(); pref null → await (sticky activation vẫn hợp
+    // lệ cho play() sau await).
     dictationStore.getState().reset();
     dictationStore.getState().start(parts.map((p) => ({ transcript: p.text })));
-    if (user && relaxedPrefRef.current && !dictationStore.getState().relaxed) {
+    const sessionUser =
+      user ?? ((await getSession())?.user ?? null);
+    let pref = relaxedPrefRef.current;
+    if (sessionUser && pref === null) {
+      pref = await readRelaxedMode().catch(() => null);
+      relaxedPrefRef.current = pref === true;
+    }
+    if (sessionUser && pref && !dictationStore.getState().relaxed) {
       dictationStore.getState().toggleRelaxed();
     }
     dictationStore.getState().start();
