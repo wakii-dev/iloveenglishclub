@@ -4,6 +4,74 @@
     "books": "Sách",
     "users": "Người dùng"
   },
+  "common": {
+    "create": "Tạo mới",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "saving": "Đang lưu…",
+    "retry": "Thử lại",
+    "back": "Quay lại"
+  },
+  "errors": {
+    "titleRequired": "Tiêu đề tiếng Anh là bắt buộc.",
+    "invalidNumber": "Số unit phải là số nguyên dương.",
+    "invalidVocabLevel": "Cấp độ từ vựng không hợp lệ.",
+    "duplicateNumber": "Số này đã tồn tại — chọn số khác.",
+    "hasAttempts": "Đã có học viên làm bài này nên không xóa được (bảo vệ dữ liệu). Gỡ bài bằng nút Không xuất bản.",
+    "cannotChangeSelf": "Không thể đổi quyền của chính bạn.",
+    "generic": "Có lỗi xảy ra — thử lại."
+  },
+  "books": {
+    "title": "Sách",
+    "lead": "7 sách Cambridge Prepare cố định — chọn sách để quản lý units.",
+    "unitsCount": "{count} units · {published}/{total} bài XB · {parts} câu",
+    "open": "Quản lý units"
+  },
+  "units": {
+    "title": "Units",
+    "lead": "Số unit theo mục lục sách — tạo xong không đổi được số (audio neo vào số unit).",
+    "createTitle": "Tạo unit mới",
+    "number": "Số unit",
+    "titleEn": "Tên (tiếng Anh) *",
+    "titleVi": "Tên (tiếng Việt)",
+    "descEn": "Mô tả (tiếng Anh)",
+    "descVi": "Mô tả (tiếng Việt)",
+    "empty": "Chưa có unit nào — tạo unit đầu tiên.",
+    "lessonsCount": "{published}/{total} bài XB",
+    "open": "Bài học",
+    "deleteConfirm": "Xóa unit sẽ xóa tất cả bài học và câu hỏi bên trong. Tiếp tục?",
+    "numberImmutable": "Số unit không đổi được"
+  },
+  "lessons": {
+    "title": "Bài học",
+    "lead": "Số bài tự tăng theo unit — tạo xong vào trình soạn thảo để nhập script và audio.",
+    "createTitle": "Tạo bài học",
+    "titleEn": "Tiêu đề (tiếng Anh) *",
+    "titleVi": "Tiêu đề (tiếng Việt)",
+    "vocabLevel": "Cấp độ từ vựng *",
+    "empty": "Chưa có bài học nào — tạo bài đầu tiên.",
+    "statusDraft": "Nháp",
+    "statusPublished": "Đã XB",
+    "partsSummary": "{count} câu",
+    "missingAudio": "{count} thiếu audio",
+    "open": "Soạn thảo",
+    "deleteConfirm": "Xóa bài học sẽ xóa toàn bộ câu hỏi và audio mapping. Tiếp tục?"
+  },
+  "users": {
+    "title": "Người dùng",
+    "lead": "Tìm kiếm và phân quyền. “Khóa” tài khoản chưa có trong phiên bản này.",
+    "search": "Tìm theo tên hoặc email…",
+    "empty": "Không tìm thấy người dùng nào.",
+    "colName": "Tên",
+    "colEmail": "Email",
+    "colRole": "Quyền",
+    "colJoined": "Tham gia",
+    "roleUser": "Người dùng",
+    "roleAdmin": "Quản trị",
+    "selfNote": "(bạn)"
+  },
   "dashboard": {
     "title": "Tổng quan",
     "lead": "Toàn bộ nội dung platform — bài học, audio và người học.",

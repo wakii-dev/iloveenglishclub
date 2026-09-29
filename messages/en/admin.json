@@ -4,6 +4,74 @@
     "books": "Books",
     "users": "Users"
   },
+  "common": {
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "saving": "Saving…",
+    "retry": "Retry",
+    "back": "Back"
+  },
+  "errors": {
+    "titleRequired": "English title is required.",
+    "invalidNumber": "Unit number must be a positive integer.",
+    "invalidVocabLevel": "Invalid vocabulary level.",
+    "duplicateNumber": "This number already exists — pick another.",
+    "hasAttempts": "Learners have already attempted this content, so it cannot be deleted (data protection). Unpublish the lesson instead.",
+    "cannotChangeSelf": "You cannot change your own role.",
+    "generic": "Something went wrong — try again."
+  },
+  "books": {
+    "title": "Books",
+    "lead": "7 fixed Cambridge Prepare books — pick one to manage its units.",
+    "unitsCount": "{count} units · {published}/{total} published · {parts} parts",
+    "open": "Manage units"
+  },
+  "units": {
+    "title": "Units",
+    "lead": "Unit numbers follow the book's table of contents — fixed after creation (audio paths anchor to the unit number).",
+    "createTitle": "Create unit",
+    "number": "Unit number",
+    "titleEn": "Title (English) *",
+    "titleVi": "Title (Vietnamese)",
+    "descEn": "Description (English)",
+    "descVi": "Description (Vietnamese)",
+    "empty": "No units yet — create the first one.",
+    "lessonsCount": "{published}/{total} published",
+    "open": "Lessons",
+    "deleteConfirm": "Deleting a unit deletes all its lessons and parts. Continue?",
+    "numberImmutable": "Unit number is immutable"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "lead": "Lesson numbers auto-increment per unit — after creating, open the editor to add script and audio.",
+    "createTitle": "Create lesson",
+    "titleEn": "Title (English) *",
+    "titleVi": "Title (Vietnamese)",
+    "vocabLevel": "Vocabulary level *",
+    "empty": "No lessons yet — create the first one.",
+    "statusDraft": "Draft",
+    "statusPublished": "Published",
+    "partsSummary": "{count} parts",
+    "missingAudio": "{count} missing audio",
+    "open": "Editor",
+    "deleteConfirm": "Deleting a lesson deletes all its parts and audio mapping. Continue?"
+  },
+  "users": {
+    "title": "Users",
+    "lead": "Search and manage roles. Account \"lock\" is not available in this version.",
+    "search": "Search by name or email…",
+    "empty": "No users found.",
+    "colName": "Name",
+    "colEmail": "Email",
+    "colRole": "Role",
+    "colJoined": "Joined",
+    "roleUser": "User",
+    "roleAdmin": "Admin",
+    "selfNote": "(you)"
+  },
   "dashboard": {
     "title": "Dashboard",
     "lead": "All platform content — lessons, audio and learners.",
