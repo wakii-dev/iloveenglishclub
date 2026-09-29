@@ -78,7 +78,10 @@ export default async function HomePage({
                 <p className="text-[12.5px] text-muted-foreground">{t("hero.miniCard1Sub")}</p>
               </div>
             </div>
-            <Progress value={35} className="mt-4 h-2.5 rounded-full border-2 border-border bg-muted" />
+            <Progress
+              value={35}
+              className="mt-4 h-2.5 rounded-full border-2 border-border bg-muted [&>[data-slot=progress-indicator]]:bg-secondary"
+            />
             <p className="mt-2 text-[12px] font-bold text-muted-foreground tabular-nums">
               {t("hero.miniCard1Meta")}
             </p>
