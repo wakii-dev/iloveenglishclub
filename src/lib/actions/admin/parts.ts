@@ -138,25 +138,23 @@ export async function movePartAction(
     .limit(1);
   if (!other) return { ok: true }; // đầu/cuối danh sách — không có gì để đổi
   await db.transaction(async (tx) => {
-    // Swap 2 hàng qua vùng cao: bump +1000 → đổi chỗ (vẫn high, distinct) →
-    // hạ −1000. Mỗi statement tự an toàn (xem comment primitive ở đầu file).
-    const both = inArray(lessonParts.id, [part.id, other.id]);
+    // Swap 2 hàng (fix 23505 2026-09-29: bản cũ set part = neighbor+1000 —
+    // TRÙNG giá trị bump +1000 của neighbor → duplicate key mọi hướng).
+    // Chuẩn 3 bước: (1) neighbor rời chỗ lên vùng cao, (2) part trượt vào
+    // chỗ trống, (3) neighbor xuống chỗ part vừa bỏ trống. Mỗi statement
+    // thấy giá trị distinct riêng.
     await tx
       .update(lessonParts)
       .set({ sortOrder: sql`${lessonParts.sortOrder} + 1000` })
-      .where(both);
-    await tx
-      .update(lessonParts)
-      .set({ sortOrder: neighbor + 1000 })
-      .where(eq(lessonParts.id, part.id));
-    await tx
-      .update(lessonParts)
-      .set({ sortOrder: part.sortOrder + 1000 })
       .where(eq(lessonParts.id, other.id));
     await tx
       .update(lessonParts)
-      .set({ sortOrder: sql`${lessonParts.sortOrder} - 1000` })
-      .where(both);
+      .set({ sortOrder: neighbor })
+      .where(eq(lessonParts.id, part.id));
+    await tx
+      .update(lessonParts)
+      .set({ sortOrder: part.sortOrder })
+      .where(eq(lessonParts.id, other.id));
   });
   await revalidateIfPublished(part.lessonId);
   return { ok: true };
