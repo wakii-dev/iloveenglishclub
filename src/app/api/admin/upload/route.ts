@@ -4,7 +4,8 @@ import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { books, lessonParts, lessons, units } from "@/db/schema";
 import { CONTENT_TAG } from "@/lib/revalidate";
-import { buildAudioPath, putAudio } from "@/lib/storage";
+import { buildAudioPath } from "@/lib/storage";
+import { putAudio } from "@/lib/storage-server";
 import {
   MAX_AUDIO_BYTES,
   mimeToAudioExt,

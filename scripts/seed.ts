@@ -242,11 +242,12 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const storage = await import("../src/lib/storage.ts");
+  const storageServer = await import("../src/lib/storage-server.ts");
   const sql = postgres(process.env.DATABASE_URL, { prepare: false });
   db = drizzle(sql);
   s = await import("../src/db/schema.ts");
   try {
-    await seedAll(storage);
+    await seedAll(storage, storageServer);
   } finally {
     // pool giữ event loop — không end() thì process treo sau khi xong
     await sql.end({ timeout: 5 });
@@ -255,6 +256,7 @@ async function main(): Promise<void> {
 
 async function seedAll(
   storage: typeof import("../src/lib/storage.ts"),
+  storageServer: typeof import("../src/lib/storage-server.ts"),
 ): Promise<void> {
 
   // 1. Books — upsert theo id (7 dòng cố định, chỉnh qua migration/seed)
@@ -366,7 +368,7 @@ async function seedAll(
           DEMO_FREQUENCIES[idx % DEMO_FREQUENCIES.length],
           DEMO_DURATION_MS,
         );
-        await storage.putAudio(path, wavToMp3(wav));
+        await storageServer.putAudio(path, wavToMp3(wav));
         audioPath = path;
         durationMs = DEMO_DURATION_MS;
         audioCount++;
