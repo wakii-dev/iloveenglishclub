@@ -5,3 +5,4 @@ sweep 30-09 (DB ilec): unit 267/267 · rls 18/18 · audit 15/15 · e2e admin 46/
 lighthouse final local: 7/7 PASS hard (perf 90-94, a11y 98-100, ≥ baseline SF-8) — lighthouse-final.md
 security-scan: PASS (30-09) · Rule 0 prod build: 15/15 bước 3 tầng DOM/VISUAL/FLOW (rule0-browser.md) · prod DB dry-run: 0 test data (prod-cleanup-dryrun.md)
 registry: findings.md 17 FIXED · 7 BY-DESIGN · 7 DEFERRED · 0 OPEN · prod flows: BLOCKED GAP #3 (đúng protocol — qa-final-report.md §4)
+follow-up (hậu merge): de45630 (merge commit no-ff sf-6 → dest wakii-dev/story-vu24-qa-hardening, GUARD1+GUARD2 PASS, pushed origin) · ce7ecac (review P2 evidence screenshot) · efff11d (review P1 findings counts) · bd38eab (run-plan + evidence) — provenance chain kín: HEAD de45630, HEAD~1 ce7ecac
