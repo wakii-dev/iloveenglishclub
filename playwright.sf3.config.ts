@@ -47,7 +47,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT}`,
+    // QA-7 (SF-6 fix): webpack dev — bypass --turbopack (race font 1/4-1/7
+    // start, audit SF-1); script `dev` dùng chung không đổi (team HMR).
+    command: `npx next dev --port ${PORT}`,
     url: `${BASE}/en`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

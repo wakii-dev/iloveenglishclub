@@ -27,7 +27,9 @@ export default defineConfig({
     locale: "vi-VN",
   },
   webServer: {
-    command: "npm run dev -- --port 3010",
+    // QA-7 (SF-6 fix): webpack dev — bypass --turbopack (race font 1/4-1/7
+    // start, audit SF-1); script `dev` dùng chung không đổi (team HMR).
+    command: "npx next dev --port 3010",
     url: "http://localhost:3010/en",
     // port 3010 riêng tránh bẫy chéo worktree (QA-2); server stale từ run cũ
     // vẫn phải kill tay khi nghi env cũ (lsof -i :3010)

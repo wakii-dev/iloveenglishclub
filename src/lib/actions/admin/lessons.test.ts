@@ -104,6 +104,12 @@ describe("deleteLessonAction", () => {
     expect(res).toEqual({ error: "hasAttempts" });
   });
 
+  it("23001 → hasAttempts (QA-501 — PG17+ raise restrict_violation thay 23503)", async () => {
+    dbState.failWith = { code: "23001" };
+    const res = await deleteLessonAction(1);
+    expect(res).toEqual({ error: "hasAttempts" });
+  });
+
   it("thành công → revalidateTag('content') đúng 1 lần (unconditional — matrix §5)", async () => {
     const res = await deleteLessonAction(1);
     expect(res).toEqual({ ok: true });

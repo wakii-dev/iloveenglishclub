@@ -112,3 +112,17 @@ describe("revalidate contract (QA-302 — RED trước fix)", () => {
     expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
   });
 });
+
+describe("delete PG-code mapping (QA-501 — RESTRICT trên PG17+ raise 23001)", () => {
+  it("23001 (PG17+ restrict_violation) → hasAttempts, không rethrow", async () => {
+    dbState.failWith = { code: "23001" };
+    const res = await deleteUnitAction(1);
+    expect(res).toEqual({ error: "hasAttempts" });
+  });
+
+  it("23503 (PG≤16 foreign_key_violation) → hasAttempts (giữ nguyên)", async () => {
+    dbState.failWith = { code: "23503" };
+    const res = await deleteUnitAction(1);
+    expect(res).toEqual({ error: "hasAttempts" });
+  });
+});

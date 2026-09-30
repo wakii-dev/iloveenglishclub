@@ -1,0 +1,68 @@
+{
+  "url": "/en/books/level-3/units/1/lessons/1/listen-and-type",
+  "run": 1,
+  "fetchTime": "2026-09-29T21:22:17.552Z",
+  "categories": {
+    "performance": 0.92,
+    "accessibility": 1
+  },
+  "metrics": {
+    "first-contentful-paint": "0.9 s",
+    "largest-contentful-paint": "3.3 s",
+    "total-blocking-time": "20 ms",
+    "cumulative-layout-shift": "0.013",
+    "speed-index": "0.9 s"
+  },
+  "failingAudits": [
+    {
+      "id": "largest-contentful-paint",
+      "score": 0.69,
+      "title": "Largest Contentful Paint"
+    },
+    {
+      "id": "max-potential-fid",
+      "score": 0.99,
+      "title": "Max Potential First Input Delay"
+    },
+    {
+      "id": "interactive",
+      "score": 0.93,
+      "title": "Time to Interactive"
+    },
+    {
+      "id": "largest-contentful-paint-element",
+      "score": 0,
+      "title": "Largest Contentful Paint element"
+    },
+    {
+      "id": "render-blocking-resources",
+      "score": 0.5,
+      "title": "Eliminate render-blocking resources"
+    },
+    {
+      "id": "unused-javascript",
+      "score": 0.5,
+      "title": "Reduce unused JavaScript"
+    },
+    {
+      "id": "legacy-javascript",
+      "score": 0,
+      "title": "Avoid serving legacy JavaScript to modern browsers"
+    },
+    {
+      "id": "legacy-javascript-insight",
+      "score": 0,
+      "title": "Legacy JavaScript"
+    },
+    {
+      "id": "network-dependency-tree-insight",
+      "score": 0,
+      "title": "Network dependency tree"
+    },
+    {
+      "id": "render-blocking-insight",
+      "score": 0,
+      "title": "Render blocking requests"
+    }
+  ]
+}

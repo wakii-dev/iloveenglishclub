@@ -81,10 +81,12 @@ export async function deleteUnitAction(unitId: number): Promise<UnitActionState>
   await assertAdmin();
   try {
     // cascade units→lessons→parts (schema); attempts RESTRICT part → nếu đã
-    // có người học, delete nổ 23503 → trả "hasAttempts" (unpublish thay vì xóa)
+    // có người học, delete nổ lỗi RESTRICT → trả "hasAttempts" (unpublish
+    // thay vì xóa). PG≤16 raise 23503, PG17+ raise 23001 — QA-501
     await db.delete(units).where(eq(units.id, unitId));
   } catch (error) {
-    if (pgErrorCode(error) === "23503") return { error: "hasAttempts" };
+    const code = pgErrorCode(error);
+    if (code === "23001" || code === "23503") return { error: "hasAttempts" };
     console.error("[deleteUnitAction] delete failed:", error);
     throw error;
   }

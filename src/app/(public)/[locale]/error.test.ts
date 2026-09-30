@@ -52,11 +52,15 @@ function renderErrorPage(locale: "en" | "vi", digest?: string): string {
   // children truyền TRONG props object — overload TS của NextIntlClientProvider
   // require children trong props (createElement arg-3 không tính vào type).
   return renderToString(
+    /* eslint-disable react/no-children-prop -- children PHẢI nằm trong props:
+       overload TS của NextIntlClientProvider không tính createElement arg-3
+       (QA-501 — `next build` lint fail trên pattern này) */
     createElement(NextIntlClientProvider, {
       locale,
       messages: MESSAGES[locale],
       children: createElement(ErrorPage, { error, reset: () => {} }),
     }),
+    /* eslint-enable react/no-children-prop */
   );
 }
 
