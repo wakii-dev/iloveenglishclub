@@ -20,6 +20,31 @@ function rowOf(page: Page, email: string) {
   return page.locator("table tbody tr").filter({ hasText: email });
 }
 
+/**
+ * Mở menu role + click option — CÓ RETRY cho race hydration (QA-505):
+ * Radix SelectTrigger là button SSR — click trước khi React gắn listener
+ * = no-op (row đã hiện vì SSR HTML, nên `toHaveCount(1)` không đủ làm
+ * "đã hydrate"); dropdown không mở → option không bao giờ render. Retry
+ * lần 2 sau 4s (hydration kịp xong) — probe xác nhận dropdown mở đẹp khi
+ * click sau settle (QA-505 evidence).
+ */
+async function pickRole(
+  page: Page,
+  row: ReturnType<typeof rowOf>,
+  label: string,
+): Promise<void> {
+  const trigger = row.getByRole("combobox");
+  const opt = page.getByRole("option", { name: label, exact: true });
+  await trigger.click();
+  try {
+    await opt.waitFor({ state: "visible", timeout: 4_000 });
+  } catch {
+    await trigger.click();
+    await opt.waitFor({ state: "visible", timeout: 15_000 });
+  }
+  await opt.click();
+}
+
 test.describe("Users mgmt (SF-4)", () => {
   test.beforeEach(async ({ page }) => {
     await seedQaUser(QA_EMAIL, "SF4 User");
@@ -44,15 +69,18 @@ test.describe("Users mgmt (SF-4)", () => {
     await page.getByRole("searchbox").fill(QA_EMAIL);
     await page.getByRole("searchbox").press("Enter");
     const row = rowOf(page, QA_EMAIL);
+    // QA-505 (sweep SF-6): chờ row của trang KẾT QUẢ search — click ngay sau
+    // Enter rơi vào DOM trang cũ (form GET đang reload) → dropdown state mất,
+    // option không bao giờ render (race 3/3 trên DB đông; test 1 có await này
+    // nên không hề fail).
+    await expect(row).toHaveCount(1);
 
-    await row.getByRole("combobox").click();
-    await page.getByRole("option", { name: "Quản trị" }).click();
+    await pickRole(page, row, "Quản trị");
     // nguồn sự thật = DB (toast "Quản trị" trùng text option — không tin)
     await expect.poll(() => roleOf(QA_EMAIL), { timeout: 60_000 }).toBe("admin"); // cold compile 60-115s (SF-6 lesson)
 
     // đổi ngược — action chạy cả 2 chiều
-    await row.getByRole("combobox").click();
-    await page.getByRole("option", { name: "Người dùng", exact: true }).click();
+    await pickRole(page, row, "Người dùng");
     await expect.poll(() => roleOf(QA_EMAIL), { timeout: 60_000 }).toBe("user");
     await expect(row).toContainText("Người dùng");
   });
@@ -60,9 +88,14 @@ test.describe("Users mgmt (SF-4)", () => {
   test("self-row: select disabled + badge (bạn) — không tự hạ được mình", async ({
     page,
   }) => {
-    // row admin đang đăng nhập (ADMIN_EMAIL từ .env.local)
+    // row admin đang đăng nhập (ADMIN_EMAIL từ .env.local) — SEARCH trước:
+    // QA-504 (sweep SF-6): bảng chỉ render 20 user mới nhất (limit(20), không
+    // phân trang) — admin cũ rơi khỏi trang 1 trên DB đông; search là path
+    // chính thức tìm mọi user.
     const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase();
     expect(adminEmail).toBeTruthy();
+    await page.getByRole("searchbox").fill(adminEmail);
+    await page.getByRole("searchbox").press("Enter");
     const row = rowOf(page, adminEmail);
     await expect(row).toHaveCount(1);
     await expect(row).toContainText("(bạn)");

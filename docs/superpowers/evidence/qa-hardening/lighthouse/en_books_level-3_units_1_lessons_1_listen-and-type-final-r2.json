@@ -1,7 +1,7 @@
 {
   "url": "/en/books/level-3/units/1/lessons/1/listen-and-type",
   "run": 2,
-  "fetchTime": "2026-09-29T21:22:29.868Z",
+  "fetchTime": "2026-09-30T03:17:46.547Z",
   "categories": {
     "performance": 0.92,
     "accessibility": 1
@@ -26,7 +26,7 @@
     },
     {
       "id": "interactive",
-      "score": 0.94,
+      "score": 0.93,
       "title": "Time to Interactive"
     },
     {

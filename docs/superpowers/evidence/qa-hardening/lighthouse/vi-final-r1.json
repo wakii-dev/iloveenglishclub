@@ -1,7 +1,7 @@
 {
   "url": "/vi",
   "run": 1,
-  "fetchTime": "2026-09-29T21:19:50.565Z",
+  "fetchTime": "2026-09-30T03:03:58.838Z",
   "categories": {
     "performance": 0.9,
     "accessibility": 1
@@ -9,20 +9,20 @@
   "metrics": {
     "first-contentful-paint": "1.1 s",
     "largest-contentful-paint": "3.6 s",
-    "total-blocking-time": "20 ms",
+    "total-blocking-time": "10 ms",
     "cumulative-layout-shift": "0.013",
     "speed-index": "1.1 s"
   },
   "failingAudits": [
     {
+      "id": "first-contentful-paint",
+      "score": 0.99,
+      "title": "First Contentful Paint"
+    },
+    {
       "id": "largest-contentful-paint",
       "score": 0.6,
       "title": "Largest Contentful Paint"
-    },
-    {
-      "id": "max-potential-fid",
-      "score": 0.99,
-      "title": "Max Potential First Input Delay"
     },
     {
       "id": "interactive",

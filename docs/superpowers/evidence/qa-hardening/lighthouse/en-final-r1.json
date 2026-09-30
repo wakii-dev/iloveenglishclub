@@ -1,7 +1,7 @@
 {
   "url": "/en",
   "run": 1,
-  "fetchTime": "2026-09-29T21:19:13.900Z",
+  "fetchTime": "2026-09-30T02:48:04.135Z",
   "categories": {
     "performance": 0.92,
     "accessibility": 1
@@ -9,7 +9,7 @@
   "metrics": {
     "first-contentful-paint": "0.9 s",
     "largest-contentful-paint": "3.3 s",
-    "total-blocking-time": "30 ms",
+    "total-blocking-time": "20 ms",
     "cumulative-layout-shift": "0.013",
     "speed-index": "0.9 s"
   },

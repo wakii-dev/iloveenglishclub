@@ -1,7 +1,7 @@
 {
   "url": "/en/books/level-3",
   "run": 3,
-  "fetchTime": "2026-09-29T21:21:28.206Z",
+  "fetchTime": "2026-09-30T03:05:36.845Z",
   "categories": {
     "performance": 0.94,
     "accessibility": 1
@@ -18,6 +18,11 @@
       "id": "largest-contentful-paint",
       "score": 0.76,
       "title": "Largest Contentful Paint"
+    },
+    {
+      "id": "max-potential-fid",
+      "score": 0.99,
+      "title": "Max Potential First Input Delay"
     },
     {
       "id": "interactive",

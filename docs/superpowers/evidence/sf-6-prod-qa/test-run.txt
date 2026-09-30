@@ -1,0 +1,8 @@
+tdd: RED→GREEN — QA-501: 2 unit mock 23001 → rethrow (2 failed trên code cũ) → 25/25 sau fix 40b56ec + test-rls superset ["23503","23001"] · QA-503: npm run build RED (Failed to compile 55:5 react/no-children-prop) → GREEN (Compiled successfully) sau c9ed6c0 · QA-505: admin-users RED 4/4 (option Quản trị không render — pre-hydration click race) → GREEN 4/4 (28.8s) sau pickRole 8c80401 · QA-7: RED = số đo audit SF-1 (turbopack boot chết 1/4-1/7, race không deterministic) + GREEN probe boot webpack 3/3 sạch → fix 9716d6f
+code commits: 9716d6f (QA-7) · c9ed6c0 (QA-503) · 40b56ec (QA-501) · 8c80401 (QA-505 spec fix)
+evidence chain: HEAD~1 = ce689d8 (sweep final + QA-506 + final report) — file này commit ngay sau
+sweep 30-09 (DB ilec): unit 267/267 · rls 18/18 · audit 15/15 · e2e admin 46/46 (R2) · sf3 26/26 · sf4 46/46 (R3 sau pickRole) · sf5 43/43 · dict-baseline 110/113 (R1) & 96/113 (R3) + sf2 43/44→39/43 — flake class QA-506 DEFERRED (mọi test PASS isolated + prod build; sweep-final.md)
+lighthouse final local: 7/7 PASS hard (perf 90-94, a11y 98-100, ≥ baseline SF-8) — lighthouse-final.md
+security-scan: PASS (30-09) · Rule 0 prod build: 15/15 bước 3 tầng DOM/VISUAL/FLOW (rule0-browser.md) · prod DB dry-run: 0 test data (prod-cleanup-dryrun.md)
+registry: findings.md 17 FIXED · 7 BY-DESIGN · 7 DEFERRED · 0 OPEN · prod flows: BLOCKED GAP #3 (đúng protocol — qa-final-report.md §4)
+follow-up (hậu merge): de45630 (merge commit no-ff sf-6 → dest wakii-dev/story-vu24-qa-hardening, GUARD1+GUARD2 PASS, pushed origin) · ce7ecac (review P2 evidence screenshot) · efff11d (review P1 findings counts) · bd38eab (run-plan + evidence) — provenance chain kín: HEAD de45630, HEAD~1 ce7ecac
