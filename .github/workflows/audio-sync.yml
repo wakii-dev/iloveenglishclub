@@ -33,6 +33,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # commit trong script cần identity (runner mặc định không có)
+      - name: Config git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Mirror audio từ Blob
         run: node scripts/audio-sync.ts --apply
         env:
