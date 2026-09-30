@@ -35,6 +35,8 @@ Tổng hợp cho người merge + story kế tiếp. Mọi DEFERRED của regist
 | QA-201 | OAuth Google chưa test round-trip thật | Cần GOOGLE_CLIENT_ID/SECRET prod — khi có, mở `progress-oauth` suite (đã viết sẵn 2 probe + graceful-off được e2e chặn) |
 | QA-202 | Guest relaxed → login commit drift preview 5 vs server 10 | Cần quyết product/schema (persist guest prefs pre-auth) — hiện cap 10 XP/part, không corrupt. Hướng an toàn: chấp nhận + document |
 | QA-305 | Khóa user (ban) thiếu cột `profiles.banned` | Schema migration chủ đích ngoài story — làm kèm direction B hoặc epic riêng |
+| QA-504 | `/admin/users` chỉ render 20 user mới nhất (`searchAdminUsers` limit(20), không phân trang — silent cut, search vẫn tìm được mọi user) | Thêm phân trang hoặc count indicator "hiển thị 20/N"; lộ trên DB đông (sweep: admin rank 24/73 biến mất khỏi bảng) — v1 search-first chấp nhận được nhưng cần chỉ báo |
+| QA-506 | dict baseline lane (113 test hậu expansion) + sf2 lane flake 2-8%/test trên dev (fail khác nhau mỗi round, pass isolated, prod build sạch 15/15; machine load 7.36 khi tệ nhất) | (1) hydration-retry helpers cho start-flow specs (~6-8 file, pattern `pickRole` QA-505); (2) tách baseline lane per-suite thay vì 113-test mono; (3) CI/e2e retry policy (`retries` cho lane dài); (4) chạy lane trên máy nhàn/CI runner |
 
 ## 5. Thiết bị thật / IME
 

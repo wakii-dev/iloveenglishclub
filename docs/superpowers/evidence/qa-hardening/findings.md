@@ -6,7 +6,7 @@ Chi tiết đầy đủ từng row (repro/root-cause/evidence dài) giữ nguyê
 bảng này là bản tổng hợp có trỏ nguồn. **Verification AC#2: 0 OPEN** (mới nhất: QA-7
 OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 
-Đếm cuối story: **16 FIXED · 7 BY-DESIGN · 5 DEFERRED + 1 residual note (đủ sign-off + Recommendations) · 0 OPEN.**
+Đếm cuối story: **17 FIXED · 7 BY-DESIGN · 7 DEFERRED + 1 residual note (đủ sign-off + Recommendations) · 0 OPEN.**
 
 ## FIXED (20)
 
@@ -28,6 +28,7 @@ OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 | QA-501 | P1 | db/compat delete | PG17+ RESTRICT raise 23001 ≠ 23503 — admin 500 thay vì toast hasAttempts; test-rls sẽ FAIL trên prod PG18 | 40b56ec (SF-6) | unit mock 23001 RED→GREEN + superset assert | sf6 |
 | QA-502 | P1 | infra/env | `.env.local` worktree chính trỏ Neon PROD — test suite suýt chạy trên prod | (ops coordinator) env → localhost ilec | — (ops) | sf6 |
 | QA-503 | P1 | infra/build | `next build` fail lint react/no-children-prop (error.test.ts) — không có artifact prod | c9ed6c0 (SF-6) | build RED→GREEN | sf6 |
+| QA-505 | P2 | e2e admin-users (test-race) | click combobox trên trang chưa settle/pre-hydration → dropdown không mở, option không render (RED 4/4 sf4 config) | thiếu chờ settle + click pre-hydration (product OK — probe dropdown mở đẹp) | 8c80401 (`pickRole` click-with-retry) | RED 4/4 → GREEN 4/4 (28.8s) | sf6 |
 
 > 16 rows FIXED đủ ở bảng trên (gồm fix hygiene/ops không có commit code: QA-1,
 > QA-2, QA-502). Chi tiết per-row đầy đủ = nguồn sf1/sf2/sf3/sf4/sf5/sf6.
@@ -54,6 +55,8 @@ OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 | QA-201 | ENV-LIMIT | OAuth Google cần creds | env-matrix ghi nhận; sign-off PM theo comment epic |
 | QA-202 | P2 | guest relaxed commit drift (cap 10 XP/part, không corrupt) | out-of-scope schema — PM sign-off trong comment epic |
 | QA-305 | P2 | khóa user thiếu cột `profiles.banned` | REQUIREMENT-GAP VU-15 trong code + spec §4 |
+| QA-504 | P2 | `/admin/users` cắt im lặng ở 20 user mới nhất (limit 20, không phân trang — search vẫn tìm được) | DEFERRED product enhancement — pagination/count indicator; sign-off PM (batch audit comment SF-6) |
+| QA-506 | P2 | dict baseline lane (113 test) + sf2 lane flake — fail ngẫu nhiên 1-10 test/round, khác nhau mỗi round; toàn bộ PASS isolated + prod build Rule 0 15/15 | DEFERRED test-infra robustness (hydration-retry helpers, tách lane, CI retry) — owner tier-1; sign-off PM (batch SF-6) — chi tiết sweep-final.md |
 
 ## Conclusion
 
