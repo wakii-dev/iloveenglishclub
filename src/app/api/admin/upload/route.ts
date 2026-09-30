@@ -9,8 +9,10 @@ import { putAudio } from "@/lib/storage-server";
 import {
   MAX_AUDIO_BYTES,
   mimeToAudioExt,
+  persistedAudioPath,
 } from "@/lib/admin/audio-mapping";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
+import { storageDriver } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -65,45 +67,56 @@ export async function POST(req: NextRequest) {
   }
 
   // Path context từ lessonId: books.slug + units.number + lessons.number (join)
-  const [part] = await db
-    .select({
-      partId: lessonParts.id,
-      bookSlug: books.slug,
-      unitNumber: units.number,
-      lessonNumber: lessons.number,
-      published: lessons.published,
-    })
-    .from(lessonParts)
-    .innerJoin(lessons, eq(lessonParts.lessonId, lessons.id))
-    .innerJoin(units, eq(lessons.unitId, units.id))
-    .innerJoin(books, eq(units.bookId, books.id))
-    .where(and(eq(lessonParts.lessonId, lessonId), eq(lessonParts.sortOrder, partIndex)))
-    .limit(1);
-  if (!part) {
-    return NextResponse.json({ ok: false, error: "partNotFound" }, { status: 404 });
+  try {
+    const [part] = await db
+      .select({
+        partId: lessonParts.id,
+        bookSlug: books.slug,
+        unitNumber: units.number,
+        lessonNumber: lessons.number,
+        published: lessons.published,
+      })
+      .from(lessonParts)
+      .innerJoin(lessons, eq(lessonParts.lessonId, lessons.id))
+      .innerJoin(units, eq(lessons.unitId, units.id))
+      .innerJoin(books, eq(units.bookId, books.id))
+      .where(and(eq(lessonParts.lessonId, lessonId), eq(lessonParts.sortOrder, partIndex)))
+      .limit(1);
+    if (!part) {
+      return NextResponse.json({ ok: false, error: "partNotFound" }, { status: 404 });
+    }
+
+    const path = buildAudioPath({
+      book: part.bookSlug,
+      unit: `unit-${part.unitNumber}`,
+      lesson: `lesson-${part.lessonNumber}`,
+      index: partIndex,
+    }).replace(/\.mp3$/, `.${ext}`);
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const stored = await putAudio(path, buffer, file.type || `audio/${ext}`);
+
+    // durationMs fail-soft (spec §6): parse lỗi → null, KHÔNG block
+    const durationMs = /^\d+$/.test(durationRaw)
+      ? Math.min(Number.parseInt(durationRaw, 10), 600000)
+      : null;
+
+    // blob driver: DB lưu URL CDN đầy đủ (resolveAudioUrl pass-through);
+    // local dev: path tương đối (playback `/` + path).
+    const audioPath = persistedAudioPath(storageDriver(), stored);
+    await db
+      .update(lessonParts)
+      .set({ audioPath, durationMs })
+      .where(eq(lessonParts.id, part.partId));
+
+    if (part.published) revalidateTag(CONTENT_TAG);
+
+    return NextResponse.json({ ok: true, path: audioPath });
+  } catch (error) {
+    console.error("[upload] storage/db failed:", error);
+    return NextResponse.json(
+      { ok: false, error: "uploadFailed" },
+      { status: 500 },
+    );
   }
-
-  const path = buildAudioPath({
-    book: part.bookSlug,
-    unit: `unit-${part.unitNumber}`,
-    lesson: `lesson-${part.lessonNumber}`,
-    index: partIndex,
-  }).replace(/\.mp3$/, `.${ext}`);
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await putAudio(path, buffer, file.type || `audio/${ext}`);
-
-  // durationMs fail-soft (spec §6): parse lỗi → null, KHÔNG block
-  const durationMs = /^\d+$/.test(durationRaw)
-    ? Math.min(Number.parseInt(durationRaw, 10), 600000)
-    : null;
-
-  await db
-    .update(lessonParts)
-    .set({ audioPath: path, durationMs })
-    .where(eq(lessonParts.id, part.partId));
-
-  if (part.published) revalidateTag(CONTENT_TAG);
-
-  return NextResponse.json({ ok: true, path });
 }

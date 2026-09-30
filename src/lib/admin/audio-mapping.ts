@@ -50,3 +50,17 @@ export function mimeToAudioExt(mime: string): string | null {
 
 /** Cap 4MB — Vercel serverless Route Handler body limit ~4.5MB (spec §3). */
 export const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Giá trị lưu DB `lessonParts.audioPath` theo driver (bug prod 2026-09-30:
+ * route lưu path tương đối cả khi blob → playback 404 vì resolveAudioUrl
+ * blob-driver pass-through kỳ vọng URL CDN đầy đủ — storage.test §blob).
+ * - blob: URL CDN đầy đủ trả về từ putAudio.
+ * - local (dev): path key tương đối, playback resolve `/` + path.
+ */
+export function persistedAudioPath(
+  driver: "local" | "blob",
+  put: { path: string; url: string },
+): string {
+  return driver === "blob" ? put.url : put.path;
+}

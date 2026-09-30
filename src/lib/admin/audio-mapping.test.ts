@@ -4,6 +4,7 @@ import {
   mimeToAudioExt,
   numericFileSort,
   parseFileNameIndex,
+  persistedAudioPath,
 } from "./audio-mapping";
 
 describe("parseFileNameIndex", () => {
@@ -85,5 +86,20 @@ describe("mimeToAudioExt", () => {
 describe("MAX_AUDIO_BYTES", () => {
   it("cap 4MB đúng (Vercel serverless ~4.5MB body limit)", () => {
     expect(MAX_AUDIO_BYTES).toBe(4 * 1024 * 1024);
+  });
+});
+
+describe("persistedAudioPath — giá trị lưu DB audioPath theo driver", () => {
+  const put = {
+    path: "audio/level-3/unit-1/lesson-3/02.mp3",
+    url: "https://abc.public.blob.vercel-storage.com/audio/level-3/unit-1/lesson-3/02.mp3",
+  };
+
+  it("blob driver: URL CDN đầy đủ (resolveAudioUrl pass-through, storage.test §blob)", () => {
+    expect(persistedAudioPath("blob", put)).toBe(put.url);
+  });
+
+  it("local driver: path tương đối (playback resolve / + path)", () => {
+    expect(persistedAudioPath("local", put)).toBe(put.path);
   });
 });

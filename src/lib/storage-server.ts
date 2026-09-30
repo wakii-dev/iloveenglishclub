@@ -10,8 +10,9 @@ import { del, put } from "@vercel/blob";
  *   ⚠ CHỈ dev: Vercel prod read-only FS + public/ đóng băng lúc build.
  * - driver `blob`: Vercel Blob (CDN URL) — prod khi có BLOB_READ_WRITE_TOKEN.
  *
- * DB lưu path key tương đối `audio/{book}/{unit}/{lesson}/{NN}.mp3` (spec §3);
- * playback resolve qua resolveAudioUrl() (client-safe) theo driver.
+ * DB `lessonParts.audioPath` lưu giá trị playback-able (persistedAudioPath):
+ * local → path key `audio/{book}/{unit}/{lesson}/{NN}.mp3`, blob → URL CDN
+ * đầy đủ. Playback resolve qua resolveAudioUrl() (client-safe) theo driver.
  */
 
 export async function putAudio(
@@ -19,6 +20,13 @@ export async function putAudio(
   data: Buffer,
   contentType = "audio/mpeg",
 ): Promise<{ path: string; url: string }> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN && process.env.VERCEL) {
+    // Fail fast với lỗi rõ ràng — KHÔNG fallback FS (bug prod 2026-09-30:
+    // thiếu token → mkdir /var/task/public/... → ENOENT 500 im lặng).
+    throw new Error(
+      "putAudio: BLOB_READ_WRITE_TOKEN missing on Vercel — connect a Blob store (vercel storage connect)",
+    );
+  }
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const blob = await put(path, data, {
       contentType,
