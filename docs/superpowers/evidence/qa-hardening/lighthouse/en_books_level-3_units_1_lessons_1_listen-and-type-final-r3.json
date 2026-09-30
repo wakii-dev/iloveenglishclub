@@ -1,7 +1,7 @@
 {
   "url": "/en/books/level-3/units/1/lessons/1/listen-and-type",
   "run": 3,
-  "fetchTime": "2026-09-29T21:22:42.129Z",
+  "fetchTime": "2026-09-30T03:17:59.023Z",
   "categories": {
     "performance": 0.92,
     "accessibility": 1
@@ -20,8 +20,13 @@
       "title": "Largest Contentful Paint"
     },
     {
+      "id": "max-potential-fid",
+      "score": 0.99,
+      "title": "Max Potential First Input Delay"
+    },
+    {
       "id": "interactive",
-      "score": 0.94,
+      "score": 0.93,
       "title": "Time to Interactive"
     },
     {

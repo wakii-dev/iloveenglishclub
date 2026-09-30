@@ -1,22 +1,22 @@
 {
   "url": "/en/books/level-3/units/1",
   "run": 1,
-  "fetchTime": "2026-09-29T21:21:40.376Z",
+  "fetchTime": "2026-09-30T03:16:57.504Z",
   "categories": {
-    "performance": 0.94,
+    "performance": 0.95,
     "accessibility": 1
   },
   "metrics": {
-    "first-contentful-paint": "0.9 s",
-    "largest-contentful-paint": "3.1 s",
+    "first-contentful-paint": "0.8 s",
+    "largest-contentful-paint": "2.9 s",
     "total-blocking-time": "10 ms",
     "cumulative-layout-shift": "0.013",
-    "speed-index": "0.9 s"
+    "speed-index": "0.8 s"
   },
   "failingAudits": [
     {
       "id": "largest-contentful-paint",
-      "score": 0.75,
+      "score": 0.79,
       "title": "Largest Contentful Paint"
     },
     {

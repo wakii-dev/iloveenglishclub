@@ -1,32 +1,27 @@
 {
   "url": "/en",
   "run": 2,
-  "fetchTime": "2026-09-29T21:19:26.134Z",
+  "fetchTime": "2026-09-30T02:48:16.499Z",
   "categories": {
-    "performance": 0.94,
+    "performance": 0.92,
     "accessibility": 1
   },
   "metrics": {
     "first-contentful-paint": "0.9 s",
-    "largest-contentful-paint": "3.1 s",
-    "total-blocking-time": "10 ms",
+    "largest-contentful-paint": "3.3 s",
+    "total-blocking-time": "20 ms",
     "cumulative-layout-shift": "0.013",
     "speed-index": "0.9 s"
   },
   "failingAudits": [
     {
       "id": "largest-contentful-paint",
-      "score": 0.76,
+      "score": 0.69,
       "title": "Largest Contentful Paint"
     },
     {
-      "id": "max-potential-fid",
-      "score": 0.99,
-      "title": "Max Potential First Input Delay"
-    },
-    {
       "id": "interactive",
-      "score": 0.92,
+      "score": 0.93,
       "title": "Time to Interactive"
     },
     {
@@ -41,7 +36,7 @@
     },
     {
       "id": "unused-javascript",
-      "score": 0.5,
+      "score": 0,
       "title": "Reduce unused JavaScript"
     },
     {

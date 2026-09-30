@@ -1,23 +1,28 @@
 {
   "url": "/en",
   "run": 3,
-  "fetchTime": "2026-09-29T21:19:38.348Z",
+  "fetchTime": "2026-09-30T03:03:46.489Z",
   "categories": {
     "performance": 0.92,
     "accessibility": 1
   },
   "metrics": {
     "first-contentful-paint": "0.9 s",
-    "largest-contentful-paint": "3.3 s",
-    "total-blocking-time": "10 ms",
+    "largest-contentful-paint": "3.4 s",
+    "total-blocking-time": "20 ms",
     "cumulative-layout-shift": "0.013",
     "speed-index": "0.9 s"
   },
   "failingAudits": [
     {
       "id": "largest-contentful-paint",
-      "score": 0.69,
+      "score": 0.68,
       "title": "Largest Contentful Paint"
+    },
+    {
+      "id": "max-potential-fid",
+      "score": 0.99,
+      "title": "Max Potential First Input Delay"
     },
     {
       "id": "interactive",
