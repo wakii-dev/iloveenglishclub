@@ -8,7 +8,7 @@ OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 
 Đếm cuối story: **17 FIXED · 7 BY-DESIGN · 7 DEFERRED + 1 residual note (đủ sign-off + Recommendations) · 0 OPEN.**
 
-## FIXED (20)
+## FIXED (17)
 
 | ID | Sev | Surface | Tóm tắt | Fix commit | Regression | Nguồn |
 |---|---|---|---|---|---|---|
@@ -28,12 +28,12 @@ OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 | QA-501 | P1 | db/compat delete | PG17+ RESTRICT raise 23001 ≠ 23503 — admin 500 thay vì toast hasAttempts; test-rls sẽ FAIL trên prod PG18 | 40b56ec (SF-6) | unit mock 23001 RED→GREEN + superset assert | sf6 |
 | QA-502 | P1 | infra/env | `.env.local` worktree chính trỏ Neon PROD — test suite suýt chạy trên prod | (ops coordinator) env → localhost ilec | — (ops) | sf6 |
 | QA-503 | P1 | infra/build | `next build` fail lint react/no-children-prop (error.test.ts) — không có artifact prod | c9ed6c0 (SF-6) | build RED→GREEN | sf6 |
-| QA-505 | P2 | e2e admin-users (test-race) | click combobox trên trang chưa settle/pre-hydration → dropdown không mở, option không render (RED 4/4 sf4 config) | thiếu chờ settle + click pre-hydration (product OK — probe dropdown mở đẹp) | 8c80401 (`pickRole` click-with-retry) | RED 4/4 → GREEN 4/4 (28.8s) | sf6 |
+| QA-505 | P2 | e2e admin-users (test-race) | click combobox trên trang chưa settle/pre-hydration → dropdown không mở, option không render (RED 4/4 sf4 config; root cause = thiếu chờ settle, product OK) | 8c80401 (`pickRole` click-with-retry) | RED 4/4 → GREEN 4/4 (28.8s) | sf6 |
 
-> 16 rows FIXED đủ ở bảng trên (gồm fix hygiene/ops không có commit code: QA-1,
+> 17 rows FIXED đủ ở bảng trên (gồm fix hygiene/ops không có commit code: QA-1,
 > QA-2, QA-502). Chi tiết per-row đầy đủ = nguồn sf1/sf2/sf3/sf4/sf5/sf6.
 
-## BY-DESIGN (4 + seed re-verified)
+## BY-DESIGN (7 — 4 seed + 3 re-classify có rationale)
 
 | ID | Surface | Hành vi | Rationale (nguồn) |
 |---|---|---|---|
@@ -45,7 +45,7 @@ OPEN của SF-1 đã fix trong SF-6 — 9716d6f).
 | QA-300 | baseline admin config testMatch thoáng | boundary: không sửa baseline — config sf4 anchored | sf4 |
 | QA-402 | JSON-LD nested `@context` | JSON-LD 1.1 hợp lệ, Google parse OK | sf5 |
 
-## DEFERRED (6 — rationale + sign-off, chi tiết qa-recommendations.md §4)
+## DEFERRED (7 + 1 residual note — rationale + sign-off, chi tiết qa-recommendations.md §4)
 
 | ID | Sev | Nội dung | Sign-off nguồn |
 |---|---|---|---|
