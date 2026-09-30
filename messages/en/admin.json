@@ -52,7 +52,8 @@
     "add": "Add {count} sentences to lesson",
     "clear": "Clear all",
     "addRow": "Add row",
-    "limitation": "Note: abbreviations (Mr., e.g.), decimals (3.5), ellipsis (…) may split wrongly — fix rows manually below."
+    "limitation": "Note: abbreviations (Mr., e.g.), decimals (3.5), ellipsis (…) may split wrongly — fix rows manually below.",
+    "merge": "Merge with line below"
   },
   "parts": {
     "title": "Lesson parts",

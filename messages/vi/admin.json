@@ -52,7 +52,8 @@
     "add": "Thêm {count} câu vào bài",
     "clear": "Xóa hết",
     "addRow": "Thêm dòng",
-    "limitation": "Lưu ý: viết tắt (Mr., e.g.), số thập phân (3.5), ellipsis (…) có thể tách sai — sửa tay từng dòng bên dưới."
+    "limitation": "Lưu ý: viết tắt (Mr., e.g.), số thập phân (3.5), ellipsis (…) có thể tách sai — sửa tay từng dòng bên dưới.",
+    "merge": "Gộp với dòng dưới"
   },
   "parts": {
     "title": "Câu hỏi của bài",

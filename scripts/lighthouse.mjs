@@ -13,6 +13,12 @@
  *   final — thêm FULL raw lighthouse JSON 1 file/URL (lượt quyết định
  *           verdict; ~600KB/file — size đã cân nhắc, ghi report)
  *
+ * Env (SF-1 task 8):
+ *   LH_REPORT_ONLY=1  — perf REPORT-ONLY (không exit non-0 vì perf);
+ *                       a11y ≥0.95 vẫn HARD exit (spec VU-24 §5.4)
+ *   LH_OUT_DIR=<dir>  — override thư mục evidence (default: dir sf-8,
+ *                       KHÔNG ĐỔI — provenance VU-15)
+ *
  * Điều kiện: `next start` ĐANG CHẠY trên base-url (build prod — KHÔNG chạy
  * dev). Guard: /en phải 200 + HTML KHÔNG chứa dev-indicator (nếu thấy dev
  * server → abort, không đo để evidence không nhiễm).
@@ -23,11 +29,20 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { summarize } from "./audit-thresholds.mjs";
+import {
+  effectiveThresholds,
+  isReportOnly,
+  LH_THRESHOLDS,
+  resolveOutDir,
+} from "../src/lib/lighthouse-config.ts";
 
 const LABEL = process.argv[2];
 const BASE = (process.argv[3] ?? "http://localhost:3110").replace(/\/$/, "");
 const RUNS = 3;
-const THRESHOLDS = { performance: 0.85, accessibility: 0.95 };
+const REPORT_ONLY = isReportOnly();
+// report-only CHỈ nới perf (a11y ≥0.95 vẫn hard) — spec VU-24 §5.4
+const THRESHOLDS = effectiveThresholds(REPORT_ONLY);
+const THRESHOLDS_HARD = { ...LH_THRESHOLDS };
 const URLS = [
   "/en",
   "/vi",
@@ -41,8 +56,7 @@ const CHROME =
   process.env.CHROME_PATH ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const LH_VERSION = "12";
-const OUT_DIR =
-  "docs/superpowers/evidence/sf-8-production-audit/lighthouse";
+const OUT_DIR = resolveOutDir();
 
 if (LABEL !== "pre" && LABEL !== "final") {
   console.error("Dùng: node scripts/lighthouse.mjs <pre|final> [base-url]");
@@ -169,7 +183,19 @@ rmSync(tmp, { force: true });
 const result = summarize(entries, THRESHOLDS, URLS);
 writeFileSync(
   `${OUT_DIR}/summary-${LABEL}.json`,
-  `${JSON.stringify({ base: BASE, thresholds: THRESHOLDS, runsPlanned: RUNS, ...result }, null, 2)}\n`,
+  `${JSON.stringify(
+    {
+      base: BASE,
+      reportOnly: REPORT_ONLY,
+      thresholds: THRESHOLDS,
+      thresholdsHard: THRESHOLDS_HARD,
+      runsPlanned: RUNS,
+      outDir: OUT_DIR,
+      ...result,
+    },
+    null,
+    2,
+  )}\n`,
 );
 // review P1 — URL mất HẾT run ≠ PASS (fail-closed tường minh, exit 2 riêng)
 const unmeasured = result.perUrl
@@ -182,15 +208,24 @@ if (unmeasured.length) {
   process.exit(2);
 }
 
-console.log(`\n== KẾT QUẢ (${LABEL}) — median/${RUNS} runs, ngưỡng a11y≥${THRESHOLDS.accessibility} perf≥${THRESHOLDS.performance} ==`);
+console.log(`\n== KẾT QUẢ (${LABEL}${REPORT_ONLY ? " — REPORT-ONLY: perf nới, a11y hard" : ""}) — median/${RUNS} runs, ngưỡng a11y≥${THRESHOLDS.accessibility} perf≥${THRESHOLDS.performance} ==`);
 for (const row of result.perUrl) {
   const fmt = (c) =>
     `${(c.median * 100).toFixed(1)} ${c.pass ? "PASS" : "FAIL"}`;
+  const perf = REPORT_ONLY
+    ? `${(row.performance.median * 100).toFixed(1)} REPORT-ONLY`
+    : fmt(row.performance);
   console.log(
-    `${row.url.padEnd(58)} perf ${fmt(row.performance)} | a11y ${fmt(row.accessibility)}`,
+    `${row.url.padEnd(58)} perf ${perf} | a11y ${fmt(row.accessibility)}`,
   );
 }
-console.log(result.pass ? "\nTỔNG: PASS" : "\nTỔNG: FAIL — median dưới ngưỡng");
+console.log(
+  result.pass
+    ? REPORT_ONLY
+      ? "\nTỔNG: PASS (report-only — a11y hard đạt; perf chỉ report, sụt so local root-cause trong report)"
+      : "\nTỔNG: PASS"
+    : "\nTỔNG: FAIL — median dưới ngưỡng",
+);
 process.exit(result.pass ? 0 : 1);
 
 function readTmp(file) {

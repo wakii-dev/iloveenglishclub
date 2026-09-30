@@ -519,6 +519,67 @@ describe("prevPart — xem lại part đã xong (§5.6)", () => {
   });
 });
 
+describe("nextPart — › thuần điều hướng kề bên (QA-103, §3.9: KHÔNG advance-to-pending)", () => {
+  it("nextPart từ review → part KỀ BÊN (không nhảy cóc qua part resolved)", () => {
+    const s = active();
+    s.getState().setInput("The cat.");
+    s.getState().check();
+    s.getState().next(); // part 0 done → part 1
+    s.getState().skip(); // part 1 skipped → part 2
+    s.getState().prevPart();
+    s.getState().prevPart(); // về part 0 (review)
+    s.getState().nextPart();
+    expect(s.getState().currentPartIndex).toBe(1); // KỀ BÊN — next() sẽ nhảy 2
+    expect(s.getState().parts[1]!.status).toBe("skipped"); // không đổi status
+    expect(s.getState().phase).toBe("input"); // part 1 không lastDiff
+  });
+
+  it("nextPart vào part có lastDiff → checked + input=typedText (đối xứng prevPart)", () => {
+    const s = active();
+    s.getState().setInput("The cat.");
+    s.getState().check();
+    s.getState().next(); // → part 1
+    s.getState().setInput("Wrong text");
+    s.getState().check();
+    s.getState().next(); // part 1 skipped ngầm (lastDiff) → part 2
+    s.getState().prevPart();
+    s.getState().prevPart(); // part 0
+    s.getState().nextPart();
+    const st = s.getState();
+    expect(st.currentPartIndex).toBe(1);
+    expect(st.phase).toBe("checked");
+    expect(st.input).toBe("Wrong text");
+  });
+
+  it("nextPart vào part PENDING → giữ pending, cho làm tiếp (không resolve ngầm)", () => {
+    const s = active();
+    s.getState().setInput("The cat.");
+    s.getState().check();
+    s.getState().next(); // → part 1 pending
+    s.getState().prevPart(); // part 0 review
+    s.getState().nextPart();
+    const st = s.getState();
+    expect(st.currentPartIndex).toBe(1);
+    expect(st.parts[1]!.status).toBe("pending"); // chưa resolve
+    expect(st.input).toBe("");
+  });
+
+  it("nextPart tại part cuối → no-op", () => {
+    const s = active();
+    s.getState().skip();
+    s.getState().skip();
+    s.getState().skip(); // complete
+    s.getState().nextPart();
+    expect(s.getState().phase).toBe("complete");
+  });
+
+  it("nextPart ở idle → no-op", () => {
+    const s = createDictationStore();
+    s.getState().nextPart();
+    expect(s.getState().phase).toBe("idle");
+  });
+});
+
 describe("toggleRelaxed / reset / complete terminal", () => {
   it("toggleRelaxed flips", () => {
     const s = active();

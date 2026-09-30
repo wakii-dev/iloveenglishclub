@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { RegisterForm } from "./register-form";
 
 export async function generateMetadata({
@@ -9,7 +10,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "auth" });
-  return { title: t("register.title") };
+  // buildPageMetadata (SF-5 QA-401): register là trang public — cần canonical
+  // + hreflang cặp + og như mọi route public khác; description theo locale.
+  return buildPageMetadata({
+    locale,
+    path: "/register",
+    title: { absolute: t("register.title") },
+    description: t("register.description"),
+  });
 }
 
 export default async function RegisterPage({

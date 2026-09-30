@@ -15,9 +15,12 @@
     "db:seed": "node scripts/seed.ts",
     "test:rls": "vitest run --config vitest.rls.config.ts",
     "test:audit": "vitest run --config vitest.audit.config.ts",
+    "test:sf3": "vitest run --config vitest.sf3.config.ts",
     "test:coverage": "vitest run --coverage",
     "admin:create": "node scripts/create-admin.ts",
     "test:e2e": "playwright test --config playwright.admin.config.ts",
+    "test:e2e:sf3": "playwright test --config playwright.sf3.config.ts",
+    "test:e2e:sf4": "playwright test --config playwright.sf4.config.ts",
     "test:e2e:dictation": "playwright test"
   },
   "dependencies": {

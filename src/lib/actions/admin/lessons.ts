@@ -94,10 +94,13 @@ export async function updateLessonMetaAction(
 export async function deleteLessonAction(lessonId: number): Promise<LessonActionState> {
   await assertAdmin();
   try {
-    // cascade lessons→parts; attempts RESTRICT → 23503 nếu part đã có người học
+    // cascade lessons→parts; attempts RESTRICT nếu part đã có người học —
+    // PG≤16 raise 23503 (foreign_key_violation), PG17+ raise 23001
+    // (restrict_violation) — QA-501, cùng pattern parts.ts
     await db.delete(lessons).where(eq(lessons.id, lessonId));
   } catch (error) {
-    if (pgErrorCode(error) === "23503") return { error: "hasAttempts" };
+    const code = pgErrorCode(error);
+    if (code === "23001" || code === "23503") return { error: "hasAttempts" };
     console.error("[deleteLessonAction] delete failed:", error);
     throw error;
   }

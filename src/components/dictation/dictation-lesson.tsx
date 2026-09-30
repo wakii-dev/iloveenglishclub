@@ -403,7 +403,13 @@ export function DictationLesson({
       const part = s.parts[s.currentPartIndex];
       const frozen = !part || part.status !== "pending";
       if (e.key === "Tab") {
-        e.preventDefault(); // spec §5: Tab = replay trong exercise (a11y: review M6)
+        // QA-106: Tab = replay CHỈ trong exercise (textarea/pane — spec §5
+        // "trong exercise"); từ button/link để Tab điều hướng — WCAG 2.1.2
+        // No Keyboard Trap (trước đây preventDefault mọi target → trap).
+        const inExercise =
+          e.target instanceof HTMLTextAreaElement || e.target === document.body;
+        if (!inExercise) return;
+        e.preventDefault();
         s.replay();
       } else if (e.key === "Escape") {
         s.pause();
@@ -457,7 +463,7 @@ export function DictationLesson({
         currentIndex={currentPartIndex}
       />
 
-      <div className="mb-3.5 flex items-center gap-2">
+      <div className="mb-3.5 flex flex-wrap items-center gap-2">
         <div className="flex gap-2">
           {(["dictation", "transcript"] as const).map((key) => (
             <button
@@ -579,7 +585,7 @@ export function DictationLesson({
               canPrev={currentPartIndex > 0}
               canNext={currentPart?.status !== "pending"}
               onPrev={() => dictationStore.getState().prevPart()}
-              onNext={() => dictationStore.getState().next()}
+              onNext={() => dictationStore.getState().nextPart()}
             />
           </div>
         </>
