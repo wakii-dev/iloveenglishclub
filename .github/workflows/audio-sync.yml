@@ -1,0 +1,39 @@
+name: Audio sync (Blob → Git)
+
+# Mirror audio từ Vercel Blob store về public/audio + commit + push.
+# Backup + serve tĩnh — cùng scripts/audio-sync.ts với chạy tay
+# (`npm run audio:sync`). Chỉ chạy trên master (push nhánh khác không mirror).
+
+on:
+  schedule:
+    - cron: "17 3 * * 0" # Chủ nhật 03:17 UTC (10:17 GMT+7)
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write # push bằng GITHUB_TOKEN (checkout persist-credentials)
+
+concurrency:
+  group: audio-sync
+  cancel-in-progress: false # cron đụng push tay → xếp hàng, không giết nhau
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Mirror audio từ Blob
+        run: node scripts/audio-sync.ts --apply
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}

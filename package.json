@@ -18,6 +18,7 @@
     "test:sf3": "vitest run --config vitest.sf3.config.ts",
     "test:coverage": "vitest run --coverage",
     "admin:create": "node scripts/create-admin.ts",
+    "audio:sync": "node scripts/audio-sync.ts",
     "test:e2e": "playwright test --config playwright.admin.config.ts",
     "test:e2e:sf3": "playwright test --config playwright.sf3.config.ts",
     "test:e2e:sf4": "playwright test --config playwright.sf4.config.ts",
