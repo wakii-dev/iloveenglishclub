@@ -254,9 +254,9 @@ describe("DB contract — UNIQUE + RESTRICT", () => {
   it("DELETE RESTRICT: part đã có attempts không xóa được (23503 PG≤16 / 23001 PG17+) — quyết định #15", async () => {
     // QA-501: prod PG18.6 raise restrict_violation 23001, local PG16 raise
     // foreign_key_violation 23503 — assertion nhận cả 2 (superset, không yếu)
-    const err = await sql`DELETE FROM lesson_parts WHERE id = ${demoPartId}`.catch(
+    const err = (await sql`DELETE FROM lesson_parts WHERE id = ${demoPartId}`.catch(
       (e: { code?: string }) => e,
-    );
+    )) as { code?: string };
     expect(["23503", "23001"]).toContain(err.code);
   });
 
