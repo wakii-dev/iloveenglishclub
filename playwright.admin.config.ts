@@ -24,9 +24,15 @@ export default defineConfig({
     locale: "vi-VN",
   },
   webServer: {
-    command: "npm run dev",
+    // QA-7 (SF-6 fix): `npx next dev` (webpack) — bypass --turbopack của script
+    // `dev` (race font Turbopack 1/4-1/7 start, audit SF-1); script dùng chung
+    // KHÔNG đổi (team giữ HMR).
+    command: "npx next dev",
     url: "http://localhost:3000/en",
-    reuseExistingServer: true, // dev server đang chạy (Rule 0 browser) → reuse
+    // QA-2 (SF-6 áp khuyến nghị): guard env — reuse server cùng worktree (Rule
+    // 0 browser) nhưng KHÔNG reuse server stale từ worktree khác (DB khác →
+    // 5/6 admin e2e timeout "Email hoặc mật khẩu không đúng" — baseline.md §QA-2)
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 });

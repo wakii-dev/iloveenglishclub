@@ -1,0 +1,52 @@
+tdd: RED→GREEN
+code commit: abad8b4 (cuối — chuỗi code commits: ab5ed12→0d85841→34abadc→5f74c12→7f8bfc6→6ca64b2→2873357→bacf396→0909615→4cb1345→abad8b4)
+re-verify trên abad8b4 (sau review P2 follow-ups — drop gap-y-2, src đổi 1 class):
+typecheck exit 0 · unit 234/234 · coverage dictation Branches 100% (122/122) · e2e sf2 45/45 (1.7m)
+regression RED→GREEN (4 fix, mỗi cái kèm test bắt lại đúng bug):
+- QA-102 maxLength: RED value 2001 ký tự (server MAX_TYPED_LEN reject êm, XP mất âm thầm) → GREEN clamp 2000 + attempt row ghi DB (dictation-store-edge case QA-102)
+- QA-103 PartNav ›: RED nhảy advance-to-pending (expect Part 2/4 nhận Part 3/4; trace test.trace actions 3788→4715) + unit nextPart chưa tồn tại (TypeError ×5) → GREEN unit 5 test adjacent + e2e › → part kề bên
+- QA-106 keyboard trap: RED Tab từ button focus kẹt (preventDefault mọi target, WCAG 2.1.2) → GREEN Tab=replay CHỈ textarea/body, từ button Tab điều hướng + focus-visible outline
+- QA-107 tabs row mobile: RED XP chip boundingBox right > innerWidth (390px) → GREEN flex-wrap, screenshot sau fix không còn cắt
+
+Lane run trên HEAD 4cb1345:
+- unit  (npm test):             Test Files 20 passed (20) · Tests 234 passed (234)  [229 baseline + 5 nextPart QA-103]
+- rls   (npm run test:rls):     Tests 18 passed (18)  — chạy trên DB worktree ilec_sf2 (templateidentical; SF-2 không đụng auth/rls surface)
+- audit (npm run test:audit):   Tests 15 passed (15)
+- coverage (vitest --coverage): src/lib/dictation/** Branches 100% (122/122) · Statements/Functions/Lines 100% — threshold gate PASS sau fix store
+- typecheck (tsc --noEmit):     exit 0
+- e2e sf2 (playwright.sf2.config.ts, port 3210, DB ilec_sf2): **45/45 passed** ×2 full runs (1.7m + 1.5m) =
+    6 baseline dictation-guest (regression) + 7 scoring-edges + 5 store-edge + 6 audio-controls
+    + 3 start-gate + 6 nav-results + 3 mobile (iPhone 12 emulated) + 4 i18n + 5 a11y
+- spec --list: chỉ dictation-* + dictation-guest (testMatch basename-anchored — QA-101)
+- lighthouse (chạy SAU review P2#3, next start build prod port 3299, LH_REPORT_ONLY,
+  median/3): **7/7 PASS** — a11y 98–100 HARD ĐẠT (2 lesson page 100/100); perf 90–95
+  REPORT-ONLY (= baseline SF-1: 90–95, không sụt) — fix UI SF-2 (maxLength/trap/wrap)
+  không tụt a11y lẫn perf
+
+Rule 0 — browser verify 3 tầng (screenshots-sf2/, 9 ảnh pixel thật, 0 page error):
+- DOM: aria/slider/progressbar/aria-live assert trong dictation-a11y + store-edge (45 test)
+- VISUAL: 01-start-gate · 03-diff-wrong (friend đỏ + chip friends + +9 XP not saved) · 04-exactly-right
+  · 06-results (94% ring, +17 XP = 9 + 8 hint×0.8, 2 done · 2 skipped) · 07-shortcuts-panel
+  · 08-vi-lesson (full vi copy) · 09-mobile-lesson (sau fix QA-107: tabs wrap 2 dòng, 0 clip trong pane)
+- FLOW trọn: start → nghe → gõ sai → check diff → sửa → next → hint → skip → results → try-again — chạy bằng
+  walkthrough script + 45 e2e; đúng 1 gesture → audio thật phát (paused=false, currentTime chạy)
+- Hạn chế khai báo trung thực: Orca embedded browser không có page-command ở CLI version này → ảnh chụp
+  headless Chromium cùng build (fallback FI-464); iPhone = chromium engine (webkit special-build Bus error
+  10 trên macOS 14.3 arm64); gesture-gate autoplay verified ở tier flow (không flags chỉ ở desktop e2e —
+  headless policy chặn không tái hiện được); nhờ user nhìn thêm 9 ảnh khi có cơ hội.
+
+Isolation + hygiene: DB ilec_sf2 (template SF-1) · port 3210 · config MỚI (0 baseline config đổi) ·
+fixture lesson 99 self-clean teardown (0 còn) · users sf2-*@test.ilec cleanup helper --yes (users=0,
+orphan 0 hết, attempts=1 = fixture gốc template) · .env.local worktree gitignored (0 secrets trong diff)
+
+Findings registry: findings-sf2.md — QA-101/102/103/106/107 FIXED (đủ regression test) ·
+QA-104 BY-DESIGN (relaxed mid-part, rationale + e2e pin) · QA-105/108 DEFERRED (rationale +
+sign-off PM comment epic VU-24 + Recommendations) → surface SF-2: 0 OPEN.
+Observations (không phải finding, vào Recommendations): Esc chưa đóng shortcuts panel (popover,
+backdrop + toggle button đóng được); flake nav-click liền kề 1 lần ở nav-results (click rớt trong
+window re-render — workaround waitForTimeout(800) trong spec, nguyên nhân Playwright actionability
+vs React node replacement CHƯA đuổi root — reviewer P2#2 flag, theo dõi: tái diễn ≥2 lần → thành
+finding); transient flake 1 lần ở audio-controls start (không tái diễn full-run ×2).
+QA-106 residual (reviewer P2#1): Tab/Shift+Tab trong textarea vẫn replay (spec-sanctioned §5) —
+ghi block residual trong findings-sf2.md, PM sign-off batch QA-105/108.
+Lighthouse lane chạy sau review (P2#3): 7/7 PASS a11y 98–100 hard — thay waiver bằng data.

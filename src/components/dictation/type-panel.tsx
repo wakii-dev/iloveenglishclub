@@ -9,7 +9,12 @@ import { useTranslations } from "next-intl";
  * attrs (autoCapitalize/autoCorrect/spellcheck off — ACCEPTANCE #5), Enter =
  * check/next (orchestrator branch — không xuống dòng), paste bị chặn kèm
  * note tạm thời (không Toaster — infra ngoài scope).
+ * maxLength 2000 (QA-102): khớp MAX_TYPED_LEN server (submit-attempt.ts) —
+ * KHÔNG import được từ "use server" file nên giữ literal; đổi server constant
+ * phải đổi cả đây (e2e dictation-store-edge case QA-102 bắt lệch).
  */
+const MAX_TYPED_LEN = 2000;
+
 export function TypePanel({ value, onChange, onEnter, readOnly }: Props) {
   const t = useTranslations("lesson");
   const [pasteNote, setPasteNote] = useState(false);
@@ -27,6 +32,7 @@ export function TypePanel({ value, onChange, onEnter, readOnly }: Props) {
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        maxLength={MAX_TYPED_LEN}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();

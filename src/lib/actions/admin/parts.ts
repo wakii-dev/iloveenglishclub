@@ -138,25 +138,23 @@ export async function movePartAction(
     .limit(1);
   if (!other) return { ok: true }; // đầu/cuối danh sách — không có gì để đổi
   await db.transaction(async (tx) => {
-    // Swap 2 hàng qua vùng cao: bump +1000 → đổi chỗ (vẫn high, distinct) →
-    // hạ −1000. Mỗi statement tự an toàn (xem comment primitive ở đầu file).
-    const both = inArray(lessonParts.id, [part.id, other.id]);
+    // Swap 2 hàng (fix 23505 2026-09-29: bản cũ set part = neighbor+1000 —
+    // TRÙNG giá trị bump +1000 của neighbor → duplicate key mọi hướng).
+    // Chuẩn 3 bước: (1) neighbor rời chỗ lên vùng cao, (2) part trượt vào
+    // chỗ trống, (3) neighbor xuống chỗ part vừa bỏ trống. Mỗi statement
+    // thấy giá trị distinct riêng.
     await tx
       .update(lessonParts)
       .set({ sortOrder: sql`${lessonParts.sortOrder} + 1000` })
-      .where(both);
-    await tx
-      .update(lessonParts)
-      .set({ sortOrder: neighbor + 1000 })
-      .where(eq(lessonParts.id, part.id));
-    await tx
-      .update(lessonParts)
-      .set({ sortOrder: part.sortOrder + 1000 })
       .where(eq(lessonParts.id, other.id));
     await tx
       .update(lessonParts)
-      .set({ sortOrder: sql`${lessonParts.sortOrder} - 1000` })
-      .where(both);
+      .set({ sortOrder: neighbor })
+      .where(eq(lessonParts.id, part.id));
+    await tx
+      .update(lessonParts)
+      .set({ sortOrder: part.sortOrder })
+      .where(eq(lessonParts.id, other.id));
   });
   await revalidateIfPublished(part.lessonId);
   return { ok: true };
@@ -212,7 +210,9 @@ export async function splitPartAction(
   return { ok: true };
 }
 
-/** Gộp part hiện tại với part DƯỚI: text join " ", xóa dưới, shift kín lỗ. */
+/** Gộp part hiện tại với part DƯỚI: text join " ", xóa dưới, shift kín lỗ.
+ *  Part bị xóa (next) phải chưa có attempts (user 2026-09-29: gộp part đã có
+ *  người học → RESTRICT 23001 nổ 500 — pre-check + catch 2 mã như delete). */
 export async function mergePartDownAction(
   partId: number,
 ): Promise<PartActionState> {
@@ -234,6 +234,11 @@ export async function mergePartDownAction(
     )
     .limit(1);
   if (!next) return { error: "cannotMerge" };
+  const [attemptRow] = await db
+    .select({ total: count() })
+    .from(attempts)
+    .where(eq(attempts.partId, next.id));
+  if ((attemptRow?.total ?? 0) > 0) return { error: "hasAttempts" };
   const followers = await db
     .select({ id: lessonParts.id })
     .from(lessonParts)
@@ -243,18 +248,26 @@ export async function mergePartDownAction(
         gt(lessonParts.sortOrder, next.sortOrder),
       ),
     );
-  await db.transaction(async (tx) => {
-    await tx
-      .update(lessonParts)
-      .set({ text: `${part.text} ${next.text}`.trim() })
-      .where(eq(lessonParts.id, part.id));
-    await tx.delete(lessonParts).where(eq(lessonParts.id, next.id));
-    await shiftByIds(
-      tx,
-      followers.map((f) => f.id),
-      -1,
-    );
-  });
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(lessonParts)
+        .set({ text: `${part.text} ${next.text}`.trim() })
+        .where(eq(lessonParts.id, part.id));
+      await tx.delete(lessonParts).where(eq(lessonParts.id, next.id));
+      await shiftByIds(
+        tx,
+        followers.map((f) => f.id),
+        -1,
+      );
+    });
+  } catch (error) {
+    // TOCTOU lưới cuối: 23001 restrict_violation (Postgres ném mã này cho
+    // RESTRICT) hoặc 23503 foreign_key_violation → hasAttempts thay vì 500
+    const code = pgErrorCode(error);
+    if (code === "23001" || code === "23503") return { error: "hasAttempts" };
+    throw error;
+  }
   await revalidateIfPublished(part.lessonId);
   return { ok: true };
 }
@@ -333,9 +346,12 @@ export async function deletePartAction(
       );
     });
   } catch (error) {
-    // TOCTOU (review P2): attempt chen giữa count và delete → FK RESTRICT nổ
-    // tại đây — trả "hasAttempts" thay vì raw 500
-    if (pgErrorCode(error) === "23503") return { error: "hasAttempts" };
+    // TOCTOU (review P2): attempt chen giữa count và delete → RESTRICT nổ
+    // tại đây — 23001 restrict_violation + 23503 foreign_key_violation đều
+    // trả "hasAttempts" thay vì raw 500 (user 2026-09-29: chỉ check 23503
+    // nên gộp/xóa part có attempts vẫn 500)
+    const code = pgErrorCode(error);
+    if (code === "23001" || code === "23503") return { error: "hasAttempts" };
     throw error;
   }
   await revalidateIfPublished(part.lessonId);
