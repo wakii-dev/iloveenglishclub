@@ -5,7 +5,8 @@
     "epic": "vocabulary-module",
     "dest": "vocabulary-module",
     "generatedAt": "2026-10-03T10:28:30.312Z",
-    "generator": "story-mindmap 1.0.0 (coordinator-authored)"
+    "generator": "story-mindmap 1.0.0 (coordinator-authored)",
+    "updatedAt": "2026-10-03T10:52:27Z"
   },
   "nodes": [
     {
@@ -54,14 +55,14 @@
       "id": "t-1.1",
       "kind": "task",
       "title": "schema Drizzle: words/book_words/user_word_progress/quiz_attempts + RLS + migration",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
       "id": "t-1.2",
       "kind": "task",
       "title": "admin API CRUD + bulk import CSV/JSON (validate)",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
@@ -75,7 +76,7 @@
       "id": "t-1.4",
       "kind": "task",
       "title": "tests: unit + RLS + e2e admin",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-1"
     },
     {
