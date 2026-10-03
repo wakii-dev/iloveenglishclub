@@ -1,6 +1,6 @@
 {
   "appName": "I Love English Club",
-  "nav": { "home": "Trang chủ", "levels": "Cấp độ" },
+  "nav": { "home": "Trang chủ", "levels": "Cấp độ", "vocabulary": "Từ vựng" },
   "header": {
     "login": "Đăng nhập",
     "register": "Đăng ký",

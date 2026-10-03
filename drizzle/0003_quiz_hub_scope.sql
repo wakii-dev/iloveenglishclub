@@ -1,0 +1,1 @@
+ALTER TABLE "quiz_attempts" ALTER COLUMN "book_id" DROP NOT NULL;

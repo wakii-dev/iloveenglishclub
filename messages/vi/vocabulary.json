@@ -42,5 +42,84 @@
   "lookupLoading": "Đang tra…",
   "lookupMiss": "Từ này chưa có trong bộ từ vựng của sách",
   "lookupError": "Không tra được từ — thử lại nhé.",
-  "lookupAria": "Nghĩa của từ “{word}”"
+  "lookupAria": "Nghĩa của từ “{word}”",
+  "hub": {
+    "title": "Tổng quan từ vựng",
+    "tabs": {
+      "overview": "Tổng quan",
+      "library": "Thư viện",
+      "review": "Ôn tập",
+      "quiz": "Kiểm tra"
+    },
+    "comingSoon": "Sắp có",
+    "stats": {
+      "learning": "Từ đang học",
+      "dueToday": "Đến hạn hôm nay",
+      "mastered": "Đã thành thạo"
+    },
+    "wordsTitle": "Từ của bạn",
+    "emptyAll": "Bạn chưa học từ nào —",
+    "emptyFiltered": "Không có từ nào khớp bộ lọc.",
+    "ctaBrowseBooks": "xem các sách để bắt đầu nhé.",
+    "filterBook": "Lọc theo sách",
+    "filterBookAll": "Tất cả sách",
+    "filterStatus": "Lọc theo trạng thái",
+    "status": {
+      "all": "Mọi trạng thái",
+      "due": "Đến hạn",
+      "mastered": "Thành thạo",
+      "learning": "Đang học"
+    },
+    "table": {
+      "colWord": "Từ",
+      "colMeaning": "Nghĩa",
+      "colBook": "Sách",
+      "colStatus": "Trạng thái SRS",
+      "colDue": "Đến hạn"
+    },
+    "chip": {
+      "due": "Đến hạn",
+      "mastered": "Thành thạo",
+      "learning": "Đang học"
+    },
+    "libraryTitle": "Thư viện từ vựng",
+    "review": {
+      "start": "Bắt đầu ôn"
+    },
+    "quiz": {
+      "pickerTitle": "Chọn phạm vi bài kiểm tra",
+      "scope": {
+        "all": "Tất cả từ",
+        "allHint": "Mọi từ trong thư viện, kể cả từ ngoài sách",
+        "book": "Từng sách",
+        "bookHint": "Làm bài trên 1 sách",
+        "multi": "Nhiều sách",
+        "multiHint": "Hợp từ của các sách được chọn — từ chung chỉ vào đề 1 lần"
+      },
+      "bookSelect": "Chọn sách",
+      "bookPlaceholder": "Chọn sách…",
+      "start": "Bắt đầu",
+      "lead": "Bài kiểm tra {count} câu xen kẽ trắc nghiệm, điền từ và ghép nghĩa.",
+      "changeScope": "Đổi phạm vi",
+      "empty": "Phạm vi này chưa có từ vựng để tạo đề — chọn phạm vi khác nhé."
+    },
+    "library": {
+      "searchLabel": "Tìm từ vựng",
+      "searchPlaceholder": "Tìm từ hoặc nghĩa…",
+      "filterAudio": "Lọc theo audio",
+      "filterAudioAll": "Tất cả từ",
+      "filterAudioWith": "Có audio",
+      "count": "{count, plural, other {# từ}}",
+      "emptyAll": "Thư viện chưa có từ nào — từ thêm từ các sách sẽ hiện ở đây.",
+      "table": {
+        "colAudio": "Audio",
+        "colAction": "Thao tác"
+      },
+      "chipNotLearning": "Chưa học",
+      "learn": "Học từ này",
+      "pageInfo": "Trang {page}/{total}",
+      "prev": "Trước",
+      "next": "Sau"
+    }
+  }
 }

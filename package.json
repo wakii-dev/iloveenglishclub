@@ -26,7 +26,9 @@
     "test:e2e:vocabulary-review": "playwright test --config playwright.vocabulary-review.config.ts",
     "test:e2e:dictation": "playwright test",
     "test:e2e:vocabulary-quiz": "playwright test --config playwright.vocabulary-quiz.config.ts",
-    "test:e2e:vocabulary-lookup": "playwright test --config playwright.vocabulary-lookup.config.ts"
+    "test:e2e:vocabulary-lookup": "playwright test --config playwright.vocabulary-lookup.config.ts",
+    "test:e2e:vocabulary-hub": "playwright test --config playwright.vocabulary-hub.config.ts",
+    "test:e2e:vocabulary-hub-quiz": "playwright test --config playwright.vocabulary-hub-quiz.config.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

@@ -1,0 +1,138 @@
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { StatsCards } from "@/components/gamification/stats-cards";
+import { localize } from "@/lib/content/localize";
+import { HubFilters } from "@/components/vocabulary/hub-filters";
+import {
+  displayStatus,
+  formatBookTitles,
+  hubStatusChipClass,
+  parseHubFilters,
+} from "@/lib/vocabulary/hub-status";
+import {
+  getHubStats,
+  listHubBooks,
+  listHubWords,
+} from "@/lib/vocabulary/hub-store";
+
+/**
+ * Tab Tổng quan (SF-1 t-1.2) — tách khỏi page.tsx khi SF-2 thêm tab Thư viện:
+ * KPI mọi book + bảng từ đang học ⋈ filter book/trạng thái. Như cũ, data cá
+ * nhân → query live; guest không bao giờ render section này (page điều phối).
+ */
+export async function HubOverviewSection({
+  userId,
+  sp,
+  locale,
+  now,
+}: {
+  userId: string;
+  sp: { book?: string; status?: string };
+  locale: string;
+  now: Date;
+}) {
+  const t = await getTranslations("vocabulary");
+  const filter = parseHubFilters(sp);
+  const [stats, books, rows] = await Promise.all([
+    getHubStats(userId),
+    listHubBooks(),
+    listHubWords(userId, filter),
+  ]);
+  const bookOptions = books.map((book) => ({
+    id: book.id,
+    title: localize(locale, { en: book.titleEn, vi: book.titleVi }),
+  }));
+
+  return (
+    <>
+      <div className="mt-6">
+        <StatsCards
+          columns={3}
+          items={[
+            { label: t("hub.stats.learning"), value: stats.total },
+            { label: t("hub.stats.dueToday"), value: stats.dueToday },
+            { label: t("hub.stats.mastered"), value: stats.mastered },
+          ]}
+        />
+      </div>
+
+      <section
+        aria-labelledby="hub-words-heading"
+        className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2
+            id="hub-words-heading"
+            className="font-display text-[20px] font-bold"
+          >
+            {t("hub.wordsTitle")}
+          </h2>
+          <HubFilters books={bookOptions} bookId={filter.bookId} status={filter.status} />
+        </div>
+
+        <div className="mt-4">
+          {rows.length === 0 ? (
+            stats.total === 0 ? (
+              <p className="rounded-[14px] border-2 border-dashed border-border p-5 text-center text-[14px] font-semibold text-muted-foreground">
+                {t("hub.emptyAll")}{" "}
+                <Link
+                  href="/books"
+                  className="text-primary underline-offset-2 hover:underline focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
+                >
+                  {t("hub.ctaBrowseBooks")}
+                </Link>
+              </p>
+            ) : (
+              <p className="rounded-[14px] border-2 border-dashed border-border p-5 text-center text-[14px] font-semibold text-muted-foreground">
+                {t("hub.emptyFiltered")}
+              </p>
+            )
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[14px]">
+                <thead>
+                  <tr className="border-b-2 border-border text-left text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-muted-foreground">
+                    <th className="px-4 py-3">{t("hub.table.colWord")}</th>
+                    <th className="px-4 py-3">{t("hub.table.colMeaning")}</th>
+                    <th className="px-4 py-3">{t("hub.table.colBook")}</th>
+                    <th className="px-4 py-3">{t("hub.table.colStatus")}</th>
+                    <th className="px-4 py-3">{t("hub.table.colDue")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const status = displayStatus(row, now);
+                    return (
+                      <tr
+                        key={row.wordId}
+                        className="border-b border-border/60 last:border-0"
+                      >
+                        <td className="px-4 py-3 font-bold">{row.word}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {row.meaningVi}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {formatBookTitles(locale, row.books)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 font-bold ${hubStatusChipClass(status)}`}
+                        >
+                          {t(`hub.chip.${status}`)}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                          {row.dueAt.toLocaleDateString(
+                            locale === "vi" ? "vi-VN" : "en-US",
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}

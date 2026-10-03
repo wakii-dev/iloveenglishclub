@@ -4,9 +4,9 @@
  * phải assertAdmin); engine nextReview PURE đã test riêng ở srs.test.ts.
  * Contract mock @/db: review-store.test.ts.
  */
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { userWordProgress, words } from "@/db/schema";
+import { bookWords, userWordProgress, words } from "@/db/schema";
 import { pgErrorCode } from "@/lib/actions/admin/pg-errors";
 import { nextReview } from "./srs";
 
@@ -27,11 +27,31 @@ export type DueWord = {
 
 /**
  * Hàng ôn: progress có due_at ≤ now (đồng hồ DB — không lệch TZ máy chủ
- * app). Cũ nhất đến hạn trước; bảng words có thể chưa migrate → bắt lỗi
- * trả [] (build-safe, cùng fallback getBookVocabulary SF-2).
+ * app). Cũ nhất đến hạn trước; filter bookId (SF-3 t-3.1, optional — scope
+ * "all" mặc định không lọc) thu hẹp qua subquery book_words như listHubWords.
+ * Bảng words có thể chưa migrate → bắt lỗi trả [] (build-safe, cùng fallback
+ * getBookVocabulary SF-2).
  */
-export async function listDueWords(userId: string): Promise<DueWord[]> {
+export async function listDueWords(
+  userId: string,
+  filter: { bookId: number } | null = null,
+): Promise<DueWord[]> {
   try {
+    const conditions = [
+      eq(userWordProgress.userId, userId),
+      lte(userWordProgress.dueAt, sql`now()`),
+    ];
+    if (filter?.bookId !== undefined) {
+      conditions.push(
+        inArray(
+          words.id,
+          db
+            .select({ id: bookWords.wordId })
+            .from(bookWords)
+            .where(eq(bookWords.bookId, filter.bookId)),
+        ),
+      );
+    }
     const rows = await db
       .select({
         wordId: words.id,
@@ -46,12 +66,7 @@ export async function listDueWords(userId: string): Promise<DueWord[]> {
       })
       .from(userWordProgress)
       .innerJoin(words, eq(words.id, userWordProgress.wordId))
-      .where(
-        and(
-          eq(userWordProgress.userId, userId),
-          lte(userWordProgress.dueAt, sql`now()`),
-        ),
-      )
+      .where(and(...conditions))
       .orderBy(asc(userWordProgress.dueAt))
       .limit(DUE_LIMIT);
     return rows;

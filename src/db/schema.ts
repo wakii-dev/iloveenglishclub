@@ -391,6 +391,9 @@ export const userWordProgress = pgTable(
  * - score 0–1 (real, cùng thang attempts.accuracy)
  * - detailJson: chi tiết từng câu (jsonb — shape SF-4 sở hữu, không ràng buộc
  *   schema-level để không khoá evolution)
+ * - book_id nullable (SF-3 t-3.2, migration 0003): quiz tổng hub scope
+ *   all/multi không thuộc 1 book — topQuizScores chỉ group theo user, không
+ *   đọc book_id
  */
 export const quizAttempts = pgTable(
   "quiz_attempts",
@@ -399,9 +402,9 @@ export const quizAttempts = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    bookId: integer("book_id")
-      .notNull()
-      .references(() => books.id, { onDelete: "cascade" }),
+    bookId: integer("book_id").references(() => books.id, {
+      onDelete: "cascade",
+    }),
     mode: text("mode").notNull(),
     score: real("score").notNull(),
     detailJson: jsonb("detail_json").notNull(),
