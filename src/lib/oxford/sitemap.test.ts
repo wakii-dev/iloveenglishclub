@@ -76,4 +76,34 @@ describe("fetchSlugs — index → english sub-sitemaps → slugs", () => {
     expect(slugs).toContain("tree");
     expect(slugs).not.toContain("color_1");
   });
+
+  // Reviewer nhóm B P1: 500 phải THROW — không [] lặng lẽ (fake enumerate)
+  it("index trả 500 → HttpError (không trả [] im lặng)", async () => {
+    const err = await fetchSlugs({
+      fetchImpl: (async (url: RequestInfo | URL) =>
+        String(url).endsWith("/sitemap.xml") ? new Response("", { status: 500 }) : new Response("")
+      ) as typeof fetch,
+    }).catch((e) => e);
+    expect(err.name).toBe("HttpError");
+    expect(err.status).toBe(500);
+    expect(err.retryable).toBe(true);
+  });
+
+  // Reviewer nhóm B P2: sub-sitemap hostname ngoài allowlist bị chặn
+  it("sub-sitemap hostname ngoài allowlist → không fetch", async () => {
+    const hostileIndex = INDEX_XML.replace(
+      "https://www.oxfordlearnersdictionaries.com/sitemap/english/sitemap1.xml",
+      "https://evil.com/sitemap/english/sitemap1.xml",
+    );
+    const fetched: string[] = [];
+    await fetchSlugs({
+      fetchImpl: (async (url: RequestInfo | URL) => {
+        fetched.push(String(url));
+        if (String(url).endsWith("/robots.txt")) return new Response(ROBOTS_TEXT);
+        if (String(url).endsWith("/sitemap.xml")) return new Response(hostileIndex);
+        return new Response("");
+      }) as typeof fetch,
+    });
+    expect(fetched.some((u) => u.includes("evil.com"))).toBe(false);
+  });
 });

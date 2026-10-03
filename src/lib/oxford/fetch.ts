@@ -140,21 +140,34 @@ export async function fetchEntry(
   if (res.status === 404) return null;
   if (!res.ok) throw new HttpError(res.status, res.url);
 
-  // Đọc stream với size cap — không trusting content-length
-  const reader = res.body?.getReader();
-  if (!reader) throw new NetworkError(new Error("no body"), res.url);
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel().catch(() => {});
-      throw new SizeCapError(maxBytes, res.url);
+  // Đọc stream với size cap — lỗi giữa chừng (undici "terminated", abort trễ)
+  // phải bọc NetworkError retryable (reviewer nhóm B P1: read-loop ngoài try
+  // → withRetry bỏ qua + reader leak)
+  let reader: ReadableStreamDefaultReader<Uint8Array<ArrayBuffer>> | undefined;
+  try {
+    reader = res.body?.getReader();
+    if (!reader) throw new NetworkError(new Error("no body"), res.url);
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        throw new SizeCapError(maxBytes, res.url);
+      }
+      chunks.push(value);
     }
-    chunks.push(value);
+    const html = Buffer.concat(chunks).toString("utf8");
+    return { html, finalSlug: slugFromUrl(res.url) };
+  } catch (err) {
+    if (err instanceof SizeCapError) throw err; // có chủ đích — không re-wrap
+    await reader?.cancel().catch(() => {});
+    if (err instanceof NetworkError) throw err;
+    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+      throw new TimeoutError(res.url);
+    }
+    throw new NetworkError(err, res.url);
   }
-  const html = Buffer.concat(chunks).toString("utf8");
-  return { html, finalSlug: slugFromUrl(res.url) };
 }

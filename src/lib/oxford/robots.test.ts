@@ -85,4 +85,27 @@ describe("assertCrawlAllowed — runtime guard", () => {
     });
     expect(calledUrl).toBe("https://www.oxfordlearnersdictionaries.com/robots.txt");
   });
+
+  // Reviewer nhóm B P1/P2: 500 phải throw (fail-CLOSED, không parse rỗng fail-open)
+  it("robots.txt trả 500 → HttpError retryable (fail-closed, caller retry rồi exit)", async () => {
+    await expect(
+      assertCrawlAllowed("/definition/english/tree", {
+        fetchImpl: async () => new Response("", { status: 500 }),
+      }),
+    ).rejects.toMatchObject({ name: "HttpError", status: 500, retryable: true });
+  });
+
+  it("robots.txt timeout → TimeoutError (runner không treo vô hạn)", async () => {
+    await expect(
+      assertCrawlAllowed("/definition/english/tree", {
+        timeoutMs: 20,
+        fetchImpl: (_url, init) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+          }),
+      }),
+    ).rejects.toMatchObject({ name: "TimeoutError" });
+  });
 });

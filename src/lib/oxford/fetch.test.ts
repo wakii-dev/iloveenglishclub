@@ -126,6 +126,25 @@ describe("fetchEntry — pure (inject fetchImpl)", () => {
     }).catch((e) => e);
     expect(err).toBeInstanceOf(HostNotAllowedError);
   });
+
+  // Reviewer nhóm B P1: lỗi giữa stream phải NetworkError RETRYABLE (không raw)
+  it("stream đứt giữa chừng → NetworkError retryable", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("<html>par"));
+        // lỗi sau chunk đầu — mô phỏng undici "terminated"
+        controller.error(new TypeError("terminated"));
+      },
+    });
+    const err = await fetchEntry("tree", {
+      fetchImpl: async () =>
+        ({ ok: true, status: 200, url: OK_URL, body: stream }) as unknown as Response,
+    }).catch((e) => e);
+    expect(err.name).toBe("NetworkError");
+    expect(err.retryable).toBe(true);
+    // cancel() trên stream đã errored là no-op theo spec ReadableStream —
+    // đừng assert callback cancel (đã bọc try/catch để không nuốt lỗi thật)
+  });
 });
 
 describe("slugFromUrl", () => {

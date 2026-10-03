@@ -15,6 +15,9 @@ export type SleepFn = (ms: number) => Promise<void>;
 export function createTokenBucket(
   { rate, sleep = defaultSleep }: { rate: number; sleep?: SleepFn } = { rate: 2 },
 ): () => Promise<void> {
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error(`createTokenBucket: rate phải > 0 (nhận ${rate})`);
+  }
   const intervalMs = 1000 / rate;
   let lastAcquire = -Infinity;
   return async () => {

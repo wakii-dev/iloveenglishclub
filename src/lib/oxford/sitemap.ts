@@ -15,7 +15,28 @@
  */
 
 import { isAllowed, parseRobots } from "./robots";
-import { slugFromUrl } from "./fetch";
+import {
+  DEFAULT_TIMEOUT_MS,
+  ENTRY_HOST_SUFFIX,
+  HttpError,
+  TimeoutError,
+  slugFromUrl,
+} from "./fetch";
+
+/** Fetch XML — check res.ok (500 → throw, KHÔNG [] lặng lẽ) + timeout 15s. */
+async function fetchText(doFetch: typeof fetch, url: string): Promise<string> {
+  let res: Response;
+  try {
+    res = await doFetch(url, { signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS) });
+  } catch (err) {
+    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+      throw new TimeoutError(url);
+    }
+    throw err;
+  }
+  if (!res.ok) throw new HttpError(res.status, url);
+  return res.text();
+}
 
 export const SITEMAP_INDEX_URL =
   "https://www.oxfordlearnersdictionaries.com/sitemap.xml";
@@ -41,20 +62,20 @@ export async function fetchSlugs(deps: SitemapDeps = {}): Promise<string[]> {
   if (deps.robotsText !== undefined) {
     robotsText = deps.robotsText;
   } else {
-    robotsText = await doFetch("https://www.oxfordlearnersdictionaries.com/robots.txt").then(
-      (r) => r.text(),
-    );
+    robotsText = await fetchText(doFetch, "https://www.oxfordlearnersdictionaries.com/robots.txt");
   }
   const policy = parseRobots(robotsText, "*");
 
-  const indexXml = await doFetch(SITEMAP_INDEX_URL).then((r) => r.text());
+  const indexXml = await fetchText(doFetch, SITEMAP_INDEX_URL);
   const englishSitemaps = extractLocs(indexXml)
     .filter((url) => /\/sitemap\/english\/sitemap\d*\.xml$/.test(url))
+    // hostname allowlist — index là nguồn tin cậy nhưng vẫn chặn (reviewer P2)
+    .filter((url) => new URL(url).hostname.endsWith(ENTRY_HOST_SUFFIX))
     .slice(0, deps.maxSitemaps ?? Infinity);
 
   const slugs = new Set<string>();
   for (const sitemapUrl of englishSitemaps) {
-    const xml = await doFetch(sitemapUrl).then((r) => r.text());
+    const xml = await fetchText(doFetch, sitemapUrl);
     for (const loc of extractLocs(xml)) {
       let path: string;
       try {

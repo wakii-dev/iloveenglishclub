@@ -8,6 +8,8 @@
  * dừng → tắt runner + xoá crawl_entries + prefix blob).
  */
 
+import { DEFAULT_TIMEOUT_MS, HttpError, TimeoutError } from "./fetch";
+
 export class RobotsDeniedError extends Error {
   constructor(path: string) {
     super(
@@ -61,6 +63,8 @@ export type RobotsCheckDeps = {
   fetchImpl?: typeof fetch;
   /** Robots text inject trực tiếp (test) — ưu tiên hơn fetch. */
   robotsText?: string;
+  /** Cho test — mặc định 15s. */
+  timeoutMs?: number;
 };
 
 /**
@@ -76,7 +80,21 @@ export async function assertCrawlAllowed(
   if (deps.robotsText !== undefined) {
     text = deps.robotsText;
   } else {
-    const res = await doFetch("https://www.oxfordlearnersdictionaries.com/robots.txt");
+    // timeout 15s (runner không treo vô hạn) + fail-CLOSED khi !ok (RFC 9309:
+    // robots unreachable/5xx → KHÔNG crawl — reviewer nhóm B P1/P2; 5xx
+    // retryable để caller withRetry thử lại trước khi exit)
+    let res: Response;
+    try {
+      res = await doFetch("https://www.oxfordlearnersdictionaries.com/robots.txt", {
+        signal: AbortSignal.timeout(deps.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      });
+    } catch (err) {
+      if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+        throw new TimeoutError("robots.txt");
+      }
+      throw err;
+    }
+    if (!res.ok) throw new HttpError(res.status, "robots.txt");
     text = await res.text();
   }
   const policy = parseRobots(text, "*");

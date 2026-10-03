@@ -38,6 +38,15 @@ describe("createTokenBucket — pacing 1000/rate ms giữa 2 call", () => {
   });
 });
 
+describe("createTokenBucket — guard", () => {
+  // Reviewer nhóm B P2: rate=0 → intervalMs=Infinity, waitMs=NaN → pacing tắt
+  it("rate <= 0 / không hợp lệ → throw", () => {
+    expect(() => createTokenBucket({ rate: 0 })).toThrow(/rate/);
+    expect(() => createTokenBucket({ rate: -1 })).toThrow(/rate/);
+    expect(() => createTokenBucket({ rate: Number.NaN })).toThrow(/rate/);
+  });
+});
+
 describe("withRetry — chỉ retry khi err.retryable", () => {
   const retryableErr = Object.assign(new Error("429"), { retryable: true });
   const fatalErr = Object.assign(new Error("403"), { retryable: false });
