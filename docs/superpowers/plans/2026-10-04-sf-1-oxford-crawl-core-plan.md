@@ -237,7 +237,7 @@ không cần dev trông.
       tự nhiên) → save URL. Test inject fetch/put/save: skip có blob, tải
       đúng path, throw khi put throw (thiếu token KHÔNG silent). Exit: test
       xanh.
-- [ ] **T12. CLI runner `scripts/oxford-crawl.ts` — implementation (plan-critic
+- [x] **T12. CLI runner `scripts/oxford-crawl.ts` — implementation (plan-critic
       P1: tách impl khỏi demo — Oxford outage không kẹt cả task).**
       node24 native TS (import .ts có extension, DB động sau dotenv — pattern
       seed.ts NHƯNG KHÔNG dynamic-import storage-server — import
