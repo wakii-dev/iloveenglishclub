@@ -23,6 +23,7 @@
     "test:e2e:sf3": "playwright test --config playwright.sf3.config.ts",
     "test:e2e:sf4": "playwright test --config playwright.sf4.config.ts",
     "test:e2e:vocabulary": "playwright test --config playwright.vocabulary.config.ts",
+    "test:e2e:vocabulary-review": "playwright test --config playwright.vocabulary-review.config.ts",
     "test:e2e:dictation": "playwright test"
   },
   "dependencies": {
