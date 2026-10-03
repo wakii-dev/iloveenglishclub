@@ -42,6 +42,12 @@ export function Header() {
           >
             {t("nav.levels")}
           </Link>
+          <Link
+            href="/vocabulary"
+            className="rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-primary"
+          >
+            {t("nav.vocabulary")}
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
