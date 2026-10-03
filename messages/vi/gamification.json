@@ -14,7 +14,10 @@
     "xp": "XP",
     "empty": "Chưa có điểm nào — hãy là người đầu tiên học bài!",
     "anonymous": "Ẩn danh",
-    "medalAria": "Hạng {rank}"
+    "medalAria": "Hạng {rank}",
+    "quizSection": "Điểm quiz",
+    "quizScore": "Điểm",
+    "quizEmpty": "Chưa có điểm quiz nào — làm bài kiểm tra từ vựng để lên bảng!"
   },
   "me": {
     "title": "Tiến độ của tôi",

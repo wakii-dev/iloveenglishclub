@@ -15,13 +15,16 @@ function initialsOf(name: string): string {
   );
 }
 
-/** Bảng xếp hạng /top-users (context pack #5): avatar + display_name + xp. */
+/** Bảng xếp hạng /top-users (context pack #5): avatar + display_name + xp.
+ *  valueSuffix: hậu tố giá trị (vd "%" cho cột Điểm quiz SF-4) — không đụng style. */
 export function LeaderboardTable({
   rows,
   labels,
+  valueSuffix,
 }: {
   rows: LeaderboardRow[];
   labels: { rank: string; player: string; xp: string; empty: string; anonymous: string; medalAria: string };
+  valueSuffix?: string;
 }) {
   if (rows.length === 0) {
     return (
@@ -78,6 +81,7 @@ export function LeaderboardTable({
             </td>
             <td className="px-3 py-2.5 text-right text-[15px] font-extrabold text-secondary tabular-nums">
               {row.xp.toLocaleString("vi-VN")}
+              {valueSuffix ?? ""}
             </td>
           </tr>
         ))}
