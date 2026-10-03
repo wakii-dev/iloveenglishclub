@@ -324,10 +324,58 @@ export const words = pgTable("words", {
   meaningVi: text("meaning_vi").notNull(),
   example: text("example"),
   audioUrl: text("audio_url"), // nullable — nút phát ẩn khi chưa upload (t-2.2)
+  // Oxford crawl (VU-32 SF-1 — additive, SF-2 fill): cefr = level thô A1–C2
+  // (KHÔNG map enum vocab_level — hai thang khác nhau); source = 'oxford-ld'
+  // khi enrich fill ≥1 field (null = teacher tạo thuần).
+  cefr: text("cefr"),
+  source: text("source"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 }, (word) => [unique("words_word_unique").on(word.word)]);
+
+/**
+ * crawl_entries — data lake Oxford Learner's Dictionaries (VU-32 SF-1).
+ * Tách lớp với `words` (curated — teacher-owned): crawl KHÔNG BAO GIỜ tạo
+ * row words; enrich (SF-2) đọc từ đây để fill-empty.
+ * - slug UNIQUE từ sitemap; sau redirect lưu slug CUỐI (tree_1 → tree = 1 row).
+ * - word (headword) NULLABLE — null khi pending (chưa parse); UI hiển thị
+ *   COALESCE(word, pretty(slug)).
+ * - raw jsonb = object cấu trúc (scalar + senses + idioms/phrasals) — KHÔNG
+ *   nhét HTML gốc (~98KB/entry).
+ * - status machine 3 trạng thái bền: pending → parsed | failed (fetch+parse
+ *   nguyên tử — KHÔNG có trạng thái 'fetched' riêng). Single-runner
+ *   assumption (không lock/claim — chỉ 1 runner tại 1 thời điểm).
+ * - audio_uk/us_url = provenance URL mp3 gốc; audio_uk/us_blob = URL Blob sau
+ *   khi tải (prefix audio/oxford/, qua helper blob-only — throw khi thiếu token).
+ * - word_idx: enrich match per-word không seq-scan 60k rows mỗi request.
+ */
+export const crawlEntries = pgTable("crawl_entries", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  slug: text("slug").notNull().unique(),
+  word: text("word"),
+  source: text("source").notNull().default("oxford-ld"),
+  raw: jsonb("raw"),
+  ipaUk: text("ipa_uk"),
+  ipaUs: text("ipa_us"),
+  audioUkUrl: text("audio_uk_url"),
+  audioUsUrl: text("audio_us_url"),
+  audioUkBlob: text("audio_uk_blob"),
+  audioUsBlob: text("audio_us_blob"),
+  pos: text("pos"),
+  cefr: text("cefr"),
+  ox3000: boolean("ox3000").notNull().default(false),
+  status: text("status").notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (entry) => [
+  index("crawl_entries_status_idx").on(entry.status),
+  index("crawl_entries_word_idx").on(entry.word),
+]);
 
 /**
  * book_words — gắn word vào book với thứ tự học (cột "order" — SQL reserved,
