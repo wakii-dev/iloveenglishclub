@@ -203,7 +203,7 @@ không cần dev trông.
       baseMs})` — retry khi err.retryable (HttpError + network/Abort),
       backoff exponential + jitter, KHÔNG retry 4xx khác. Test fake timers:
       pacing 2 r/s, retry đếm đúng, non-retryable 1 call. Exit: test xanh.
-- [ ] **T8. robots lib + test.** `src/lib/oxford/robots.ts`:
+- [x] **T8. robots lib + test.** `src/lib/oxford/robots.ts`:
       `parseRobots(text, ua="*")` → {disallowed[]}; `isAllowed(policy, path)`
       prefix-match; `assertCrawlAllowed(deps)` — fetch `/robots.txt`, nhóm
       `User-agent: *`, path `/definition/english/` bị Disallow → throw
