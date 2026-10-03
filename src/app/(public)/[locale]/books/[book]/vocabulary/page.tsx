@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getBook, getBooks, getBookVocabulary } from "@/lib/content/queries";
+import { WordPlayButton } from "@/components/content/word-play-button";
 
 /**
  * /books/[book]/vocabulary — từ vựng của book theo thứ tự học (SF-2 t-2.1).
@@ -74,6 +75,9 @@ export default async function BookVocabularyPage({
               key={entry.id}
               className="flex items-center gap-4 rounded-[18px] border-2 border-border bg-card p-4"
             >
+              {entry.audioUrl ? (
+                <WordPlayButton word={entry.word} audioUrl={entry.audioUrl} />
+              ) : null}
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-baseline gap-x-2">
                   <span className="font-display text-[16.5px] font-bold">
