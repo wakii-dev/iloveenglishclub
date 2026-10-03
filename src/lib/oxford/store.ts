@@ -1,4 +1,4 @@
-import type { OxfordEntry } from "./parse";
+import type { OxfordEntry } from "./parse.ts";
 
 /**
  * Store cho crawl_entries (VU-32 SF-1) — SQL client INJECTABLE (postgres.js
@@ -162,4 +162,46 @@ export async function saveAudioBlob(
   } else {
     await sql`UPDATE crawl_entries SET audio_us_blob = ${blobUrl} WHERE id = ${id}`;
   }
+}
+
+export type AudioPendingRow = {
+  id: number;
+  slug: string;
+  audioUkUrl: string | null;
+  audioUsUrl: string | null;
+  audioUkBlob: string | null;
+  audioUsBlob: string | null;
+};
+
+/** Entries parsed còn thiếu blob (≥1 variant có URL nhưng chưa tải) — phase audio. */
+export async function claimAudioPending(
+  sql: SqlClient,
+  limit: number,
+): Promise<AudioPendingRow[]> {
+  const rows = await sql<{
+    id: number;
+    slug: string;
+    audio_uk_url: string | null;
+    audio_us_url: string | null;
+    audio_uk_blob: string | null;
+    audio_us_blob: string | null;
+  }[]>`
+    SELECT id, slug, audio_uk_url, audio_us_url, audio_uk_blob, audio_us_blob
+    FROM crawl_entries
+    WHERE status = 'parsed'
+      AND (
+        (audio_uk_url IS NOT NULL AND audio_uk_blob IS NULL)
+        OR (audio_us_url IS NOT NULL AND audio_us_blob IS NULL)
+      )
+    ORDER BY id
+    LIMIT ${limit}
+  `;
+  return rows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    audioUkUrl: r.audio_uk_url,
+    audioUsUrl: r.audio_us_url,
+    audioUkBlob: r.audio_uk_blob,
+    audioUsBlob: r.audio_us_blob,
+  }));
 }

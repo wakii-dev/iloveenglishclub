@@ -8,7 +8,7 @@
  * dừng → tắt runner + xoá crawl_entries + prefix blob).
  */
 
-import { DEFAULT_TIMEOUT_MS, HttpError, TimeoutError } from "./fetch";
+import { DEFAULT_TIMEOUT_MS, HttpError, TimeoutError } from "./fetch.ts";
 
 export class RobotsDeniedError extends Error {
   constructor(path: string) {

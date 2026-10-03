@@ -20,12 +20,11 @@ export const DEFAULT_TIMEOUT_MS = 15_000;
 export const DEFAULT_MAX_BYTES = 2 * 1024 * 1024; // entry ~98KB — cap 2MB
 
 export class HttpError extends Error {
-  constructor(
-    public readonly status: number,
-    url: string,
-  ) {
+  readonly status: number;
+  constructor(status: number, url: string) {
     super(`HTTP ${status} — ${url}`);
     this.name = "HttpError";
+    this.status = status;
   }
   get retryable(): boolean {
     return this.status === 429 || this.status >= 500;
@@ -43,10 +42,7 @@ export class TimeoutError extends Error {
 }
 
 export class NetworkError extends Error {
-  constructor(
-    cause: unknown,
-    url: string,
-  ) {
+  constructor(cause: unknown, url: string) {
     super(`network — ${url}: ${cause instanceof Error ? cause.message : String(cause)}`);
     this.name = "NetworkError";
   }
@@ -56,12 +52,11 @@ export class NetworkError extends Error {
 }
 
 export class SizeCapError extends Error {
-  constructor(
-    public readonly maxBytes: number,
-    url: string,
-  ) {
+  readonly maxBytes: number;
+  constructor(maxBytes: number, url: string) {
     super(`size > ${maxBytes}B — ${url}`);
     this.name = "SizeCapError";
+    this.maxBytes = maxBytes;
   }
   get retryable(): boolean {
     return false;

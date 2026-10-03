@@ -3,6 +3,7 @@ import postgres from "postgres";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { OxfordEntry } from "./parse";
 import {
+  claimAudioPending,
   claimPending,
   findBySlug,
   markFailed,
@@ -168,4 +169,26 @@ describe.skipIf(!hasDb)("store — crawl_entries (DB dev thật)", () => {
     expect(r!.audioUsBlob).toBe("https://blob.example/audio/oxford/zz-test-audio.us.mp3");
     expect(r!.audioUkUrl).toBeNull(); // provenance URL chưa parse — null
   });
+
+  d("claimAudioPending: chỉ parsed thiếu blob ≥1 variant; đủ blob → không nằm", async () => {
+    await upsertSlugs(sql, ["zz-test-aa1", "zz-test-aa2", "zz-test-aa3"]);
+    const r1 = await findBySlug(sql, "zz-test-aa1");
+    const r2 = await findBySlug(sql, "zz-test-aa2");
+    await markParsed(sql, r1!.id, { ...treeEntry, audioUkUrl: MP3, audioUsUrl: null });
+    await markParsed(sql, r2!.id, { ...treeEntry, audioUkUrl: MP3, audioUsUrl: MP3 });
+    // r1 parsed pending; zz-test-aa3 pending — không có trong audio queue
+    const queue = await claimAudioPending(sql, 10);
+    expect(queue.map((q) => q.slug)).toContain("zz-test-aa1");
+    expect(queue.map((q) => q.slug)).toContain("zz-test-aa2");
+    expect(queue.map((q) => q.slug)).not.toContain("zz-test-aa3");
+    // tải đủ uk+us cho aa2 → khỏi queue; aa1 chỉ có uk → tải uk là xong
+    await saveAudioBlob(sql, r2!.id, "uk", "https://blob.example/x.uk.mp3");
+    await saveAudioBlob(sql, r2!.id, "us", "https://blob.example/x.us.mp3");
+    await saveAudioBlob(sql, r1!.id, "uk", "https://blob.example/y.uk.mp3");
+    const after = await claimAudioPending(sql, 10);
+    expect(after.map((q) => q.slug)).not.toContain("zz-test-aa1");
+    expect(after.map((q) => q.slug)).not.toContain("zz-test-aa2");
+  });
 });
+
+const MP3 = "https://www.oxfordlearnersdictionaries.com/media/english/uk_pron/x/x.mp3";

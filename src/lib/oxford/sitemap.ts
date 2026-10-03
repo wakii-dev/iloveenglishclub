@@ -14,14 +14,14 @@
  * nhất quán với redirect final.
  */
 
-import { isAllowed, parseRobots } from "./robots";
+import { isAllowed, parseRobots } from "./robots.ts";
 import {
   DEFAULT_TIMEOUT_MS,
   ENTRY_HOST_SUFFIX,
   HttpError,
   TimeoutError,
   slugFromUrl,
-} from "./fetch";
+} from "./fetch.ts";
 
 /** Fetch XML — check res.ok (500 → throw, KHÔNG [] lặng lẽ) + timeout 15s. */
 async function fetchText(doFetch: typeof fetch, url: string): Promise<string> {

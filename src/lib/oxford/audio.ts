@@ -8,7 +8,7 @@
  * Chỉ tải từ media host (allowlist Oxford) — provenance URL mp3 gốc nằm ở
  * audio_uk_url/audio_us_url (fetch+parse lưu trước).
  */
-import { ENTRY_HOST_SUFFIX, SizeCapError } from "./fetch";
+import { ENTRY_HOST_SUFFIX, SizeCapError } from "./fetch.ts";
 
 export const AUDIO_OXFORD_PREFIX = "audio/oxford/";
 export const DEFAULT_AUDIO_MAX_BYTES = 2 * 1024 * 1024;
