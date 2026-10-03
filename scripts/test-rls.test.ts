@@ -14,10 +14,13 @@
  *   users↔profiles (thay thế TRIGGER on_auth_user_created — deviation chốt
  *   trong plan §2: events.createUser + register transaction là 2 path tạo
  *   profile, KHÔNG dùng DB trigger vì vỡ registerAction).
+ * - VOCABULARY (SF-1): DB contract 4 bảng mới — unique word/PK+unique order
+ *   book_words/defaults SRS/FK cascade + jsonb roundtrip quiz_attempts;
+ *   authz vẫn app-level (assertAdmin ở route, test chung mục ROLE).
  *
  * Chạy: npm run db:seed trước → npm run test:rls. Exit 0 = sạch.
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import postgres from "postgres";
 
 // ---- Mocks: Next runtime không có ở đây — bypass cache wrapper, control session
@@ -32,6 +35,7 @@ vi.mock("@/auth", () => ({
 
 import { assertAdmin, ForbiddenError } from "@/lib/content/guards";
 import { updateRelaxedMode } from "@/lib/actions/relaxed-mode";
+import * as vocabularyStore from "@/lib/admin/vocabulary-store";
 import {
   getBook,
   getBooks,
@@ -260,11 +264,12 @@ describe("DB contract — UNIQUE + RESTRICT", () => {
     expect(["23503", "23001"]).toContain(err.code);
   });
 
-  it("UNIQUE constraints tồn tại đúng spec §4", async () => {
+  it("UNIQUE constraints tồn tại đúng spec §4 + vocabulary SF-1", async () => {
     const names = await sql<{ conname: string }[]>`
       SELECT conname FROM pg_constraint
       WHERE contype = 'u' AND conrelid IN (
-        'units'::regclass, 'lessons'::regclass, 'lesson_parts'::regclass, 'attempts'::regclass
+        'units'::regclass, 'lessons'::regclass, 'lesson_parts'::regclass, 'attempts'::regclass,
+        'words'::regclass, 'book_words'::regclass
       )
     `;
     expect(names.map((n) => n.conname).sort()).toEqual(
@@ -273,6 +278,8 @@ describe("DB contract — UNIQUE + RESTRICT", () => {
         "lesson_parts_lesson_id_sort_order_unique",
         "lessons_unit_id_number_unique",
         "units_book_id_number_unique",
+        "words_word_unique",
+        "book_words_book_id_order_unique",
       ].sort(),
     );
   });
@@ -324,5 +331,171 @@ describe("Leaderboard view — chỉ expose cột cho phép + XP tuần ISO đú
     expect(a!.xp).toBe(50);
     expect(rows.find((r) => r.display_name === "RLS noprofile")).toBeUndefined();
     expect(rows.filter((r) => r.display_name === "RLS user")).toHaveLength(1);
+  });
+});
+
+/**
+ * VOCABULARY (SF-1) — DB contract 4 bảng words/book_words/user_word_progress/
+ * quiz_attempts. Authz vẫn app-level (assertAdmin ở /api/admin/vocabulary —
+ * chung mục ROLE ở trên; pivot VU-15). Fixture word có prefix 'rls-vocab-' —
+ * xoá theo prefix cascade dọn book_words/progress, re-run an toàn.
+ */
+const VOCAB_PREFIX = "rls-vocab-";
+
+async function vocabFixtureWord(suffix: string): Promise<number> {
+  const [row] = await sql<{ id: number }[]>`
+    INSERT INTO words (word, meaning_vi) VALUES (${VOCAB_PREFIX + suffix}, 'RLS fixture')
+    RETURNING id
+  `;
+  return row.id;
+}
+
+describe("VOCABULARY — words UNIQUE + nullable", () => {
+  afterEach(async () => {
+    await sql`DELETE FROM words WHERE word LIKE ${VOCAB_PREFIX + "%"}`;
+  });
+
+  it("UNIQUE(word) chặn trùng (23505) — nền import idempotent", async () => {
+    const id = await vocabFixtureWord("dup");
+    await expect(
+      sql`INSERT INTO words (word, meaning_vi) VALUES (${VOCAB_PREFIX + "dup"}, 'x')`,
+    ).rejects.toMatchObject({ code: "23505" });
+    await sql`DELETE FROM words WHERE id = ${id}`;
+  });
+
+  it("ipa/example/audio_url nullable + created_at default", async () => {
+    const id = await vocabFixtureWord("nullable");
+    const [row] = await sql<{
+      ipa: string | null;
+      example: string | null;
+      audio_url: string | null;
+      created_at: Date;
+    }[]>`SELECT ipa, example, audio_url, created_at FROM words WHERE id = ${id}`;
+    expect(row.ipa).toBeNull();
+    expect(row.example).toBeNull();
+    expect(row.audio_url).toBeNull();
+    expect(row.created_at).not.toBeNull();
+  });
+});
+
+describe("VOCABULARY — book_words PK/UNIQUE + cascade", () => {
+  afterEach(async () => {
+    await sql`DELETE FROM words WHERE word LIKE ${VOCAB_PREFIX + "%"}`;
+  });
+
+  it("PK(book,word) + UNIQUE(book,order) chặn attach trùng (23505)", async () => {
+    const idA = await vocabFixtureWord("attach-a");
+    const idB = await vocabFixtureWord("attach-b");
+    await sql`
+      INSERT INTO book_words (book_id, word_id, "order") VALUES (1, ${idA}, 999999)
+    `;
+    await expect(
+      sql`INSERT INTO book_words (book_id, word_id, "order") VALUES (1, ${idA}, 999998)`,
+    ).rejects.toMatchObject({ code: "23505" }); // PK
+    await expect(
+      sql`INSERT INTO book_words (book_id, word_id, "order") VALUES (1, ${idB}, 999999)`,
+    ).rejects.toMatchObject({ code: "23505" }); // UNIQUE order
+  });
+
+  it("delete word cascade book_words + user_word_progress", async () => {
+    const idA = await vocabFixtureWord("cascade");
+    await sql`INSERT INTO book_words (book_id, word_id, "order") VALUES (1, ${idA}, 999997)`;
+    await sql`
+      INSERT INTO user_word_progress (user_id, word_id) VALUES (${ID_A}, ${idA})
+    `;
+    await sql`DELETE FROM words WHERE id = ${idA}`;
+    const [bw] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM book_words WHERE word_id = ${idA}
+    `;
+    const [p] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM user_word_progress WHERE word_id = ${idA}
+    `;
+    expect(bw.n).toBe(0);
+    expect(p.n).toBe(0);
+  });
+});
+
+describe("VOCABULARY — user_word_progress defaults SRS", () => {
+  afterEach(async () => {
+    await sql`DELETE FROM words WHERE word LIKE ${VOCAB_PREFIX + "%"}`;
+  });
+
+  it("insert tối thiểu → ease 2.5 / interval 0 / reps 0 / due_at NOT NULL", async () => {
+    const id = await vocabFixtureWord("defaults");
+    await sql`INSERT INTO user_word_progress (user_id, word_id) VALUES (${ID_A}, ${id})`;
+    const [row] = await sql<{
+      ease: number;
+      interval_days: number;
+      reps: number;
+      due_at: Date;
+      last_reviewed_at: Date | null;
+    }[]>`
+      SELECT ease, interval_days, reps, due_at, last_reviewed_at
+      FROM user_word_progress WHERE user_id = ${ID_A} AND word_id = ${id}
+    `;
+    expect(row.ease).toBe(2.5);
+    expect(row.interval_days).toBe(0);
+    expect(row.reps).toBe(0);
+    expect(row.due_at).not.toBeNull(); // word mới đến hạn ngay (SF-3)
+    expect(row.last_reviewed_at).toBeNull();
+  });
+});
+
+describe("VOCABULARY — quiz_attempts jsonb + FK cascade rules", () => {
+  afterEach(async () => {
+    await sql`DELETE FROM words WHERE word LIKE ${VOCAB_PREFIX + "%"}`;
+    await sql`
+      DELETE FROM quiz_attempts
+      WHERE user_id = ${ID_A} AND mode = 'rls-vocab-test'
+    `;
+  });
+
+  it("score real + detail_json roundtrip + created_at default", async () => {
+    await sql`
+      INSERT INTO quiz_attempts (user_id, book_id, mode, score, detail_json)
+      VALUES (${ID_A}, 1, 'rls-vocab-test', 0.75,
+              ${JSON.stringify({ answers: [{ word: "a", ok: true }] })}::jsonb)
+    `;
+    const [row] = await sql<{ detail_json: { answers: unknown[] }; created_at: Date }[]>`
+      SELECT detail_json, created_at FROM quiz_attempts
+      WHERE user_id = ${ID_A} AND mode = 'rls-vocab-test'
+    `;
+    expect(row.detail_json.answers).toHaveLength(1);
+    expect(row.created_at).not.toBeNull();
+  });
+
+  it("mọi FK vocabulary CASCADE đúng chiều (schema contract, không phá fixture)", async () => {
+    const rules = await sql<{ conname: string; delete_rule: string }[]>`
+      SELECT conname, delete_rule FROM information_schema.referential_constraints
+      WHERE constraint_name IN (
+        'book_words_book_id_books_id_fk',
+        'book_words_word_id_words_id_fk',
+        'quiz_attempts_user_id_profiles_id_fk',
+        'quiz_attempts_book_id_books_id_fk',
+        'user_word_progress_user_id_profiles_id_fk',
+        'user_word_progress_word_id_words_id_fk'
+      )
+    `;
+    expect(rules).toHaveLength(6);
+    expect(rules.every((r) => r.delete_rule === "CASCADE")).toBe(true);
+  });
+});
+
+describe("VOCABULARY — isolation-by-surface (app-level authz)", () => {
+  it("vocabulary-store không expose hàm nào nhận userId ghi/đọc hộ user khác", () => {
+    // Write user-facing (progress/review) thuộc SF-3 — PHẢI scope theo session
+    // khi thêm; surface hiện tại chỉ admin CRUD (assertAdmin ở route)
+    const exports = Object.keys(vocabularyStore).filter(
+      (k) => typeof (vocabularyStore as Record<string, unknown>)[k] === "function",
+    );
+    expect(exports.sort()).toEqual(
+      [
+        "createVocabularyWord",
+        "deleteVocabularyWord",
+        "importVocabulary",
+        "listVocabulary",
+        "updateVocabularyWord",
+      ].sort(),
+    );
   });
 });
