@@ -169,7 +169,7 @@ không cần dev trông.
       KHÔNG đụng script wrapper. Test thêm vào audio-sync.test.ts: entry
       `audio/oxford/tree.uk.mp3` bị loại, entry thường vẫn sync. Exit: test
       xanh — audio-sync không bao giờ mirror prefix đó (acceptance 4).
-- [ ] **T4. Fixtures HTML (contract cho parse + tái dùng e2e SF-3).**
+- [x] **T4. Fixtures HTML (contract cho parse + tái dùng e2e SF-3).**
       `src/lib/oxford/fixtures/`: multi-pos.html, idiom.html, homonym-2.html
       (`_2`), us-only.html (không UK audio), + 1 file fetch thật TRIM (authoring
       fetch 1-2 entry thật để chốt selectors — spec probe `span.phon`,
