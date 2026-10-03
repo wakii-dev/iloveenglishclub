@@ -46,8 +46,11 @@ test.describe("Review flow (vocabulary SF-3)", () => {
     );
     await expect(page.getByText(/2 words to review today/)).toBeVisible();
 
-    // Thẻ 1 mặt trước: từ alpha + hint lật
-    await expect(page.getByText(ALPHA.word)).toBeVisible();
+    // Thẻ 1 mặt trước: từ alpha + hint lật (word render ở CẢ 2 mặt thẻ trong
+    // DOM — lật 3D — nên bám mặt trước qua button bấm-lật)
+    await expect(
+      page.getByRole("button", { name: new RegExp(ALPHA.word) }),
+    ).toBeVisible();
     await page.getByRole("button", { name: /Tap the card to flip/ }).click();
 
     // Mặt sau: nghĩa + 4 nút quality (audio null → không nút phát)
@@ -59,7 +62,9 @@ test.describe("Review flow (vocabulary SF-3)", () => {
 
     // Good (q=4) → rep1 interval 1 ngày → advance sang thẻ bravo
     await page.getByRole("button", { name: "Good", exact: true }).click();
-    await expect(page.getByText(BRAVO.word)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: new RegExp(BRAVO.word) }),
+    ).toBeVisible();
     await expect(page.getByText(ALPHA.word)).toHaveCount(0);
 
     // Reload: alpha đã due tomorrow, bravo còn due → đếm 1 (persist qua API)
