@@ -6,14 +6,15 @@
     "dest": "master",
     "generatedAt": "2026-10-03T16:29:55.730Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T17:42:55Z"
+    "updatedAt": "2026-10-03T18:25:27Z",
+    "doneVerdict": "2026-10-04 — 3/3 SF qua kit workflow portable (worktree per-story + worker passes): hub 4 tab (Tổng quan aggregate/Thư viện toàn bộ/Review SRS tổng/Quiz tổng scope book-all-multi) · 498/498 vitest · e2e hub 8/8 · navbar item · PR vào master chờ user review"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "Vocabulary Hub — module tổng + item navbar",
-      "state": "in-progress",
+      "state": "done",
       "parent": ""
     },
     {
@@ -34,7 +35,7 @@
       "id": "sf-3",
       "kind": "sf",
       "title": "Review SRS tổng (rebrand) + Quiz tổng (pool scope)",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -76,21 +77,21 @@
       "id": "t-3.1",
       "kind": "task",
       "title": "rebrand /me/vocabulary → hub tab Review (do-today tổng, không theo sách)",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.2",
       "kind": "task",
       "title": "quiz tổng: engine pool scope all/multi-book + UI chọn phạm vi + submit (top-users giữ nguyên)",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.3",
       "kind": "task",
       "title": "tests: engine scope + e2e quiz tổng",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     }
   ],
