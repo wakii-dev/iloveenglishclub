@@ -38,5 +38,9 @@
   "summaryTitle": "Kết quả bài kiểm tra",
   "summaryScore": "Đúng {correct}/{total} câu",
   "summaryPercent": "{percent}% đúng",
-  "quizAgain": "Làm lại"
+  "quizAgain": "Làm lại",
+  "lookupLoading": "Đang tra…",
+  "lookupMiss": "Từ này chưa có trong bộ từ vựng của sách",
+  "lookupError": "Không tra được từ — thử lại nhé.",
+  "lookupAria": "Nghĩa của từ “{word}”"
 }

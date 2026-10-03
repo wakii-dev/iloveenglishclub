@@ -38,5 +38,9 @@
   "summaryTitle": "Quiz results",
   "summaryScore": "You got {correct}/{total} correct",
   "summaryPercent": "{percent}% correct",
-  "quizAgain": "Try again"
+  "quizAgain": "Try again",
+  "lookupLoading": "Looking up…",
+  "lookupMiss": "This word isn't in the book's vocabulary yet",
+  "lookupError": "Couldn't look up the word — please try again.",
+  "lookupAria": "Meaning of “{word}”"
 }

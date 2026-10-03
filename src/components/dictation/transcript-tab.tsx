@@ -5,16 +5,19 @@ import { Lock, Pause, Play } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { PartStatus } from "@/lib/dictation/store";
 import { dictationStore } from "@/lib/dictation/store";
+import { WordLookupText } from "@/components/vocabulary/word-lookup";
 import { cn } from "cn";
 
 /**
  * §3.10 TranscriptTab (§5.9): toàn bộ text + audio player tổng (Play all —
  * queue tuần tự, element RIÊNG không đụng player chính; pause main player
  * trước khi phát). Part pending → blur + aria-hidden + lock-note (prototype).
+ * SF-5: text click-lookup (WordLookupText) — câu khoá giữ text thuần.
  */
 export function TranscriptTab({
   sentences,
   audioUrls,
+  bookId,
 }: Props) {
   const t = useTranslations("lesson");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -86,7 +89,7 @@ export function TranscriptTab({
               <span className="mr-2.5 text-[13.5px] font-extrabold text-secondary tabular-nums">
                 {i + 1}
               </span>
-              {s.text}
+              <WordLookupText text={s.text} bookId={bookId} disabled={locked} />
             </li>
           );
         })}
@@ -138,4 +141,5 @@ function GhostPill({
 interface Props {
   sentences: readonly { text: string; status: PartStatus }[];
   audioUrls: readonly (string | null)[];
+  bookId: number;
 }

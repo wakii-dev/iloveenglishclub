@@ -54,6 +54,7 @@ export interface DictationLessonProps {
   lessonTitle: string;
   cefrLabel: string;
   unitNumber: number;
+  bookId: number;
   parts: readonly {
     id: number;
     text: string;
@@ -79,6 +80,7 @@ export function DictationLesson({
   lessonTitle,
   cefrLabel,
   unitNumber,
+  bookId,
   parts,
   nextHref,
   unitHref,
@@ -510,6 +512,7 @@ export function DictationLesson({
             status: partsState[i]?.status ?? "pending",
           }))}
           audioUrls={parts.map((p) => p.audioUrl)}
+          bookId={bookId}
         />
       ) : (
         <>
