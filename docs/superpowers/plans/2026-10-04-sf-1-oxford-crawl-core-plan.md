@@ -263,7 +263,7 @@ không cần dev trông.
       audio/oxford/. Evidence file: hash HEAD + marker "CLI-equivalent proxy
       per FI-460 — SF CLI-only, không browser walkthrough" + exit codes từng
       lệnh. Exit: toàn bộ log evidence thật, không suy diễn.
-- [ ] **T13. docs README + package.json script.** README section "Oxford
+- [x] **T13. docs README + package.json script.** README section "Oxford
       crawl": 3 phases + ví dụ lệnh, flags (gồm --skip-audio semantics),
       token setup (`vercel env pull`), politeness note (rate 2 r/s, robots,
       attribution, OUP takedown runbook 1 dòng), single-runner note, note
