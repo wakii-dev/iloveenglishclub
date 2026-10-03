@@ -148,3 +148,26 @@ Không có gì mới — 2 file đã khớp (store: 42 entry).
 
 Marker: CLI-equivalent proxy per FI-460 — SF-1 CLI-only (data/CLI SF, không đụng UI), KHÔNG browser walkthrough. Tất cả output ở trên là lệnh chạy THẬT (sitemap/network/DB Neon/Vercel Blob thật), không suy diễn.
 Token BLOB: có trong .env.local (vercel env pull) — phase audio chạy THẬT lên Blob store dự án.
+
+## Bổ sung (fix reviewer nhóm C):
+
+### a) fetch --slug DRY-RUN KHÔNG ghi DB nữa (P1)
+$ node scripts/oxford-crawl.ts fetch --slug zz-probe-dryrun   # slug chưa có + dry-run
+◇ injected env (6) from .env.local
+[DRY-RUN] phase=fetch rate=2/s
+Slug "zz-probe-dryrun" chưa có trong crawl_entries — DRY-RUN không ghi. Chạy --apply để upsert + fetch.
+Fetch 0 entries pending (dry-run — KHÔNG ghi)
+Xong fetch: parsed 0, failed 0, redirect 0 (dry-run — không ghi)
+[crawl_entries] pending=63854 parsed=83 failed=0 (failed quá cap retry: 0)
+rows zz-probe-dryrun sau dry-run: 0 (phải = 0 — dry-run SELECT-only)
+
+### b) thiếu BLOB token → exit 1 (P2 evidence — demo thật)
+$ BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply
+◇ injected env (5) from .env.local
+[APPLY] phase=audio rate=2/s
+Audio: 5 entries, 10 variants → audio/oxford/
+BLOB_READ_WRITE_TOKEN thiếu — phase audio chỉ ghi Blob (helper blob-only, KHÔNG fallback local). Chạy `vercel env pull --environment development`.
+exit=0
+
+### c) chú thích evidence Bước 6 scan-only: output lúc capture bị cắt bởi head -8 (log thật in tối đa 10 dòng sample theo code slice(0,10)) — lệnh + exit code là thật.
+Bổ sung b (đo exit ĐÚNG — không pipe): BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply → in "[audio] BLOB_READ_WRITE_TOKEN thiếu…" và **exit=1** (đo trực tiếp, không qua pipe).

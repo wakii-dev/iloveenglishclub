@@ -142,9 +142,19 @@ async function main() {
 
     let batch: Array<{ id: number; slug: string; attempts: number }>;
     if (args.slug) {
-      // --slug: force 1 slug (debug) — upsert nếu chưa có trong DB
-      await store.upsertSlugs(sql, [args.slug]);
+      // --slug: force 1 slug (debug). Dry-run phải SELECT-only (reviewer nhóm
+      // C P1: upsert không guard dry-run = ghi DB trái contract) — slug chưa
+      // có trong DB thì chỉ log hướng dẫn --apply.
       const row = await store.findBySlug(sql, args.slug);
+      if (!row) {
+        if (dryRun) {
+          console.log(
+            `Slug "${args.slug}" chưa có trong crawl_entries — DRY-RUN không ghi. Chạy --apply để upsert + fetch.`,
+          );
+        } else {
+          await store.upsertSlugs(sql, [args.slug]);
+        }
+      }
       batch = row ? [{ id: row.id, slug: row.slug, attempts: 0 }] : [];
     } else {
       batch = await store.claimPending(sql, args.limit);
@@ -219,6 +229,11 @@ async function main() {
 
     const rows = await store.claimAudioPending(sql, args.limit);
     const targets = args.slug ? rows.filter((r) => r.slug === args.slug) : rows;
+    if (args.slug && targets.length === 0) {
+      console.log(
+        `Slug "${args.slug}" không nằm trong audio queue (${rows.length} rows quét) — đã tải đủ blob / chưa parsed / không có audio URL.`,
+      );
+    }
     const pendingVariants = targets.reduce(
       (n, r) =>
         n + (r.audioUkUrl && !r.audioUkBlob ? 1 : 0) + (r.audioUsUrl && !r.audioUsBlob ? 1 : 0),
@@ -256,7 +271,12 @@ async function main() {
     let skipped = 0;
     let errors = 0;
     for (const [i, row] of targets.entries()) {
+      // 1 token/variant (≤2 mp3/row) — pacing đúng claim 2 req/s (reviewer P2:
+      // 1 token/row × 2 mp3 = tới 4 req/s thực)
       await acquire();
+      if (row.audioUkUrl && !row.audioUkBlob && row.audioUsUrl && !row.audioUsBlob) {
+        await acquire();
+      }
       try {
         const res = await withRetry(
           () =>
