@@ -49,6 +49,13 @@
       "title": "tests: unit bulk-seed stagger + API + e2e flow học từ mới",
       "state": "pending",
       "parent": "sf-1"
+    },
+    {
+      "id": "t-1.5",
+      "kind": "task",
+      "title": "Lộ trình học liên tục: kế hoạch ngày (X từ mới từ queue + Y ôn due) + streak/tiến trình (derive từ user_word_progress, không bảng mới)",
+      "state": "pending",
+      "parent": "sf-1"
     }
   ],
   "evidence": {},
