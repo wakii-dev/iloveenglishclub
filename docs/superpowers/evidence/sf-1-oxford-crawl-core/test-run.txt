@@ -1,7 +1,7 @@
-hash: 99a844705d415ebab3f650a6181755e8137fbfcc
+hash: 4851d22 (code commit — evidence commit ngay sau, parent-convention)
 tdd: RED→GREEN
 
-## Test run SF-1 (2026-10-03T21:34:43Z) — vi test suite + store DB-integration
+## Test run SF-1 (2026-10-03T21:49:57Z) — vi test suite + store DB-integration (file: store.integration.test.ts)
 $ npm test
  Test Files  46 passed (46)
       Tests  557 passed (557)
@@ -9,10 +9,11 @@ error TS: 0 (npx tsc --noEmit)
 $ npm run test:store (DB dev thật — Neon)
       Tests  8 passed (8)
 
-Flake note: 1 run trước đó (21:31Z) npm test 4 fail + test:store 7 fail — Neon pooler transient (chạy liền sau 2 suite; re-run sạch, không tái hiện — flaky-tracker: chờ, chưa bug).
+Flake note: 1 run (21:31Z) fail tạm thời — Neon pooler transient, re-run sạch, không tái hiện.
 
-Marker: CLI-equivalent proxy per FI-460 — SF-1 CLI-only (data/CLI SF, không web port), KHÔNG browser walkthrough. Demo thật (lệnh + logs + exit codes): xem demo-run.txt cùng thư mục — 5/5 ACCEPTANCE SF-1 verified trên sitemap/DB Neon/Vercel Blob thật.
+Marker: CLI-equivalent proxy per FI-460 — SF-1 CLI-only, KHÔNG browser walkthrough. Demo thật: demo-run.txt — 5/5 ACCEPTANCE SF-1 verified (sitemap/DB Neon/Vercel Blob thật) + token-missing exit 1 đo trực tiếp.
 
 ## RED→GREEN evidence (meta-test P1 fixes):
-- cefr attr fix: parser cũ (git stash) → 2 test FAIL; fix → 5/5
-- fetch mid-stream/sitemap 500/robots timeout/rate<=0: meta-test RED trên code cũ — vitest 32/32 sau fix (reviewer B re-verify APPROVED)
+- cefr attr: parser cũ (git stash) → 2 FAIL; fix → 5/5
+- fetch mid-stream/sitemap 500/robots timeout/rate<=0: meta-test RED trên code cũ — 32/32 sau fix (reviewer B APPROVED)
+- --slug dry-run ghi DB: reviewer C P1 — demo sau fix: 0 rows
