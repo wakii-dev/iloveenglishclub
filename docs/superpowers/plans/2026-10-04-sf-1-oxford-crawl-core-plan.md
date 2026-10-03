@@ -144,7 +144,7 @@ không cần dev trông.
 
 ### Tasks (ordered — tick khi xong, commit mỗi task)
 
-- [ ] **T1. Migration 0004 — crawl_entries + words.cefr/source.** schema.ts:
+- [x] **T1. Migration 0004 — crawl_entries + words.cefr/source.** schema.ts:
       bảng theo spec Data model (identity, slug UNIQUE, word nullable, raw
       jsonb, ipa/audio×2 cột, pos/cefr/ox3000, status default pending,
       attempts, last_error, fetched_at, created_at; index status + word);
