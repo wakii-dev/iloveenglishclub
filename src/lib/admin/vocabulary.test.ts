@@ -6,9 +6,11 @@ import { describe, expect, it } from "vitest";
  * index+1 JSON, file-level lỗi line 0 (hoặc header CSV line 1).
  */
 import {
+  buildWordAudioPath,
   planImport,
   parseVocabularyCsv,
   parseVocabularyJson,
+  resolveStoredAudioUrl,
   validateWordInput,
   type ParsedWordRow,
 } from "./vocabulary";
@@ -235,5 +237,24 @@ describe("planImport — dedupe trong file", () => {
     const { rows, errors } = planImport([row(1, "Apple"), row(2, "apple")], []);
     expect(rows).toHaveLength(2);
     expect(errors).toEqual([]);
+  });
+});
+
+describe("buildWordAudioPath + resolveStoredAudioUrl (t-1.3 upload leg)", () => {
+  it("path unique theo word id + ext theo mime — re-upload cùng id = replace", () => {
+    expect(buildWordAudioPath(42, "mp3")).toBe("audio/vocabulary/42.mp3");
+    expect(buildWordAudioPath(7, "m4a")).toBe("audio/vocabulary/7.m4a");
+  });
+
+  it("URL CDN (blob) giữ nguyên; path local (dev) thêm prefix /", () => {
+    expect(resolveStoredAudioUrl("https://blob.vercel-storage.com/x.mp3")).toBe(
+      "https://blob.vercel-storage.com/x.mp3",
+    );
+    expect(resolveStoredAudioUrl("http://cdn.example.com/y.wav")).toBe(
+      "http://cdn.example.com/y.wav",
+    );
+    expect(resolveStoredAudioUrl("audio/vocabulary/42.mp3")).toBe(
+      "/audio/vocabulary/42.mp3",
+    );
   });
 });

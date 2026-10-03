@@ -10,6 +10,16 @@ export const IPA_MAX = 100;
 export const EXAMPLE_MAX = 1000;
 export const AUDIO_URL_MAX = 1000;
 
+/** Path lưu audio của word — unique theo word id, re-upload = replace. */
+export function buildWordAudioPath(wordId: number, ext: string): string {
+  return `audio/vocabulary/${wordId}.${ext}`;
+}
+
+/** URL playback từ giá trị DB: blob → URL CDN nguyên; local → / + path. */
+export function resolveStoredAudioUrl(value: string): string {
+  return /^https?:\/\//.test(value) ? value : `/${value}`;
+}
+
 /** Field word input — snake_case khớp cột DB (body import/API dùng y nguyên). */
 export type WordInput = {
   word: string;

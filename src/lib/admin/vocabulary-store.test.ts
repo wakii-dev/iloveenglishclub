@@ -17,8 +17,7 @@ function chainOf(): unknown {
     dbState.failWith !== null ? Promise.reject(dbState.failWith) : Promise.resolve(result);
   // Callable target + self-reference qua closure — mọi method call trả chính
   // proxy (raw target sẽ mất trap, lỗi ".x is not a function")
-  let proxy: unknown;
-  proxy = new Proxy(function chain() {}, {
+  const proxy: unknown = new Proxy(function chain() {}, {
     get(_t, prop) {
       if (typeof prop === "symbol") return undefined;
       if (prop === "then") return p.then.bind(p);
