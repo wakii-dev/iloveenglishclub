@@ -20,7 +20,7 @@ describe("parseEntry — Oxford entry HTML → OxfordEntry", () => {
     expect(e!.ipaUs).toBe("/triː/");
     expect(e!.audioUkUrl).toMatch(/\/media\/english\/uk_pron\/.+\.mp3$/);
     expect(e!.audioUsUrl).toMatch(/\/media\/english\/us_pron\/.+\.mp3$/);
-    expect(e!.senses.length).toBeGreaterThanOrEqual(1);
+    expect(e!.senses).toHaveLength(1); // senses main — idiom senses tách riêng
     expect(e!.senses[0].def).toContain("a tall plant");
     expect(e!.senses[0].examples.length).toBeGreaterThanOrEqual(1);
     // idioms giữ trong raw — 6 idm-g, mỗi cái senses riêng
@@ -43,16 +43,16 @@ describe("parseEntry — Oxford entry HTML → OxfordEntry", () => {
     expect(e!.idioms).toEqual([]);
   });
 
-  it("entry-basic (color): cefr B1, ipa uk≠us, senses + idioms đầy đủ", () => {
+  it("entry-basic (color): cefr A1 (attr cefr trên main sense — KHÔNG nhầm fkcefr b1 của idiom), ipa uk≠us", () => {
     const e = parseEntry(fixture("entry-basic.html"));
     expect(e).not.toBeNull();
     expect(e!.headword).toBe("color");
-    expect(e!.cefr).toBe("B1");
+    expect(e!.cefr).toBe("A1"); // main sense cefr="a1" — fkcefr="b1" là của idiom
     expect(e!.ox3000).toBe(true);
     expect(e!.ipaUk).toBe("/ˈkʌlə(r)/");
     expect(e!.ipaUs).toBe("/ˈkʌlər/");
-    expect(e!.senses.length).toBeGreaterThanOrEqual(1);
-    expect(e!.idioms.length).toBeGreaterThanOrEqual(1);
+    expect(e!.senses).toHaveLength(8);
+    expect(e!.idioms).toHaveLength(5);
   });
 
   it("us-only: KHÔNG UK audio/ipa → null cả hai (không parse fail), US vẫn có", () => {
@@ -62,7 +62,9 @@ describe("parseEntry — Oxford entry HTML → OxfordEntry", () => {
     expect(e!.audioUkUrl).toBeNull();
     expect(e!.ipaUs).toBe("/ˈkʌlər/");
     expect(e!.audioUsUrl).toMatch(/us_pron\/.+\.mp3$/);
-    expect(e!.cefr).toBe("B1");
+    expect(e!.cefr).toBe("A1");
+    expect(e!.senses).toHaveLength(8);
+    expect(e!.idioms).toHaveLength(5);
   });
 
   it("HTML không có headword (404 shell / selector miss) → null = parse fail", () => {

@@ -109,14 +109,15 @@ export function parseEntry(html: string): OxfordEntry | null {
   for (const block of subBlocks) {
     for (const li of block.querySelectorAll("li.sense")) subLis.add(li);
   }
-  const senses = root
-    .querySelectorAll("li.sense")
-    .filter((li) => !subLis.has(li))
-    .map(parseSense);
+  const mainLis = root.querySelectorAll("li.sense").filter((li) => !subLis.has(li));
+  const senses = mainLis.map(parseSense);
 
-  const cefrRaw = root
-    .querySelectorAll("li.sense")
-    .map((li) => li.getAttribute("fkcefr"))
+  // CEFR: attr `cefr` || `fkcefr` trên MAIN sense ĐẦU TIÊN (reviewer nhóm A —
+  // Oxford dùng cả 2 attr: tree dùng fkcefr trên main sense, color dùng cefr
+  // trên main sense và fkcefr CHỈ trên idiom sense — đọc "attr đầu tiên trong
+  // document" sẽ lấy nhầm bậc của idiom).
+  const cefrRaw = mainLis
+    .map((li) => li.getAttribute("cefr") ?? li.getAttribute("fkcefr"))
     .find((v): v is string => !!v);
 
   return {
