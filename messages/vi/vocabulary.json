@@ -83,6 +83,9 @@
       "learning": "Đang học"
     },
     "libraryTitle": "Thư viện từ vựng",
+    "review": {
+      "start": "Bắt đầu ôn"
+    },
     "library": {
       "searchLabel": "Tìm từ vựng",
       "searchPlaceholder": "Tìm từ hoặc nghĩa…",

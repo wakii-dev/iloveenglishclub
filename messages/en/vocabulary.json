@@ -83,6 +83,9 @@
       "learning": "Learning"
     },
     "libraryTitle": "Word library",
+    "review": {
+      "start": "Start review"
+    },
     "library": {
       "searchLabel": "Search words",
       "searchPlaceholder": "Search word or meaning…",

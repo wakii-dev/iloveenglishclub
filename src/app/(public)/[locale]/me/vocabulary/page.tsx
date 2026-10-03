@@ -12,6 +12,8 @@ import { ReviewFlashcards } from "@/components/vocabulary/review-flashcards";
  * (ReviewFlashcards), POST /api/vocabulary/review ghi SRS.
  * SF-2: ?word=<id> (tab Thư viện "Học từ này") — prefill thẻ đầu hàng, chấm
  * quality lên applyReview upsert = bắt đầu học từ bất kỳ.
+ * SF-3 t-3.1: scope=all (mặc định — mọi nguồn, hub tab Ôn tập link tới) /
+ * scope=book&book=<id> thu hẹp hàng ôn qua listDueWords filter.
  */
 export const dynamic = "force-dynamic"; // auth() đọc cookies
 
@@ -20,7 +22,7 @@ export default async function MeVocabularyPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ word?: string }>;
+  searchParams: Promise<{ word?: string; scope?: string; book?: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -36,8 +38,12 @@ export default async function MeVocabularyPage({
     typeof sp.word === "string" && /^\d+$/.test(sp.word)
       ? Number.parseInt(sp.word, 10)
       : null;
+  const bookId =
+    typeof sp.book === "string" && /^\d+$/.test(sp.book)
+      ? Number.parseInt(sp.book, 10)
+      : null;
   const [due, prefill] = await Promise.all([
-    listDueWords(userId),
+    listDueWords(userId, bookId !== null ? { bookId } : null),
     prefillId !== null ? getStudyWord(prefillId) : Promise.resolve(null),
   ]);
 

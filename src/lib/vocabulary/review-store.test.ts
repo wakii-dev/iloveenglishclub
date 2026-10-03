@@ -10,13 +10,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const dbState = vi.hoisted(() => ({
   queue: [] as unknown[],
   failWith: null as unknown,
+  // Lỗi THEO THỨ TỪNG query (t-3.1 subquery) — null = query đó thành công
+  failQueue: [] as (unknown | null)[],
   calls: [] as unknown[],
 }));
 
 function chainOf(): unknown {
   const result = dbState.queue.shift();
+  const failure =
+    dbState.failQueue.length > 0
+      ? dbState.failQueue.shift()
+      : dbState.failWith;
   const p =
-    dbState.failWith !== null ? Promise.reject(dbState.failWith) : Promise.resolve(result);
+    failure != null ? Promise.reject(failure) : Promise.resolve(result);
   // Callable target + self-reference qua closure — method call ghi nhận tham
   // số vào calls (values/set/where/limit/target) rồi trả chính proxy.
   const proxy: unknown = new Proxy(function chain() {}, {
@@ -50,6 +56,7 @@ const DAY_MS = 86_400_000;
 afterEach(() => {
   dbState.queue = [];
   dbState.failWith = null;
+  dbState.failQueue = [];
   dbState.calls = [];
   vi.restoreAllMocks();
 });
@@ -80,6 +87,21 @@ describe("listDueWords", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     dbState.failWith = new Error('relation "user_word_progress" does not exist');
     expect(await listDueWords("u1")).toEqual([]);
+  });
+
+  it("SF-3 t-3.1: filter bookId — rows vẫn trả về, DB lỗi vẫn [] (nhánh subquery)", async () => {
+    // mock shift ngay lúc db.select(): [select-subquery book_words, select chính]
+    dbState.queue = [
+      [],
+      [{ wordId: 7, word: "apple", meaningVi: "quả táo" }],
+    ];
+    expect(await listDueWords("u1", { bookId: 3 })).toHaveLength(1);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // failQueue theo thứ tự select: subquery [] (không await — reject sẽ thành
+    // unhandled rejection), query chính lỗi → catch trả []
+    dbState.queue = [[], []];
+    dbState.failQueue = [null, new Error('relation "book_words" does not exist')];
+    expect(await listDueWords("u1", { bookId: 3 })).toEqual([]);
   });
 });
 

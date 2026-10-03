@@ -5,9 +5,9 @@ import type { HubTab } from "@/lib/vocabulary/hub-status";
 /**
  * Tab strip hub (SF-2 t-2.2) — chip Tổng quan (SF-1) thành link chuyển tab
  * qua searchParams ?tab= (server re-render, cùng nhánh GET-filter). Guest:
- * Tổng quan cần đăng nhập → link login ?next (next prefix locale tường minh —
- * i18n Link chỉ localize pathname, không đụng query); Review/Quiz chưa có
- * (SF-3) → giữ chip "sắp có" như SF-1.
+ * Tổng quan/Ôn tập cần đăng nhập → link login ?next (next prefix locale
+ * tường minh — i18n Link chỉ localize pathname, không đụng query); SF-3
+ * t-3.1: Ôn tập có panel riêng; Quiz còn "sắp có" tới t-3.2.
  */
 export function HubTabs({
   active,
@@ -27,7 +27,7 @@ export function HubTabs({
       comingSoon: false,
     },
     { key: "library", href: "/vocabulary?tab=library", comingSoon: false },
-    { key: "review", href: "/vocabulary?tab=review", comingSoon: true },
+    { key: "review", href: "/vocabulary?tab=review", comingSoon: false },
     { key: "quiz", href: "/vocabulary?tab=quiz", comingSoon: true },
   ];
 

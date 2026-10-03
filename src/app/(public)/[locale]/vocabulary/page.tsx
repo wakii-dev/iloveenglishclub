@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { HubLibrarySection } from "@/components/vocabulary/hub-library-section";
 import { HubOverviewSection } from "@/components/vocabulary/hub-overview-section";
+import { HubReviewSection } from "@/components/vocabulary/hub-review-section";
 import { HubTabs } from "@/components/vocabulary/hub-tabs";
 import { resolveHubTab } from "@/lib/vocabulary/hub-status";
 
@@ -47,8 +48,9 @@ export default async function VocabularyHubPage({
   const sp = await searchParams;
   const tab = resolveHubTab(sp.tab ?? "", userId !== null);
 
-  if (tab === "overview" && userId === null) {
+  if ((tab === "overview" || tab === "review") && userId === null) {
     // Pattern me/page: redirect locale-prefix tường minh + ?next quay lại
+    // (tab data cá nhân — guest không thấy)
     redirect(`/${locale}/login?next=/${locale}/vocabulary`);
   }
 
@@ -69,7 +71,10 @@ export default async function VocabularyHubPage({
       {tab === "library" ? (
         <HubLibrarySection userId={userId} sp={sp} locale={locale} now={now} />
       ) : null}
-      {tab === "review" || tab === "quiz" ? (
+      {tab === "review" && userId !== null ? (
+        <HubReviewSection userId={userId} />
+      ) : null}
+      {tab === "quiz" ? (
         <p className="mt-6 rounded-[18px] border-2 border-dashed border-border bg-card p-6 text-center text-[14px] font-semibold text-muted-foreground">
           {t("hub.comingSoon")}
         </p>
