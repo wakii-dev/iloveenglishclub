@@ -2,8 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import { HUB_WORDS, seedHubProgress } from "./vocabulary-hub-fixture";
 
 /**
- * E2E vocabulary hub (story vocabulary-hub SF-1 t-1.3): navbar item → hub 4
- * tab (Tổng quan active + 3 placeholder "sắp có") → KPI 3/1/1 (từ đang học /
+ * E2E vocabulary hub (story vocabulary-hub SF-1 t-1.3; SF-3 tab Review/Quiz
+ * thành tab thật — hết placeholder): navbar item → hub 4 tab → KPI 3/1/1 (từ đang học /
  * đến hạn / thành thạo) → bảng từ đủ 3 trạng thái chip (Due/Mastered/
  * Learning) → filter status qua dropdown + filter book → empty-filter →
  * i18n vi/en → guest redirect login ?next. Tên spec `hub-overview` (né
@@ -52,8 +52,8 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Vocabulary hub",
     );
-    // shell 4 tab: Tổng quan active; Library là link (SF-2); Review/Quiz
-    // giữ placeholder "Coming soon"
+    // shell 4 tab: Tổng quan active; cả Review/Quiz là link thật (SF-3 —
+    // placeholder "Coming soon" đã bỏ)
     await expect(page.getByText("Overview", { exact: true })).toBeVisible();
     await expect(
       page
@@ -62,10 +62,15 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
         .getByRole("link", { name: "Library" }),
     ).toBeVisible();
     for (const tab of ["Review", "Quiz"]) {
-      // li gộp text tab + chip → filter theo hasText, không exact
-      const item = page.getByRole("listitem").filter({ hasText: tab });
-      await expect(item).toBeVisible();
-      await expect(item).toContainText("Coming soon");
+      const link = page
+        .getByRole("listitem")
+        .filter({ hasText: tab })
+        .getByRole("link", { name: tab });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute(
+        "href",
+        `/en/vocabulary?tab=${tab.toLowerCase()}`,
+      );
     }
 
     // KPI: 3 đang học · 1 đến hạn · 1 thành thạo
@@ -147,10 +152,20 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
         .filter({ hasText: "Thư viện" })
         .getByRole("link", { name: "Thư viện" }),
     ).toBeVisible();
-    for (const tab of ["Ôn tập", "Kiểm tra"]) {
-      const item = page.getByRole("listitem").filter({ hasText: tab });
-      await expect(item).toBeVisible();
-      await expect(item).toContainText("Sắp có");
+    // tab Ôn tập/Kiểm tra là link thật (SF-3), href VI prefix locale
+    for (const [label, tabPath] of [
+      ["Ôn tập", "review"],
+      ["Kiểm tra", "quiz"],
+    ] as const) {
+      const link = page
+        .getByRole("listitem")
+        .filter({ hasText: label })
+        .getByRole("link", { name: label });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute(
+        "href",
+        `/vi/vocabulary?tab=${tabPath}`,
+      );
     }
     const kpis = page.locator("dl > div");
     await expect(kpis.filter({ hasText: "Từ đang học" })).toContainText("3");
