@@ -17,7 +17,7 @@
     "test:audit": "vitest run --config vitest.audit.config.ts",
     "test:sf3": "vitest run --config vitest.sf3.config.ts",
     "test:coverage": "vitest run --coverage",
-    "test:store": "vitest run src/lib/oxford/store.test.ts",
+    "test:store": "vitest run src/lib/oxford/store.integration.test.ts",
     "admin:create": "node scripts/create-admin.ts",
     "audio:sync": "node scripts/audio-sync.ts",
     "crawl:oxford": "node scripts/oxford-crawl.ts",
