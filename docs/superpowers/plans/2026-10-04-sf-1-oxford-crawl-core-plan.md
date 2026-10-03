@@ -181,7 +181,7 @@ không cần dev trông.
       chung làm đích redirect — T6 test assert finalSlug). KHÔNG author file
       trùng cho e2e SF-3 (đặt chỗ dùng chung). Exit: 5 files, mỗi file có
       selector markers đúng probe facts.
-- [ ] **T5. parse lib pure + test.** `src/lib/oxford/parse.ts`:
+- [x] **T5. parse lib pure + test.** `src/lib/oxford/parse.ts`:
       `parseEntry(html) → OxfordEntry | null`; OxfordEntry = {headword BẮT
       BUỘC (null khi thiếu = parse fail), ipa{uk,us}, audio{uk,us} (mp3 URL),
       pos, senses[] {def, examples[]}, cefr (A1–C2 thô), ox3000, idioms[],
