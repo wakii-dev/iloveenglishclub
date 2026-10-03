@@ -1,0 +1,8 @@
+{
+  "title": "Từ vựng",
+  "lead": "{book} — {count, plural, other {# từ}}",
+  "backToBook": "Về trang sách",
+  "play": "Phát âm “{word}”",
+  "stop": "Dừng audio",
+  "empty": "Sách chưa có từ vựng — quay lại sau nhé."
+}

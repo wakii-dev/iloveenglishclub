@@ -1,0 +1,8 @@
+{
+  "title": "Vocabulary",
+  "lead": "{book} — {count, plural, one {# word} other {# words}}",
+  "backToBook": "Back to book",
+  "play": "Play “{word}”",
+  "stop": "Stop audio",
+  "empty": "No words in this book yet — check back soon."
+}

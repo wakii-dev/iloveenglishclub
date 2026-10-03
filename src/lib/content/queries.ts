@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { and, asc, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { books, lessonParts, lessons, units } from "@/db/schema";
+import { bookWords, books, lessonParts, lessons, units, words } from "@/db/schema";
 import { localize } from "./localize";
 import { CONTENT_TAG } from "@/lib/revalidate";
 
@@ -341,5 +341,45 @@ export async function getLesson(
       };
     },
     null,
+  );
+}
+
+export type BookVocabWord = {
+  id: number;
+  word: string;
+  ipa: string | null;
+  meaningVi: string;
+  example: string | null;
+  audioUrl: string | null;
+};
+
+/**
+ * Từ vựng của 1 book theo thứ tự học (book_words.order) — vocabulary module
+ * SF-2 t-2.1. words là content không bản địa hóa (word EN + nghĩa VI cố định)
+ * nên không qua localize; nút phát ẩn khi audioUrl null (t-2.2).
+ */
+export async function getBookVocabulary(
+  bookSlug: string,
+): Promise<BookVocabWord[]> {
+  return cachedQuery(
+    `vocabulary:${bookSlug}`,
+    async () => {
+      const rows = await db
+        .select({
+          id: words.id,
+          word: words.word,
+          ipa: words.ipa,
+          meaningVi: words.meaningVi,
+          example: words.example,
+          audioUrl: words.audioUrl,
+        })
+        .from(bookWords)
+        .innerJoin(words, eq(bookWords.wordId, words.id))
+        .innerJoin(books, eq(bookWords.bookId, books.id))
+        .where(eq(books.slug, bookSlug))
+        .orderBy(asc(bookWords.order));
+      return rows;
+    },
+    [],
   );
 }
