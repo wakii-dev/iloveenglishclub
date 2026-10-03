@@ -1,0 +1,56 @@
+{
+  "wakiiMindmap": "wakii-mindmap-schema-v1",
+  "meta": {
+    "story": "Vocabulary Learn Flow — ILEC",
+    "epic": "vocabulary-learn",
+    "dest": "master",
+    "generatedAt": "2026-10-03T18:59:50.657Z",
+    "generator": "story-mindmap 1.0.0 (coordinator-authored)"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "Vocabulary Learn Flow — học từ mới trọn vẹn",
+      "state": "in-progress",
+      "parent": ""
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Học từ mới: nút per-book + bulk bắt đầu học sách + hub khám phá",
+      "state": "pending",
+      "parent": "epic"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "nút \"Học từ này\" trên trang vocabulary per-book (prefill ?word= có sẵn)",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "nút \"Bắt đầu học sách này\": bulk seed user_word_progress cả book, due_at trải 5 từ/ngày",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "hub Tổng quan: hàng \"Khám phá — N từ chưa học của sách bạn đọc\" + link học",
+      "state": "pending",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "tests: unit bulk-seed stagger + API + e2e flow học từ mới",
+      "state": "pending",
+      "parent": "sf-1"
+    }
+  ],
+  "evidence": {},
+  "decodeWarnings": []
+}
