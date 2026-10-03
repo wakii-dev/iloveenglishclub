@@ -24,7 +24,8 @@
     "test:e2e:sf4": "playwright test --config playwright.sf4.config.ts",
     "test:e2e:vocabulary": "playwright test --config playwright.vocabulary.config.ts",
     "test:e2e:vocabulary-review": "playwright test --config playwright.vocabulary-review.config.ts",
-    "test:e2e:dictation": "playwright test"
+    "test:e2e:dictation": "playwright test",
+    "test:e2e:vocabulary-quiz": "playwright test --config playwright.vocabulary-quiz.config.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
