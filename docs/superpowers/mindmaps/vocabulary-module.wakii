@@ -6,7 +6,7 @@
     "dest": "vocabulary-module",
     "generatedAt": "2026-10-03T10:28:30.312Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T11:44:16Z"
+    "updatedAt": "2026-10-03T12:13:18Z"
   },
   "nodes": [
     {
@@ -41,7 +41,7 @@
       "id": "sf-4",
       "kind": "sf",
       "title": "Quiz + điểm + tích hợp top-users",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -125,28 +125,28 @@
       "id": "t-4.1",
       "kind": "task",
       "title": "quiz engine MC/điền/ghép + chấm điểm API",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.2",
       "kind": "task",
       "title": "quiz UI + tổng kết điểm",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.3",
       "kind": "task",
       "title": "tích hợp top-users",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
       "id": "t-4.4",
       "kind": "task",
       "title": "tests + e2e quiz",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-4"
     },
     {
