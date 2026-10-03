@@ -6,7 +6,7 @@
     "dest": "master",
     "generatedAt": "2026-10-03T16:29:55.730Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T17:05:56Z"
+    "updatedAt": "2026-10-03T17:42:55Z"
   },
   "nodes": [
     {
@@ -27,7 +27,7 @@
       "id": "sf-2",
       "kind": "sf",
       "title": "Tab Thư viện (search/filter/pagination toàn bộ từ)",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -62,14 +62,14 @@
       "id": "t-2.1",
       "kind": "task",
       "title": "tab Thư viện: query toàn bộ words + search ilike + filter (book/audio/srs) + pagination",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.2",
       "kind": "task",
       "title": "UI library grid/list + vào học từ bất kỳ + tests",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
