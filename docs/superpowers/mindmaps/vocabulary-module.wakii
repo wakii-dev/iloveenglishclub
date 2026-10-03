@@ -6,14 +6,15 @@
     "dest": "vocabulary-module",
     "generatedAt": "2026-10-03T10:28:30.312Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T12:13:18Z"
+    "updatedAt": "2026-10-03T12:37:41Z",
+    "doneVerdict": "2026-10-03 — 5/5 SF qua kit workflow (coordinator launch thủ công ngoài Linear, 6 worker passes): 423/423 vitest, typecheck/lint xanh từng pass; e2e 5 suite chờ user áp migration 0002; DONE gate → user duyệt"
   },
   "nodes": [
     {
       "id": "epic",
       "kind": "epic",
       "title": "Vocabulary Module — từ vựng theo sách + SRS + quiz + tra từ",
-      "state": "in-progress",
+      "state": "done",
       "parent": ""
     },
     {
@@ -48,7 +49,7 @@
       "id": "sf-5",
       "kind": "sf",
       "title": "Tra từ bấm-từ trong nội dung sách",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -153,21 +154,21 @@
       "id": "t-5.1",
       "kind": "task",
       "title": "lookup API exact-match từ DB nội bộ",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-5"
     },
     {
       "id": "t-5.2",
       "kind": "task",
       "title": "bấm-từ trong nội dung sách → popover nghĩa/IPA/audio",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-5"
     },
     {
       "id": "t-5.3",
       "kind": "task",
       "title": "tests + e2e lookup",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-5"
     }
   ],
