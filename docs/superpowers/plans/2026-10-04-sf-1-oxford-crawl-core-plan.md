@@ -217,7 +217,7 @@ không cần dev trông.
       `/definition/english/*` + lọc theo robots parseRobots (academic/
       collocations...). Test inject fetch: index + 2 sub xml → slugs đúng,
       lọc đúng. Exit: test xanh.
-- [ ] **T10. store + test (DB-integration, skipIf không DATABASE_URL).**
+- [x] **T10. store + test (DB-integration, skipIf không DATABASE_URL).**
       `src/lib/oxford/store.ts` injectable `sql` client: `upsertSlugs` (batch
       100, ON CONFLICT DO NOTHING → inserted count), `claimPending(limit)` →
       [{id,slug,attempts}] ORDER BY id, `markParsed(id, fields, raw)`,
