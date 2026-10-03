@@ -188,7 +188,7 @@ không cần dev trông.
       phrasalVerbs[]}; field entry không có → null (US-only bình thường);
       raw = object này (idioms/phrasals sống ở đây). Test trên fixtures T4 +
       case rác → null. Exit: test xanh, mọi fixture parse đúng kỳ vọng.
-- [ ] **T6. fetch lib pure + test.** `src/lib/oxford/fetch.ts`:
+- [x] **T6. fetch lib pure + test.** `src/lib/oxford/fetch.ts`:
       `fetchEntry(slug, deps?) → {html, finalSlug} | null`; UA
       `ILEC-VocabBot/1.0 (educational; +NEXT_PUBLIC_SITE_URL)`, redirect
       follow → finalSlug từ res.url (decode), 404→null, timeout 15s
