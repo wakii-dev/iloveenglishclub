@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   Select,
@@ -9,12 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { HUB_STATUSES } from "@/lib/vocabulary/hub-store";
+import { HUB_STATUSES } from "@/lib/vocabulary/hub-status";
 
 /**
  * Filter tab Tổng quan (SF-1 t-1.2) — 2 select cập nhật URL searchParams
  * (router.push — server re-render, pattern admin/users GET-filter nhưng qua
- * client router). Giá trị mặc định ("all") xoá param để URL gọn.
+ * client router). Giá trị mặc định ("all") xoá param để URL gọn. Đọc URL lúc
+ * click qua window.location (useSearchParams stale giữa 2 push liên tiếp —
+ * push sau sẽ mang param cũ của push chưa commit).
  */
 export function HubFilters({
   books,
@@ -28,10 +30,9 @@ export function HubFilters({
   const t = useTranslations("vocabulary");
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   function apply(key: "book" | "status", value: string) {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     if (value === "all") params.delete(key);
     else params.set(key, value);
     const qs = params.toString();

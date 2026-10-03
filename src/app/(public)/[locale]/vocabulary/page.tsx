@@ -6,12 +6,11 @@ import { Link } from "@/i18n/navigation";
 import { StatsCards } from "@/components/gamification/stats-cards";
 import { HubFilters } from "@/components/vocabulary/hub-filters";
 import { localize } from "@/lib/content/localize";
+import { displayStatus, parseHubFilters } from "@/lib/vocabulary/hub-status";
 import {
-  displayStatus,
   getHubStats,
   listHubBooks,
   listHubWords,
-  parseHubFilters,
   type HubWordRow,
 } from "@/lib/vocabulary/hub-store";
 

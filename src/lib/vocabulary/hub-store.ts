@@ -4,24 +4,14 @@
  * ⋈ words có filter book/trạng thái. Khác getBookVocabulary (unstable_cache
  * `content` — data dùng chung), hub là data CÁ NHÂN → query live, không cache.
  * DB lỗi (bảng chưa migrate) → fallback rỗng/0 — build-safe như listDueWords.
- * Thành thạo = reps ≥ MASTERED_REPS (3 lần ôn thành công liên tiếp, SM-2 lite
- * srs.ts: rep1=1d, rep2=6d, rep3+ interval giãn theo ease).
+ * Phần pure (filter/status/MASTERED_REPS) sống ở hub-status.ts (client-safe).
  */
 import { and, asc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, books, userWordProgress, words } from "@/db/schema";
+import { MASTERED_REPS, type HubStatusFilter } from "./hub-status";
 
-export const MASTERED_REPS = 3;
 export const HUB_LIST_LIMIT = 100;
-
-export type HubStatusFilter = "all" | "due" | "mastered" | "learning";
-
-export const HUB_STATUSES: readonly HubStatusFilter[] = [
-  "all",
-  "due",
-  "mastered",
-  "learning",
-];
 
 export type HubStats = { total: number; dueToday: number; mastered: number };
 
@@ -40,30 +30,6 @@ export type HubWordRow = {
   dueAt: Date;
   books: { slug: string; titleEn: string; titleVi: string | null }[];
 };
-
-/** Chuẩn hoá searchParams thô → filter type-safe (giá trị lạ → mặc định). */
-export function parseHubFilters(raw: {
-  book?: string;
-  status?: string;
-}): { bookId: number | null; status: HubStatusFilter } {
-  const bookId =
-    raw.book && /^\d+$/.test(raw.book)
-      ? Number.parseInt(raw.book, 10)
-      : null;
-  const status = (HUB_STATUSES as readonly string[]).includes(raw.status ?? "")
-    ? (raw.status as HubStatusFilter)
-    : "all";
-  return { bookId, status };
-}
-
-/** Trạng thái hiển thị 1 hàng: due đè lên mastered/learning (mốc thời gian). */
-export function displayStatus(
-  row: { reps: number; dueAt: Date },
-  now: Date = new Date(),
-): "due" | "mastered" | "learning" {
-  if (row.dueAt.getTime() <= now.getTime()) return "due";
-  return row.reps >= MASTERED_REPS ? "mastered" : "learning";
-}
 
 /** KPI toàn bộ từ đang học của user (mọi book — không theo filter bảng). */
 export async function getHubStats(userId: string): Promise<HubStats> {
