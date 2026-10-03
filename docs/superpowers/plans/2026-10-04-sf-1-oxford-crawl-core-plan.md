@@ -152,7 +152,7 @@ không cần dev trông.
       → 0004 + snapshot; `drizzle-kit migrate` DB dev; verify bảng + index
       tồn tại. Exit: migrate OK trên DB dev, `\d crawl_entries` đúng shape,
       generate không diff sau re-run.
-- [ ] **T2. Blob-only write helper (P0).** FILE MỚI `src/lib/storage-blob.ts`
+- [x] **T2. Blob-only write helper (P0).** FILE MỚI `src/lib/storage-blob.ts`
       (kế bên storage-server — plan-critic P0: storage-server.ts có `import
       "server-only"` không resolve được ngoài Next → vitest test + node24 CLI
       chết lúc load; file mới KHÔNG import "server-only", guard throw-token
