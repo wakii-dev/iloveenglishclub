@@ -167,7 +167,7 @@ $ BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply
 [APPLY] phase=audio rate=2/s
 Audio: 5 entries, 10 variants → audio/oxford/
 BLOB_READ_WRITE_TOKEN thiếu — phase audio chỉ ghi Blob (helper blob-only, KHÔNG fallback local). Chạy `vercel env pull --environment development`.
-exit=0
+exit=0 (PIPE-ARTIFACT — command chạy qua pipe `| grep -v`; exit=$? đo nhầm exit của grep. Capture ĐÚNG không pipe ở dòng bổ sung b bên dưới: exit=1)
 
 ### c) chú thích evidence Bước 6 scan-only: output lúc capture bị cắt bởi head -8 (log thật in tối đa 10 dòng sample theo code slice(0,10)) — lệnh + exit code là thật.
 Bổ sung b (đo exit ĐÚNG — không pipe): BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply → in "[audio] BLOB_READ_WRITE_TOKEN thiếu…" và **exit=1** (đo trực tiếp, không qua pipe).

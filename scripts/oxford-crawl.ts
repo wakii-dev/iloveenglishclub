@@ -145,14 +145,16 @@ async function main() {
       // --slug: force 1 slug (debug). Dry-run phải SELECT-only (reviewer nhóm
       // C P1: upsert không guard dry-run = ghi DB trái contract) — slug chưa
       // có trong DB thì chỉ log hướng dẫn --apply.
-      const row = await store.findBySlug(sql, args.slug);
-      if (!row) {
+      const existing = await store.findBySlug(sql, args.slug);
+      let row = existing;
+      if (!existing) {
         if (dryRun) {
           console.log(
-            `Slug "${args.slug}" chưa có trong crawl_entries — DRY-RUN không ghi. Chạy --apply để upsert + fetch.`,
+            `Slug "${args.slug}" chưa có trong crawl_entries — DRY-RUN không ghi. Chạy --apply để upsert + fetch ngay.`,
           );
         } else {
           await store.upsertSlugs(sql, [args.slug]);
+          row = await store.findBySlug(sql, args.slug); // re-lookup — fetch ngay (P2 reviewer C)
         }
       }
       batch = row ? [{ id: row.id, slug: row.slug, attempts: 0 }] : [];
