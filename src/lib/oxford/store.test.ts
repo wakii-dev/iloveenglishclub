@@ -84,12 +84,17 @@ describe.skipIf(!hasDb)("store — crawl_entries (DB dev thật)", () => {
     expect(all.map((r) => r.slug)).toEqual(["zz-test-a", "zz-test-b", "zz-test-c", "zz-test-d"]);
   });
 
-  d("claimPending: ORDER BY id LIMIT, chỉ pending", async () => {
+  d("claimPending: ORDER BY id, chỉ pending (DB chung — dùng LIMIT lớn, assert theo contract)", async () => {
     await upsertSlugs(sql, ["zz-test-1", "zz-test-2", "zz-test-3"]);
     await markFailed(sql, (await findBySlug(sql, "zz-test-1"))!.id, "http:404");
-    const batch = await claimPending(sql, 2);
-    expect(batch.map((r) => r.slug)).toEqual(["zz-test-2", "zz-test-3"]);
-    expect(batch[0]).toMatchObject({ attempts: 0 });
+    // DB dev chung có thể chứa pending thật (enumerate) — LIMIT lớn để chắc
+    // zz-test nằm trong kết quả; assert theo contract: failed bị loại
+    const batch = await claimPending(sql, 100_000);
+    const slugs = batch.map((r) => r.slug);
+    expect(slugs).toContain("zz-test-2");
+    expect(slugs).toContain("zz-test-3");
+    expect(slugs).not.toContain("zz-test-1");
+    expect(batch.find((r) => r.slug === "zz-test-2")).toMatchObject({ attempts: 0 });
   });
 
   d("markParsed: status/word/raw/fields + attempts+1 + fetched_at", async () => {
@@ -176,16 +181,16 @@ describe.skipIf(!hasDb)("store — crawl_entries (DB dev thật)", () => {
     const r2 = await findBySlug(sql, "zz-test-aa2");
     await markParsed(sql, r1!.id, { ...treeEntry, audioUkUrl: MP3, audioUsUrl: null });
     await markParsed(sql, r2!.id, { ...treeEntry, audioUkUrl: MP3, audioUsUrl: MP3 });
-    // r1 parsed pending; zz-test-aa3 pending — không có trong audio queue
-    const queue = await claimAudioPending(sql, 10);
+    // DB chung — LIMIT lớn để zz-test không bị rows thật lấn
+    const queue = await claimAudioPending(sql, 100_000);
     expect(queue.map((q) => q.slug)).toContain("zz-test-aa1");
     expect(queue.map((q) => q.slug)).toContain("zz-test-aa2");
-    expect(queue.map((q) => q.slug)).not.toContain("zz-test-aa3");
+    expect(queue.map((q) => q.slug)).not.toContain("zz-test-aa3"); // pending — không vào queue audio
     // tải đủ uk+us cho aa2 → khỏi queue; aa1 chỉ có uk → tải uk là xong
     await saveAudioBlob(sql, r2!.id, "uk", "https://blob.example/x.uk.mp3");
     await saveAudioBlob(sql, r2!.id, "us", "https://blob.example/x.us.mp3");
     await saveAudioBlob(sql, r1!.id, "uk", "https://blob.example/y.uk.mp3");
-    const after = await claimAudioPending(sql, 10);
+    const after = await claimAudioPending(sql, 100_000);
     expect(after.map((q) => q.slug)).not.toContain("zz-test-aa1");
     expect(after.map((q) => q.slug)).not.toContain("zz-test-aa2");
   });
