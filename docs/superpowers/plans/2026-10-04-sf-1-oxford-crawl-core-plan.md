@@ -227,7 +227,7 @@ không cần dev trông.
       url)`. Test trên DB dev thật (cleanup rows test cuối — prefix slug
       `zz-test-`), afterEach dọn. Exit: test xanh local; npm test xanh trên
       CI-shape (skip khi không env).
-- [ ] **T11. audio leg + test.** `src/lib/oxford/audio.ts`:
+- [x] **T11. audio leg + test.** `src/lib/oxford/audio.ts`:
       `oxfordAudioPath(slug, variant)` → `audio/oxford/{slug}.{uk|us}.mp3`;
       `downloadMp3(url, deps?)` — host allowlist (media host), cap 2MB →
       Buffer; `syncEntryAudio(entry, deps)` — variant đã có blob → skip
