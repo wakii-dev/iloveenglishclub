@@ -6,7 +6,7 @@
     "dest": "vocabulary-module",
     "generatedAt": "2026-10-03T10:28:30.312Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T11:19:27Z"
+    "updatedAt": "2026-10-03T11:44:16Z"
   },
   "nodes": [
     {
@@ -34,7 +34,7 @@
       "id": "sf-3",
       "kind": "sf",
       "title": "Flashcards + SRS review flow (me/vocabulary)",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -104,21 +104,21 @@
       "id": "t-3.1",
       "kind": "task",
       "title": "SRS engine SM-2 lite (ease/interval/due_at) + submit API",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.2",
       "kind": "task",
       "title": "flashcards + review flow UI (me/vocabulary, due-today)",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
       "id": "t-3.3",
       "kind": "task",
       "title": "tests + e2e review",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-3"
     },
     {
