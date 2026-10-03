@@ -210,7 +210,7 @@ không cần dev trông.
       `RobotsDeniedError` (message rõ để runner exit). Test: text robots mẫu
       (giống thật: disallow academic/collocations/info/...), cho phép
       /definition/english/, chặn khi có Disallow. Exit: test xanh.
-- [ ] **T9. sitemap lib + test.** `src/lib/oxford/sitemap.ts`:
+- [x] **T9. sitemap lib + test.** `src/lib/oxford/sitemap.ts`:
       `fetchSlugs(deps?) → string[]` — fetch `/sitemap.xml` index → <loc>
       chứa `english/sitemap` → fetch từng sub → <loc>
       `/definition/english/<slug>` → decode slug; LỌC: chỉ
