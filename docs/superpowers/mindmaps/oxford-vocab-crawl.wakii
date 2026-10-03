@@ -8,24 +8,84 @@
     "worktreeModel": "story-hub"
   },
   "nodes": [
-    { "id": "epic", "kind": "epic", "title": "Oxford Vocabulary Crawl — crawl toàn bộ từ điển về hệ thống (VU-32)" },
-    { "id": "sf-1", "kind": "sf", "title": "Crawl-core: enumerate + fetch + parse + store + runner", "tier": 0,
-      "summary": "Phase 1/2 — shippable: pipeline + API. Demo: node scripts/oxford-crawl.ts fetch --limit 20 --apply → 20 entries Oxford parsed vào crawl_entries (IPA/audio-URL/senses/cefr); kill giữa chừng → chạy lại tiếp, không dup; phase audio tải mp3 uk/us về Blob audio/oxford/ qua helper blob-only (throw khi thiếu token); audio-sync không mirror prefix đó vào git" },
-    { "id": "sf-2", "kind": "sf", "title": "Enrichment fill-empty + admin API (crawl/enrich, stats, control, word)", "tier": 1,
-      "summary": "Demo: audio --limit 1 trước cho có blob → curl POST /api/admin/vocabulary/crawl/enrich dryRun hiện counts → apply → words thiếu IPA/example/audio/cefr được điền đúng entry thắng theo match rule, KHÔNG đụng field teacher đã có, words.source='oxford-ld', revalidate chạy; crawl-on-add preview cache-first không gọi Oxford khi trúng cache" },
-    { "id": "sf-3", "kind": "sf", "title": "Admin UI: crawl dashboard + enrich panel + crawl-on-add", "tier": 2,
-      "summary": "Phase 2/2 — shippable: UI + convergence. Demo: teacher mở dashboard (dữ liệu seeded) thấy counts/failed/refresh/retry/hint lệnh runner + attribution; bấm enrich theo book thấy preview counts → chạy → report từng từ; dialog crawl-on-add: gõ từ → preview (IPA/def/audio) → điền nghĩa VI → duyệt thêm vào book" },
-    { "id": "sf-4", "kind": "sf", "title": "Convergence: public attribution + bulk rehearsal + QA", "tier": 3,
-      "summary": "Demo: vocabulary page public hiện attribution nguồn khi source='oxford-ld'; từ đã enrich phát audio Blob trên flashcards + tra từ thấy IPA/example mới; rehearsal thật 100 từ kill/resume không dup; dashboard sống với ~60k rows (enumerate-pending); runbook có số thật" }
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "Oxford Vocabulary Crawl — crawl toàn bộ từ điển về hệ thống (VU-32)"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Crawl-core: enumerate + fetch + parse + store + runner",
+      "tier": 0,
+      "summary": "Phase 1/2 — shippable: pipeline + API. Demo: node scripts/oxford-crawl.ts fetch --limit 20 --apply → 20 entries Oxford parsed vào crawl_entries (IPA/audio-URL/senses/cefr); kill giữa chừng → chạy lại tiếp, không dup; phase audio tải mp3 uk/us về Blob audio/oxford/ qua helper blob-only (throw khi thiếu token); audio-sync không mirror prefix đó vào git",
+      "linear": "VU-33"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Enrichment fill-empty + admin API (crawl/enrich, stats, control, word)",
+      "tier": 1,
+      "summary": "Demo: audio --limit 1 trước cho có blob → curl POST /api/admin/vocabulary/crawl/enrich dryRun hiện counts → apply → words thiếu IPA/example/audio/cefr được điền đúng entry thắng theo match rule, KHÔNG đụng field teacher đã có, words.source='oxford-ld', revalidate chạy; crawl-on-add preview cache-first không gọi Oxford khi trúng cache",
+      "linear": "VU-34"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Admin UI: crawl dashboard + enrich panel + crawl-on-add",
+      "tier": 2,
+      "summary": "Phase 2/2 — shippable: UI + convergence. Demo: teacher mở dashboard (dữ liệu seeded) thấy counts/failed/refresh/retry/hint lệnh runner + attribution; bấm enrich theo book thấy preview counts → chạy → report từng từ; dialog crawl-on-add: gõ từ → preview (IPA/def/audio) → điền nghĩa VI → duyệt thêm vào book",
+      "linear": "VU-35"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Convergence: public attribution + bulk rehearsal + QA",
+      "tier": 3,
+      "summary": "Demo: vocabulary page public hiện attribution nguồn khi source='oxford-ld'; từ đã enrich phát audio Blob trên flashcards + tra từ thấy IPA/example mới; rehearsal thật 100 từ kill/resume không dup; dashboard sống với ~60k rows (enumerate-pending); runbook có số thật",
+      "linear": "VU-36"
+    }
   ],
   "edges": [
-    { "from": "epic", "to": "sf-1", "rel": "contains" },
-    { "from": "epic", "to": "sf-2", "rel": "contains" },
-    { "from": "epic", "to": "sf-3", "rel": "contains" },
-    { "from": "epic", "to": "sf-4", "rel": "contains" },
-    { "from": "sf-2", "to": "sf-1", "rel": "depends-on" },
-    { "from": "sf-3", "to": "sf-2", "rel": "depends-on" },
-    { "from": "sf-4", "to": "sf-2", "rel": "depends-on" },
-    { "from": "sf-4", "to": "sf-3", "rel": "depends-on" }
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-2",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-3",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-3",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-3",
+      "rel": "depends-on"
+    }
   ]
 }
