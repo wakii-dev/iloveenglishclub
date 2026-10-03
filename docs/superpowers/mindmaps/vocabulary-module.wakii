@@ -6,7 +6,7 @@
     "dest": "vocabulary-module",
     "generatedAt": "2026-10-03T10:28:30.312Z",
     "generator": "story-mindmap 1.0.0 (coordinator-authored)",
-    "updatedAt": "2026-10-03T11:04:10Z"
+    "updatedAt": "2026-10-03T11:19:27Z"
   },
   "nodes": [
     {
@@ -27,7 +27,7 @@
       "id": "sf-2",
       "kind": "sf",
       "title": "Trang vocabulary theo book (public i18n) + phát audio",
-      "state": "pending",
+      "state": "done",
       "parent": "epic"
     },
     {
@@ -83,21 +83,21 @@
       "id": "t-2.1",
       "kind": "task",
       "title": "trang (public)/[locale]/books/[bookId]/vocabulary i18n vi/en",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.2",
       "kind": "task",
       "title": "phát audio từ (nút ẩn khi chưa có)",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
       "id": "t-2.3",
       "kind": "task",
       "title": "tests + e2e",
-      "state": "pending",
+      "state": "done",
       "parent": "sf-2"
     },
     {
