@@ -18,8 +18,13 @@ const MISS = /isn't in the book's vocabulary yet|chưa có trong bộ từ vựn
 
 async function openTranscript(page: Page) {
   await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: START }).click();
-  await expect(page.getByText(/Part 1 of 4|Phần 1 \/ 4/i)).toBeVisible();
+  // doStart() await getSession() giữa 2 lần start() — HMR runtime-update của
+  // dev server remount cây giữa chừng sẽ nuốt click đầu (phase reset intro);
+  // bấm lại tới khi part 1 mở (toPass), không bỏ qua assertion.
+  await expect(async () => {
+    await page.getByRole("button", { name: START }).click();
+    await expect(page.getByText(/Part 1 of 4|Phần 1 \/ 4/i)).toBeVisible();
+  }).toPass({ timeout: 30_000 });
   await page.getByRole("button", { name: SKIP }).click(); // câu 1 hết khoá
   await page.getByRole("button", { name: TAB }).click();
   return page

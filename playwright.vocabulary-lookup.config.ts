@@ -13,7 +13,10 @@ dotenv.config({ path: ".env.local" });
 
 const PORT = Number(process.env.E2E_PORT ?? 3313);
 const BASE = `http://localhost:${PORT}`;
-const PAGE = `/en`;
+// Poll đúng trang bài học — buộc Next dev compile route lesson TRƯỚC khi test
+// chạy; lazy-compile giữa test đẩy webpack runtime hot-update → remount nuốt
+// click "Start part" (fail 03/10 khi chạy sau các suite khác).
+const PAGE = `/en/books/level-3/units/1/lessons/1/listen-and-type`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -44,6 +47,6 @@ export default defineConfig({
     command: `npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 });
