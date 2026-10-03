@@ -35,3 +35,17 @@ export async function ensureQuizAttemptsNullable(): Promise<void> {
     );
   }
 }
+
+/**
+ * Dọn user QA của suite này (email prefix qa-hubquiz- — spec đăng ký qua UI,
+ * email đổi mỗi run nhưng display name giữ nguyên) — cascade profiles +
+ * quiz_attempts. Chạy ở globalSetup (rác các run trước trên DB dùng chung làm
+ * strict getByText trên top-users nhiều match) lẫn globalTeardown (suite tự
+ * dọn, không leak user; không đụng user suite khác).
+ */
+export async function cleanupQuizUsers(): Promise<void> {
+  const c = client();
+  const tables = await c`select to_regclass('users') as u`;
+  if (!tables[0]?.u) return;
+  await c`delete from users where email like ${"qa-hubquiz-%"}`;
+}

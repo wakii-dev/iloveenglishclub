@@ -32,7 +32,10 @@ async function registerUser(page: Page, displayName: string): Promise<string> {
 /**
  * Trả lời 1 câu hiện tại theo loại (đáp án tùy ý — server chấm). Trước khi
  * phân loại đợi TỔNG KẾT hoặc 1 trong 3 loại câu xuất hiện (advance giữa các
- * câu + POST nộp bài đều async — tránh đoán loại câu quá sớm).
+ * câu + POST nộp bài đều async — tránh đoán loại câu quá sớm). Câu CUỐI advance
+ * → POST chấm async: form câu cuối vẫn render trong lúc "Grading…" — đợi chấm
+ * xong trước khi phân loại, không thì đọc nhầm thành câu mới và click Continue
+ * bị pending disable đến hết timeout (trace 04/10: đề 3 câu nhưng fill 4 lần).
  */
 async function answerCurrent(page: Page): Promise<boolean> {
   const results = page.getByRole("heading", { name: "Quiz results" });
@@ -44,6 +47,11 @@ async function answerCurrent(page: Page): Promise<boolean> {
       .or(mcGroup)
       .or(page.getByRole("combobox").first()),
   ).toBeVisible();
+  if (await results.isVisible()) return true;
+
+  // Guard pending (runner hiện "Grading…" khi POST): chấm xong = results
+  // render cùng commit → re-check kết quả trước khi phân loại câu
+  await expect(page.getByText("Grading…")).toBeHidden();
   if (await results.isVisible()) return true;
 
   if (await fillInput.isVisible()) {
