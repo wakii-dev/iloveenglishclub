@@ -1,0 +1,199 @@
+{
+  "wakiiMindmap": "wakii-mindmap-schema-v1",
+  "meta": {
+    "story": "Vocabulary Module — ILEC",
+    "epic": "vocabulary-module",
+    "dest": "vocabulary-module",
+    "generatedAt": "2026-10-03T10:28:30.312Z",
+    "generator": "story-mindmap 1.0.0 (coordinator-authored)",
+    "updatedAt": "2026-10-03T12:37:41Z",
+    "doneVerdict": "2026-10-03 — 5/5 SF qua kit workflow (coordinator launch thủ công ngoài Linear, 6 worker passes): 423/423 vitest, typecheck/lint xanh từng pass; e2e 5 suite chờ user áp migration 0002; DONE gate → user duyệt"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "Vocabulary Module — từ vựng theo sách + SRS + quiz + tra từ",
+      "state": "done",
+      "parent": ""
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Schema + admin CRUD + bulk import + audio upload",
+      "state": "done",
+      "parent": "epic"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Trang vocabulary theo book (public i18n) + phát audio",
+      "state": "done",
+      "parent": "epic"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Flashcards + SRS review flow (me/vocabulary)",
+      "state": "done",
+      "parent": "epic"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Quiz + điểm + tích hợp top-users",
+      "state": "done",
+      "parent": "epic"
+    },
+    {
+      "id": "sf-5",
+      "kind": "sf",
+      "title": "Tra từ bấm-từ trong nội dung sách",
+      "state": "done",
+      "parent": "epic"
+    },
+    {
+      "id": "t-1.1",
+      "kind": "task",
+      "title": "schema Drizzle: words/book_words/user_word_progress/quiz_attempts + RLS + migration",
+      "state": "done",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.2",
+      "kind": "task",
+      "title": "admin API CRUD + bulk import CSV/JSON (validate)",
+      "state": "done",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.3",
+      "kind": "task",
+      "title": "admin UI quản lý từ theo book + upload audio (Blob + mirror)",
+      "state": "done",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-1.4",
+      "kind": "task",
+      "title": "tests: unit + RLS + e2e admin",
+      "state": "done",
+      "parent": "sf-1"
+    },
+    {
+      "id": "t-2.1",
+      "kind": "task",
+      "title": "trang (public)/[locale]/books/[bookId]/vocabulary i18n vi/en",
+      "state": "done",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.2",
+      "kind": "task",
+      "title": "phát audio từ (nút ẩn khi chưa có)",
+      "state": "done",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-2.3",
+      "kind": "task",
+      "title": "tests + e2e",
+      "state": "done",
+      "parent": "sf-2"
+    },
+    {
+      "id": "t-3.1",
+      "kind": "task",
+      "title": "SRS engine SM-2 lite (ease/interval/due_at) + submit API",
+      "state": "done",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.2",
+      "kind": "task",
+      "title": "flashcards + review flow UI (me/vocabulary, due-today)",
+      "state": "done",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-3.3",
+      "kind": "task",
+      "title": "tests + e2e review",
+      "state": "done",
+      "parent": "sf-3"
+    },
+    {
+      "id": "t-4.1",
+      "kind": "task",
+      "title": "quiz engine MC/điền/ghép + chấm điểm API",
+      "state": "done",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.2",
+      "kind": "task",
+      "title": "quiz UI + tổng kết điểm",
+      "state": "done",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.3",
+      "kind": "task",
+      "title": "tích hợp top-users",
+      "state": "done",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-4.4",
+      "kind": "task",
+      "title": "tests + e2e quiz",
+      "state": "done",
+      "parent": "sf-4"
+    },
+    {
+      "id": "t-5.1",
+      "kind": "task",
+      "title": "lookup API exact-match từ DB nội bộ",
+      "state": "done",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.2",
+      "kind": "task",
+      "title": "bấm-từ trong nội dung sách → popover nghĩa/IPA/audio",
+      "state": "done",
+      "parent": "sf-5"
+    },
+    {
+      "id": "t-5.3",
+      "kind": "task",
+      "title": "tests + e2e lookup",
+      "state": "done",
+      "parent": "sf-5"
+    }
+  ],
+  "edges": [
+    {
+      "from": "sf-1",
+      "to": "sf-2",
+      "kind": "depends"
+    },
+    {
+      "from": "sf-1",
+      "to": "sf-3",
+      "kind": "depends"
+    },
+    {
+      "from": "sf-1",
+      "to": "sf-4",
+      "kind": "depends"
+    },
+    {
+      "from": "sf-1",
+      "to": "sf-5",
+      "kind": "depends"
+    }
+  ],
+  "evidence": {},
+  "decodeWarnings": []
+}

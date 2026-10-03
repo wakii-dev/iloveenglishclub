@@ -43,7 +43,15 @@ export default async function AdminUnitsPage({
             {t("units.lead")}
           </p>
         </div>
-        <UnitCreateForm bookId={book.id} />
+        <div className="flex items-start gap-2">
+          <Link
+            href={`/admin/books/${bookSlug}/vocabulary`}
+            className="rounded-[14px] border-2 border-border bg-card px-4 py-2 text-[13.5px] font-bold transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
+          >
+            {t("vocabulary.open")}
+          </Link>
+          <UnitCreateForm bookId={book.id} />
+        </div>
       </div>
 
       {units.length === 0 ? (

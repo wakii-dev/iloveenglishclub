@@ -55,6 +55,7 @@ export default async function LessonDictationPage({
       lessonTitle={lessonRow.title}
       cefrLabel={book.cefrLabel}
       unitNumber={unitRow.number}
+      bookId={book.id}
       parts={lessonRow.parts.map((p) => ({
         id: p.id,
         text: p.text,

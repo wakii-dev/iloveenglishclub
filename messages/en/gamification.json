@@ -14,7 +14,10 @@
     "xp": "XP",
     "empty": "No scores yet — be the first to study!",
     "anonymous": "Anonymous",
-    "medalAria": "Rank {rank}"
+    "medalAria": "Rank {rank}",
+    "quizSection": "Quiz scores",
+    "quizScore": "Score",
+    "quizEmpty": "No quiz scores yet — take a vocabulary quiz to get on the board!"
   },
   "me": {
     "title": "My progress",

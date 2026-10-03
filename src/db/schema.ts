@@ -3,6 +3,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   pgView,
@@ -306,3 +307,110 @@ export const leaderboard = pgView("leaderboard", {
   FROM profiles p
   WHERE p.xp > 0
 `);
+
+/**
+ * Vocabulary module — story vocabulary-module SF-1.
+ *
+ * Authz = app-level (chuẩn dự án sau pivot VU-15: KHÔNG dùng Postgres RLS —
+ * assertAdmin ở write path + query user-scope theo session; contract test ở
+ * scripts/test-rls.test.ts). words là content dùng chung (admin ghi, public
+ * đọc) — unique word chặn trùng khi bulk import; audioUrl lưu URL đầy đủ
+ * (Vercel Blob CDN, cùng pattern persistedAudioPath SF-8).
+ */
+export const words = pgTable("words", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  word: text("word").notNull(),
+  ipa: text("ipa"), // nullable — không phải mọi từ có phiên âm
+  meaningVi: text("meaning_vi").notNull(),
+  example: text("example"),
+  audioUrl: text("audio_url"), // nullable — nút phát ẩn khi chưa upload (t-2.2)
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (word) => [unique("words_word_unique").on(word.word)]);
+
+/**
+ * book_words — gắn word vào book với thứ tự học (cột "order" — SQL reserved,
+ * Drizzle quote tự động). PK (book, word): 1 word xuất hiện 1 lần/book;
+ * unique (book, order): thứ tự ổn định — insert order = max+1 trong
+ * transaction (cùng pattern lessons.number). word_id cascade: xoá word dọn
+ * sạch assignment; book_id cascade: books là seed cố định nên không xảy ra.
+ */
+export const bookWords = pgTable(
+  "book_words",
+  {
+    bookId: integer("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    wordId: integer("word_id")
+      .notNull()
+      .references(() => words.id, { onDelete: "cascade" }),
+    order: integer("order").notNull(),
+  },
+  (bw) => [
+    primaryKey({ columns: [bw.bookId, bw.wordId] }),
+    unique("book_words_book_id_order_unique").on(bw.bookId, bw.order),
+    index("book_words_word_id_idx").on(bw.wordId),
+  ],
+);
+
+/**
+ * user_word_progress — SRS SM-2 lite (SF-3 đọc/ghi):
+ * - ease khởi điểm 2.5 (chuẩn SM-2), interval_days 0 = chưa review
+ * - due_at default now(): word mới thêm vào progress là đến hạn ngay
+ * - reps = số lần review thành công; lastReviewedAt nullable (chưa review)
+ * - due-today query (SF-3) phủ bởi index (user_id, due_at)
+ */
+export const userWordProgress = pgTable(
+  "user_word_progress",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    wordId: integer("word_id")
+      .notNull()
+      .references(() => words.id, { onDelete: "cascade" }),
+    ease: real("ease").notNull().default(2.5),
+    intervalDays: integer("interval_days").notNull().default(0),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull().defaultNow(),
+    reps: integer("reps").notNull().default(0),
+    lastReviewedAt: timestamp("last_reviewed_at", { withTimezone: true }),
+  },
+  (progress) => [
+    primaryKey({ columns: [progress.userId, progress.wordId] }),
+    index("user_word_progress_user_id_due_at_idx").on(
+      progress.userId,
+      progress.dueAt,
+    ),
+  ],
+);
+
+/**
+ * quiz_attempts — kết quả quiz theo book (SF-4):
+ * - mode: text thay pgEnum (pattern lessons.kind — thêm mode không migrate)
+ * - score 0–1 (real, cùng thang attempts.accuracy)
+ * - detailJson: chi tiết từng câu (jsonb — shape SF-4 sở hữu, không ràng buộc
+ *   schema-level để không khoá evolution)
+ */
+export const quizAttempts = pgTable(
+  "quiz_attempts",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    bookId: integer("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    mode: text("mode").notNull(),
+    score: real("score").notNull(),
+    detailJson: jsonb("detail_json").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (attempt) => [
+    index("quiz_attempts_user_id_idx").on(attempt.userId),
+    index("quiz_attempts_book_id_idx").on(attempt.bookId),
+  ],
+);
