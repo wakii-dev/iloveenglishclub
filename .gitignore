@@ -52,3 +52,4 @@ next-env.d.ts
 # env: giữ .env.example trong repo
 !.env.example
 test-results/
+docs/superpowers/navigator/
