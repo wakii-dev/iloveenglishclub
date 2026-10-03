@@ -163,7 +163,7 @@ không cần dev trông.
       storage-server trong node — latent bug). Test: mock @vercel/blob —
       throw khi thiếu token + KHÔNG ghi fs; put đúng params khi có token.
       Exit: test đỏ-trước/xanh-sau, npm test xanh.
-- [ ] **T3. audio-sync exclusion `audio/oxford/`.** `src/lib/admin/audio-sync.ts`:
+- [x] **T3. audio-sync exclusion `audio/oxford/`.** `src/lib/admin/audio-sync.ts`:
       `export const AUDIO_SYNC_EXCLUDED_PREFIXES = ["audio/oxford/"]`; planSync
       bỏ qua entry có prefix excluded (không toDownload, không unchanged).
       KHÔNG đụng script wrapper. Test thêm vào audio-sync.test.ts: entry
