@@ -81,6 +81,25 @@
       "due": "Due",
       "mastered": "Mastered",
       "learning": "Learning"
+    },
+    "libraryTitle": "Word library",
+    "library": {
+      "searchLabel": "Search words",
+      "searchPlaceholder": "Search word or meaning…",
+      "filterAudio": "Filter by audio",
+      "filterAudioAll": "All words",
+      "filterAudioWith": "With audio",
+      "count": "{count, plural, one {# word} other {# words}}",
+      "emptyAll": "The library has no words yet — words added from books will appear here.",
+      "table": {
+        "colAudio": "Audio",
+        "colAction": "Action"
+      },
+      "chipNotLearning": "Not learning",
+      "learn": "Learn this word",
+      "pageInfo": "Page {page}/{total}",
+      "prev": "Previous",
+      "next": "Next"
     }
   }
 }

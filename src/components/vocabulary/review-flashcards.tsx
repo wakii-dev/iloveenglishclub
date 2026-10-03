@@ -21,9 +21,20 @@ const GRADES = [
   { quality: 5, labelKey: "gradeEasy", fail: false },
 ] as const;
 
-export function ReviewFlashcards({ words }: { words: DueWord[] }) {
+export function ReviewFlashcards({
+  words,
+  prefill = null,
+}: {
+  words: DueWord[];
+  /** Thẻ "Học từ này" (SF-2 tab Thư viện) — đẩy đầu hàng, không nhân nếu trùng. */
+  prefill?: DueWord | null;
+}) {
   const t = useTranslations("vocabulary");
-  const [queue, setQueue] = useState<DueWord[]>(words);
+  const [queue, setQueue] = useState<DueWord[]>(() =>
+    prefill && !words.some((w) => w.wordId === prefill.wordId)
+      ? [prefill, ...words]
+      : words,
+  );
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [pending, setPending] = useState(false);

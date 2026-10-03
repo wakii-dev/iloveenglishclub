@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { getStudyWord } from "@/lib/vocabulary/hub-store";
 import { listDueWords } from "@/lib/vocabulary/review-store";
 import { ReviewFlashcards } from "@/components/vocabulary/review-flashcards";
 
@@ -9,13 +10,17 @@ import { ReviewFlashcards } from "@/components/vocabulary/review-flashcards";
  * me/page.tsx: redirect login kèm ?next). Hàng "Hôm nay cần ôn: N từ" đếm
  * progress due_at ≤ now (listDueWords); thẻ lật + chấm quality ở client
  * (ReviewFlashcards), POST /api/vocabulary/review ghi SRS.
+ * SF-2: ?word=<id> (tab Thư viện "Học từ này") — prefill thẻ đầu hàng, chấm
+ * quality lên applyReview upsert = bắt đầu học từ bất kỳ.
  */
 export const dynamic = "force-dynamic"; // auth() đọc cookies
 
 export default async function MeVocabularyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ word?: string }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -26,7 +31,15 @@ export default async function MeVocabularyPage({
     redirect(`/${locale}/login?next=/${locale}/me/vocabulary`);
   }
   const t = await getTranslations("vocabulary");
-  const due = await listDueWords(userId);
+  const sp = await searchParams;
+  const prefillId =
+    typeof sp.word === "string" && /^\d+$/.test(sp.word)
+      ? Number.parseInt(sp.word, 10)
+      : null;
+  const [due, prefill] = await Promise.all([
+    listDueWords(userId),
+    prefillId !== null ? getStudyWord(prefillId) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1120px] px-6 py-12">
@@ -43,7 +56,7 @@ export default async function MeVocabularyPage({
             {t("reviewEmpty")}
           </p>
         ) : (
-          <ReviewFlashcards words={due} />
+          <ReviewFlashcards words={due} prefill={prefill} />
         )}
       </div>
     </div>

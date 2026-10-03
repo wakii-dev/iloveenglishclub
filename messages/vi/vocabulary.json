@@ -81,6 +81,25 @@
       "due": "Đến hạn",
       "mastered": "Thành thạo",
       "learning": "Đang học"
+    },
+    "libraryTitle": "Thư viện từ vựng",
+    "library": {
+      "searchLabel": "Tìm từ vựng",
+      "searchPlaceholder": "Tìm từ hoặc nghĩa…",
+      "filterAudio": "Lọc theo audio",
+      "filterAudioAll": "Tất cả từ",
+      "filterAudioWith": "Có audio",
+      "count": "{count, plural, other {# từ}}",
+      "emptyAll": "Thư viện chưa có từ nào — từ thêm từ các sách sẽ hiện ở đây.",
+      "table": {
+        "colAudio": "Audio",
+        "colAction": "Thao tác"
+      },
+      "chipNotLearning": "Chưa học",
+      "learn": "Học từ này",
+      "pageInfo": "Trang {page}/{total}",
+      "prev": "Trước",
+      "next": "Sau"
     }
   }
 }
