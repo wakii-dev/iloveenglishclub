@@ -198,7 +198,7 @@ không cần dev trông.
       (429/5xx/network/timeout retryable; 4xx khác không). Test inject
       fetchImpl: redirect, 404, timeout, oversize, host sai, UA header. Exit:
       test xanh offline.
-- [ ] **T7. rate limiter + retry + test.** `src/lib/oxford/rate-limit.ts`:
+- [x] **T7. rate limiter + retry + test.** `src/lib/oxford/rate-limit.ts`:
       `createTokenBucket({rate}) → acquire()`; `withRetry(fn, {retries=3,
       baseMs})` — retry khi err.retryable (HttpError + network/Abort),
       backoff exponential + jitter, KHÔNG retry 4xx khác. Test fake timers:
