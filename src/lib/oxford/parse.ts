@@ -1,4 +1,4 @@
-import { parse } from "node-html-parser";
+import { parse, type HTMLElement } from "node-html-parser";
 
 /**
  * Parse entry Oxford Learner's Dictionaries (VU-32 SF-1) — PURE: html in,
@@ -42,12 +42,12 @@ export type OxfordEntry = {
   phrasalVerbs: SubEntry[];
 };
 
-function text(el: Element | null | undefined): string | null {
+function text(el: HTMLElement | null | undefined): string | null {
   const t = el?.text?.replace(/\s+/g, " ").trim();
   return t ? t : null;
 }
 
-function parseSense(li: Element): Sense {
+function parseSense(li: HTMLElement): Sense {
   const def = text(li.querySelector("span.def"));
   const examples = li
     .querySelectorAll("span.x")
@@ -57,12 +57,12 @@ function parseSense(li: Element): Sense {
 }
 
 /** Senses trong 1 container (mỗi li.sense 1 Sense). */
-function parseSenseList(container: Element): Sense[] {
+function parseSenseList(container: HTMLElement): Sense[] {
   return container.querySelectorAll("li.sense").map(parseSense);
 }
 
 /** Sub-entry (idiom/phrasal) từ 1 group block: span.idm-g | span.phrvb-g. */
-function parseSubEntries(root: Element, groupClass: string, itemClass: string): SubEntry[] {
+function parseSubEntries(root: HTMLElement, groupClass: string, itemClass: string): SubEntry[] {
   return root
     .querySelectorAll(`.${groupClass}`)
     .map((group) => {
@@ -74,7 +74,7 @@ function parseSubEntries(root: Element, groupClass: string, itemClass: string): 
 }
 
 /** Variant IPA + mp3: div.sound.pron-uk|pron-us → data-src-mp3 + span.phon sau nó. */
-function parseVariant(root: Element, regionClass: string): { ipa: string | null; audioUrl: string | null } {
+function parseVariant(root: HTMLElement, regionClass: string): { ipa: string | null; audioUrl: string | null } {
   const sound = root.querySelector(`div.sound.${regionClass}`);
   if (!sound) return { ipa: null, audioUrl: null };
   const audioUrl = sound.getAttribute("data-src-mp3") || null;
@@ -83,6 +83,8 @@ function parseVariant(root: Element, regionClass: string): { ipa: string | null;
 }
 
 export function parseEntry(html: string): OxfordEntry | null {
+  // parse() trả HTMLElement — element type của node-html-parser (KHÔNG phải
+  // DOM Element global — không có .text/querySelector đúng kiểu).
   const root = parse(html);
   const headword = text(root.querySelector("h1.headword"));
   if (!headword) return null; // parse fail — selector miss / trang lỗi
@@ -103,7 +105,7 @@ export function parseEntry(html: string): OxfordEntry | null {
     ...root.querySelectorAll("div.idioms"),
     ...root.querySelectorAll("div.phrasal-verbs"),
   ];
-  const subLis = new Set<Element>();
+  const subLis = new Set<HTMLElement>();
   for (const block of subBlocks) {
     for (const li of block.querySelectorAll("li.sense")) subLis.add(li);
   }
