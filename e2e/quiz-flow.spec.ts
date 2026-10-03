@@ -72,11 +72,12 @@ test.describe("Quiz flow (vocabulary SF-4)", () => {
       await answerCurrentQuestion(page, q);
     }
 
-    // Màn tổng kết: đúng/tổng + %
+    // Màn tổng kết: đúng/tổng + % (tổng = 18 đáp án chấm: 8 câu đơn + 2 ghép
+    // × 5 cặp — quiz.test.ts pin, KHÔNG phải 10 slot)
     await expect(
       page.getByRole("heading", { name: "Quiz results" }),
     ).toBeVisible();
-    await expect(page.getByText(/\d+\/10 correct/)).toBeVisible();
+    await expect(page.getByText(/You got \d+\/\d+ correct/)).toBeVisible();
     await expect(page.getByText(/\d+% correct/)).toBeVisible();
 
     // Làm lại → reload nhận đề xáo mới, về câu 1
