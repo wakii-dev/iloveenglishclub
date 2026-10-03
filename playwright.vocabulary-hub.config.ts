@@ -2,14 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 
 /**
- * E2E vocabulary hub (story vocabulary-hub SF-1 t-1.3) — copy pattern
- * playwright.vocabulary-review.config.ts: port RIÊNG 3314 qua E2E_PORT
- * (một nguồn cho baseURL/webServer.url/command), globalSetup/teardown seed +
- * tidy fixture qa-hub-* (e2e/vocabulary-hub-fixture.ts). testMatch NEO
- * basename `hub-overview` — spec tên có "vocabulary" sẽ trúng testMatch
- * `/vocabulary*` của config SF-2 (convention review-flow). Bảng words /
- * book_words / user_word_progress phải có (migration 0002) — setup fail rõ
- * nếu chưa migrate, không giả lập DB.
+ * E2E vocabulary hub (story vocabulary-hub SF-1 t-1.3, mở rộng SF-2) — copy
+ * pattern playwright.vocabulary-review.config.ts: port RIÊNG 3314 qua
+ * E2E_PORT (một nguồn cho baseURL/webServer.url/command), globalSetup/
+ * teardown seed + tidy fixture qa-hub-* (e2e/vocabulary-hub-fixture.ts).
+ * testMatch NEO basename `hub-*` — spec tên có "vocabulary" sẽ trúng
+ * testMatch `/vocabulary*` của config module vocabulary (convention
+ * review-flow). Bảng words / book_words / user_word_progress phải có
+ * (migration 0002) — setup fail rõ nếu chưa migrate, không giả lập DB.
  */
 dotenv.config({ path: ".env.local" });
 
@@ -19,7 +19,7 @@ const PAGE = `/en/vocabulary`;
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /(^|\/)hub-overview\.spec\.ts$/,
+  testMatch: /(^|\/)hub-(overview|library)\.spec\.ts$/,
   globalSetup: "./e2e/vocabulary-hub-global-setup.ts",
   globalTeardown: "./e2e/vocabulary-hub-global-teardown.ts",
   timeout: 120_000,

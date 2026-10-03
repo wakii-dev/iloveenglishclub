@@ -1,12 +1,13 @@
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { HubTab } from "@/lib/vocabulary/hub-status";
 
 /**
  * Tab strip hub (SF-2 t-2.2) — chip Tổng quan (SF-1) thành link chuyển tab
  * qua searchParams ?tab= (server re-render, cùng nhánh GET-filter). Guest:
- * Tổng quan cần đăng nhập → link login ?next; Review/Quiz chưa có (SF-3) →
- * giữ chip "sắp có" như SF-1.
+ * Tổng quan cần đăng nhập → link login ?next (next prefix locale tường minh —
+ * i18n Link chỉ localize pathname, không đụng query); Review/Quiz chưa có
+ * (SF-3) → giữ chip "sắp có" như SF-1.
  */
 export function HubTabs({
   active,
@@ -16,10 +17,13 @@ export function HubTabs({
   loggedIn: boolean;
 }) {
   const t = useTranslations("vocabulary");
+  const locale = useLocale();
   const items: { key: HubTab; href: string; comingSoon: boolean }[] = [
     {
       key: "overview",
-      href: loggedIn ? "/vocabulary" : "/login?next=/vocabulary",
+      href: loggedIn
+        ? "/vocabulary"
+        : `/${locale}/login?next=/${locale}/vocabulary`,
       comingSoon: false,
     },
     { key: "library", href: "/vocabulary?tab=library", comingSoon: false },

@@ -83,6 +83,37 @@ export async function ensureHubWordsFixture(): Promise<void> {
   });
 }
 
+/**
+ * Bulk từ ĐỘC LẬP (SF-2 t-2.3) — prefix `qa-lib-*`, không gắn book_words:
+ * 55 từ đẩy total tab Thư viện > 50 → pagination thật (page 2) + cột Sách
+ * "—". Spec tự cleanup sau run (afterAll) — global teardown chỉ dọn qa-hub-*.
+ */
+export const LIBRARY_BULK_COUNT = 55;
+export const LIBRARY_BULK_PREFIX = "qa-lib-";
+
+export async function seedLibraryBulkWords(): Promise<void> {
+  const c = client();
+  const tables = await c`select to_regclass('words') as w`;
+  if (!tables[0]?.w) {
+    throw new Error(
+      "bảng words chưa tồn tại — áp dụng migration trước khi chạy suite vocabulary hub",
+    );
+  }
+  await c`
+    insert into words (word, meaning_vi)
+    select ${LIBRARY_BULK_PREFIX} || lpad(g::text, 3, '0'), 'từ QA lib ' || g
+    from generate_series(1, ${LIBRARY_BULK_COUNT}) as g
+    on conflict (word) do nothing
+  `;
+}
+
+export async function cleanupLibraryBulkWords(): Promise<void> {
+  const c = client();
+  const tables = await c`select to_regclass('words') as w`;
+  if (!tables[0]?.w) return;
+  await c`delete from words where word like ${LIBRARY_BULK_PREFIX + "%"}`;
+}
+
 /** Seed 3 trạng thái SRS cho user (đăng ký qua UI trước đó — theo email). */
 export async function seedHubProgress(email: string): Promise<void> {
   const c = client();

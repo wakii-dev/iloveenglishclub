@@ -52,9 +52,16 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Vocabulary hub",
     );
-    // shell 4 tab: Tổng quan active + 3 placeholder "Coming soon"
+    // shell 4 tab: Tổng quan active; Library là link (SF-2); Review/Quiz
+    // giữ placeholder "Coming soon"
     await expect(page.getByText("Overview", { exact: true })).toBeVisible();
-    for (const tab of ["Library", "Review", "Quiz"]) {
+    await expect(
+      page
+        .getByRole("listitem")
+        .filter({ hasText: "Library" })
+        .getByRole("link", { name: "Library" }),
+    ).toBeVisible();
+    for (const tab of ["Review", "Quiz"]) {
       // li gộp text tab + chip → filter theo hasText, không exact
       const item = page.getByRole("listitem").filter({ hasText: tab });
       await expect(item).toBeVisible();
@@ -135,7 +142,12 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
       "Tổng quan từ vựng",
     );
     await expect(page.getByText("Tổng quan", { exact: true })).toBeVisible();
-    for (const tab of ["Thư viện", "Ôn tập", "Kiểm tra"]) {
+    await expect(
+      page.getByRole("listitem")
+        .filter({ hasText: "Thư viện" })
+        .getByRole("link", { name: "Thư viện" }),
+    ).toBeVisible();
+    for (const tab of ["Ôn tập", "Kiểm tra"]) {
       const item = page.getByRole("listitem").filter({ hasText: tab });
       await expect(item).toBeVisible();
       await expect(item).toContainText("Sắp có");
@@ -156,11 +168,22 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
     );
   });
 
-  test("chưa đăng nhập → redirect login kèm ?next", async ({ page }) => {
+  test("guest: mặc định tab Thư viện; đòi Tổng quan → login ?next (SF-2)", async ({
+    page,
+  }) => {
     await page.context().clearCookies();
     await page.goto("/en/vocabulary");
+    // guest duyệt được thư viện (không trạng thái) — không redirect thẳng
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Word library" }),
+    ).toBeVisible();
+    const rows = page.getByRole("row").filter({ hasText: "qa-hub-" });
+    await expect(rows).toHaveCount(3);
+    await expect(page.getByText("SRS status")).toHaveCount(0);
+    // Tổng quan là data cá nhân → link Overview dẫn login kèm ?next
+    await page.getByRole("link", { name: "Overview" }).click();
     await expect(page).toHaveURL(
-      /\/en\/login\?next=%2Fen%2Fvocabulary|\/en\/login\?next=\/en\/vocabulary/,
+      /\/en\/login\?next=(%2F|\/)en(%2F|\/)vocabulary/,
     );
   });
 });
