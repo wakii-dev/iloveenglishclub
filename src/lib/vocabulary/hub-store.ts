@@ -6,10 +6,28 @@
  * DB lỗi (bảng chưa migrate) → fallback rỗng/0 — build-safe như listDueWords.
  * Phần pure (filter/status/MASTERED_REPS) sống ở hub-status.ts (client-safe).
  */
-import { and, asc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, books, userWordProgress, words } from "@/db/schema";
-import { MASTERED_REPS, type HubStatusFilter } from "./hub-status";
+import {
+  MASTERED_REPS,
+  type HubStatusFilter,
+  type LibraryFilters,
+  escapeLikeTerm,
+} from "./hub-status";
+import type { DueWord } from "./review-store";
 
 export const HUB_LIST_LIMIT = 100;
 
@@ -148,5 +166,171 @@ export async function listHubBooks(): Promise<HubBook[]> {
   } catch (error) {
     console.error("[vocabulary:listHubBooks] query failed:", error);
     return [];
+  }
+}
+
+export const LIBRARY_PAGE_SIZE = 50;
+
+export type LibraryWordRow = {
+  wordId: number;
+  word: string;
+  meaningVi: string;
+  audioUrl: string | null;
+  books: { slug: string; titleEn: string; titleVi: string | null }[];
+  /** null = chưa học (hoặc guest — không có trạng thái SRS). */
+  progress: { reps: number; dueAt: Date } | null;
+};
+
+export type LibraryPage = {
+  rows: LibraryWordRow[];
+  total: number;
+  page: number;
+  totalPages: number;
+};
+
+/**
+ * Tab Thư viện (SF-2 t-2.1): TOÀN BỘ bảng words (gồm từ độc lập ngoài
+ * book_words), search ilike word/meaning_vi, filter book/has-audio + status
+ * SRS (chỉ khi userId — guest duyệt không trạng thái), phân trang 50/trang.
+ * Count query riêng để trang vượt cuối vẫn giữ total cho phân trang; left-
+ * join user_word_progress khoá theo user (PK user+word → không nhân dòng);
+ * status filter dùng cùng semantics listHubWords. DB lỗi → trang rỗng
+ * (build-safe như listHubWords).
+ */
+export async function listLibraryWords(
+  userId: string | null,
+  filter: LibraryFilters,
+): Promise<LibraryPage> {
+  try {
+    const conditions = [];
+    if (filter.search !== "") {
+      const like = `%${escapeLikeTerm(filter.search)}%`;
+      conditions.push(
+        or(ilike(words.word, like), ilike(words.meaningVi, like)),
+      );
+    }
+    if (filter.bookId !== null) {
+      conditions.push(
+        inArray(
+          words.id,
+          db
+            .select({ id: bookWords.wordId })
+            .from(bookWords)
+            .where(eq(bookWords.bookId, filter.bookId)),
+        ),
+      );
+    }
+    if (filter.hasAudio) {
+      conditions.push(isNotNull(words.audioUrl));
+    }
+    const status: HubStatusFilter = userId === null ? "all" : filter.status;
+    if (status === "due") {
+      conditions.push(lte(userWordProgress.dueAt, sql`now()`));
+    } else if (status === "mastered") {
+      conditions.push(gte(userWordProgress.reps, MASTERED_REPS));
+    } else if (status === "learning") {
+      conditions.push(lt(userWordProgress.reps, MASTERED_REPS));
+    }
+    const where = and(...conditions);
+    // guest: điều kiện join false → mọi cột progress null (duyệt thuần library)
+    const progressOn = userId
+      ? and(
+          eq(userWordProgress.wordId, words.id),
+          eq(userWordProgress.userId, userId),
+        )
+      : sql`false`;
+
+    const [countRow] = await db
+      .select({ total: sql<number>`count(*)`.mapWith(Number) })
+      .from(words)
+      .leftJoin(userWordProgress, progressOn)
+      .where(where);
+    const total = countRow?.total ?? 0;
+    const totalPages = Math.max(1, Math.ceil(total / LIBRARY_PAGE_SIZE));
+
+    const rows = await db
+      .select({
+        wordId: words.id,
+        word: words.word,
+        meaningVi: words.meaningVi,
+        audioUrl: words.audioUrl,
+        reps: userWordProgress.reps,
+        dueAt: userWordProgress.dueAt,
+      })
+      .from(words)
+      .leftJoin(userWordProgress, progressOn)
+      .where(where)
+      .orderBy(asc(words.word))
+      .limit(LIBRARY_PAGE_SIZE)
+      .offset((filter.page - 1) * LIBRARY_PAGE_SIZE);
+    if (rows.length === 0) {
+      return { rows: [], total, page: filter.page, totalPages };
+    }
+
+    // book của từng từ — query 2 như listHubWords (sortOrder book)
+    const assignments = await db
+      .select({
+        wordId: bookWords.wordId,
+        slug: books.slug,
+        titleEn: books.titleEn,
+        titleVi: books.titleVi,
+        sortOrder: books.sortOrder,
+      })
+      .from(bookWords)
+      .innerJoin(books, eq(bookWords.bookId, books.id))
+      .where(inArray(bookWords.wordId, rows.map((r) => r.wordId)))
+      .orderBy(asc(books.sortOrder));
+
+    const booksByWord = new Map<number, LibraryWordRow["books"]>();
+    for (const a of assignments) {
+      const list = booksByWord.get(a.wordId) ?? [];
+      list.push({ slug: a.slug, titleEn: a.titleEn, titleVi: a.titleVi });
+      booksByWord.set(a.wordId, list);
+    }
+    return {
+      rows: rows.map((r) => ({
+        wordId: r.wordId,
+        word: r.word,
+        meaningVi: r.meaningVi,
+        audioUrl: r.audioUrl,
+        progress:
+          r.dueAt === null || r.reps === null
+            ? null
+            : { reps: r.reps, dueAt: r.dueAt },
+        books: booksByWord.get(r.wordId) ?? [],
+      })),
+      total,
+      page: filter.page,
+      totalPages,
+    };
+  } catch (error) {
+    console.error("[vocabulary:listLibraryWords] query failed:", error);
+    return { rows: [], total: 0, page: filter.page, totalPages: 1 };
+  }
+}
+
+/**
+ * 1 từ cho nút "Học từ này" (SF-2 t-2.2) — shape DueWord để Prefill thẻ
+ * flashcard /me/vocabulary; SRS mặc định (engine applyReview upsert sẵn).
+ * Không có/không thấy (id lạ) → null — UI bỏ qua prefill.
+ */
+export async function getStudyWord(wordId: number): Promise<DueWord | null> {
+  try {
+    const [row] = await db
+      .select({
+        wordId: words.id,
+        word: words.word,
+        ipa: words.ipa,
+        meaningVi: words.meaningVi,
+        example: words.example,
+        audioUrl: words.audioUrl,
+      })
+      .from(words)
+      .where(eq(words.id, wordId))
+      .limit(1);
+    return row ? { ...row, ease: 2.5, intervalDays: 0, reps: 0 } : null;
+  } catch (error) {
+    console.error("[vocabulary:getStudyWord] query failed:", error);
+    return null;
   }
 }

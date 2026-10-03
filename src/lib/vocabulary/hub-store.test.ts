@@ -46,12 +46,19 @@ vi.mock("@/db", () => ({
 
 import {
   displayStatus,
+  escapeLikeTerm,
+  libraryHref,
   parseHubFilters,
+  parseLibraryFilters,
+  resolveHubTab,
 } from "./hub-status";
 import {
+  LIBRARY_PAGE_SIZE,
   getHubStats,
+  getStudyWord,
   listHubBooks,
   listHubWords,
+  listLibraryWords,
 } from "./hub-store";
 
 afterEach(() => {
@@ -170,6 +177,227 @@ describe("listHubBooks", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     dbState.failWith = new Error("boom");
     expect(await listHubBooks()).toEqual([]);
+  });
+});
+
+describe("listLibraryWords (SF-2 t-2.1)", () => {
+  const libRows = [
+    {
+      wordId: 1,
+      word: "alpha",
+      meaningVi: "a",
+      audioUrl: null,
+      reps: 0,
+      dueAt: new Date(0),
+    },
+    {
+      wordId: 2,
+      word: "bravo",
+      meaningVi: "b",
+      audioUrl: "audio/bravo.mp3",
+      reps: 3,
+      dueAt: new Date(1),
+    },
+  ];
+
+  it("trả rows + total + books enrichment; progress theo left-join", async () => {
+    dbState.queue = [
+      [{ total: 51 }],
+      libRows,
+      [
+        { wordId: 1, slug: "level-1", titleEn: "Level 1", titleVi: "Cấp độ 1", sortOrder: 1 },
+        { wordId: 2, slug: "level-3", titleEn: "Level 3", titleVi: "Cấp độ 3", sortOrder: 3 },
+      ],
+    ];
+    const result = await listLibraryWords("u1", {
+      search: "",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 1,
+    });
+    expect(result.total).toBe(51);
+    expect(result.page).toBe(1);
+    expect(result.totalPages).toBe(2);
+    expect(result.rows[0]).toMatchObject({
+      wordId: 1,
+      word: "alpha",
+      audioUrl: null,
+      books: [{ slug: "level-1" }],
+    });
+    expect(result.rows[0]!.progress).toEqual({ reps: 0, dueAt: new Date(0) });
+    expect(result.rows[1]!.progress).toEqual({ reps: 3, dueAt: new Date(1) });
+    // limit/offset trang 1
+    expect(dbState.calls).toContain(LIBRARY_PAGE_SIZE);
+    expect(dbState.calls).toContain(0);
+  });
+
+  it("guest (userId null) → progress null, duyệt không trạng thái", async () => {
+    // left-join miss (join false) → DB trả dueAt/reps null
+    const guestRows = libRows.map((r) => ({ ...r, reps: null, dueAt: null }));
+    dbState.queue = [[{ total: 2 }], guestRows, []];
+    const result = await listLibraryWords(null, {
+      search: "",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 1,
+    });
+    expect(result.rows[0]!.progress).toBeNull();
+    expect(result.rows[1]!.progress).toBeNull();
+    expect(result.rows[0]!.books).toEqual([]);
+  });
+
+  it("phân trang: page 3 → offset 100; total 0 → totalPages 1", async () => {
+    dbState.queue = [[{ total: 0 }], [], []];
+    const result = await listLibraryWords("u1", {
+      search: "",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 3,
+    });
+    expect(dbState.calls).toContain(LIBRARY_PAGE_SIZE);
+    expect(dbState.calls).toContain(100); // (3 - 1) * 50
+    expect(result).toEqual({ rows: [], total: 0, page: 3, totalPages: 1 });
+  });
+
+  it("page vượt cuối: rows [] nhưng vẫn giữ total + totalPages (books query không chạy)", async () => {
+    dbState.queue = [[{ total: 51 }], [], []];
+    const result = await listLibraryWords("u1", {
+      search: "alpha",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 9,
+    });
+    expect(result).toEqual({ rows: [], total: 51, page: 9, totalPages: 2 });
+    // đúng 2 query (count + main) — assignments bị bỏ khi rỗng (còn 1 không dùng)
+    expect(dbState.queue).toHaveLength(1);
+  });
+
+  it("DB lỗi → trang rỗng + log, không throw — build-safe", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    dbState.failWith = new Error('relation "words" does not exist');
+    const result = await listLibraryWords("u1", {
+      search: "x",
+      bookId: null,
+      hasAudio: true,
+      status: "due",
+      page: 1,
+    });
+    expect(result).toEqual({ rows: [], total: 0, page: 1, totalPages: 1 });
+  });
+});
+
+describe("getStudyWord (SF-2 t-2.2)", () => {
+  it("thấy từ → shape DueWord với SRS mặc định (2.5/0/0)", async () => {
+    dbState.queue = [
+      [
+        {
+          wordId: 7,
+          word: "delta",
+          ipa: "ˈdɛltə",
+          meaningVi: "d",
+          example: "delta rock",
+          audioUrl: null,
+        },
+      ],
+    ];
+    expect(await getStudyWord(7)).toEqual({
+      wordId: 7,
+      word: "delta",
+      ipa: "ˈdɛltə",
+      meaningVi: "d",
+      example: "delta rock",
+      audioUrl: null,
+      ease: 2.5,
+      intervalDays: 0,
+      reps: 0,
+    });
+    expect(dbState.calls).toContain(1); // limit 1
+  });
+
+  it("id lạ → null; DB lỗi → null + log", async () => {
+    dbState.queue = [[]];
+    expect(await getStudyWord(999)).toBeNull();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    dbState.queue = [];
+    dbState.failWith = new Error("boom");
+    expect(await getStudyWord(1)).toBeNull();
+  });
+});
+
+describe("parseLibraryFilters", () => {
+  it("thiếu param → mặc định (search rỗng, no book, no audio, all, page 1)", () => {
+    expect(parseLibraryFilters({})).toEqual({
+      search: "",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 1,
+    });
+  });
+
+  it("giá trị hợp lệ được giữ: search trim, audio=1, page số", () => {
+    expect(
+      parseLibraryFilters({
+        search: "  alpha  ",
+        book: "3",
+        audio: "1",
+        status: "due",
+        page: "4",
+      }),
+    ).toEqual({
+      search: "alpha",
+      bookId: 3,
+      hasAudio: true,
+      status: "due",
+      page: 4,
+    });
+  });
+
+  it("giá trị lạ rơi về mặc định, không throw", () => {
+    expect(parseLibraryFilters({ book: "abc", page: "-2", audio: "yes" })).toEqual({
+      search: "",
+      bookId: null,
+      hasAudio: false,
+      status: "all",
+      page: 1,
+    });
+    expect(parseLibraryFilters({ search: "  " })).toMatchObject({ search: "" });
+    expect(parseLibraryFilters({ page: "0" })).toMatchObject({ page: 1 });
+  });
+});
+
+describe("resolveHubTab + helpers (SF-2 t-2.2)", () => {
+  it("tab tường minh thắng; rác → mặc định theo đăng nhập", () => {
+    expect(resolveHubTab("library", false)).toBe("library");
+    expect(resolveHubTab("quiz", true)).toBe("quiz");
+    expect(resolveHubTab("", true)).toBe("overview");
+    expect(resolveHubTab("", false)).toBe("library");
+    expect(resolveHubTab("hacker", true)).toBe("overview");
+    expect(resolveHubTab("hacker", false)).toBe("library");
+  });
+
+  it("escapeLikeTerm khoá wildcard LIKE", () => {
+    expect(escapeLikeTerm("a%b_c\\d")).toBe("a\\%b\\_c\\\\d");
+  });
+
+  it("libraryHref giữ filter, page 1 bỏ param", () => {
+    const filter = {
+      search: "al",
+      bookId: 2,
+      hasAudio: true,
+      status: "due" as const,
+      page: 1,
+    };
+    expect(libraryHref(filter, 1)).toBe(
+      "/vocabulary?tab=library&search=al&book=2&audio=1&status=due",
+    );
+    expect(libraryHref(filter, 3)).toBe(
+      "/vocabulary?tab=library&search=al&book=2&audio=1&status=due&page=3",
+    );
   });
 });
 
