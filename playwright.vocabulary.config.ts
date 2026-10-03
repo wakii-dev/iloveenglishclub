@@ -36,8 +36,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // webpack dev — bypass --turbopack (race font, QA-7 SF-6)
-    command: `npx next dev --port ${PORT}`,
+    // webpack dev — bypass --turbopack (race font, QA-7 SF-6). Seed TRƯỚC khi
+    // server bind: Playwright start webServer + poll URL TRƯỚC globalSetup —
+    // render đầu (poll + dev prerender generateStaticParams) chạy khi DB chưa
+    // có fixture → unstable_cache `content` giữ [] suốt run (fail 03/10).
+    command: `node --input-type=module -e "import('./e2e/vocabulary-fixture.ts').then(m=>m.ensureVocabularyFixture()).then(()=>process.exit(0))" && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
