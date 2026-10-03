@@ -252,7 +252,7 @@ không cần dev trông.
       1 runtime (robots denied rõ ràng) / 2 usage. Exit: `node
       scripts/oxford-crawl.ts` (không args) → usage + exit 2; typecheck xanh;
       dry-run smoke `enumerate` không ghi DB.
-- [ ] **T12b. Demo thật + evidence (Gate 3 FI-460 proxy — CLI-equivalent).**
+- [x] **T12b. Demo thật + evidence (Gate 3 FI-460 proxy — CLI-equivalent).**
       Chạy LỆNH THẬT, lưu logs `docs/superpowers/evidence/sf-1-oxford-crawl-core/`:
       `enumerate` dry-run (đếm ≈63.949) → `enumerate --apply` (đếm DB = số
       slugs) → enumerate lại không dup → `fetch --limit 50 --apply` → query
