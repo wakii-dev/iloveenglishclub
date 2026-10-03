@@ -4,5 +4,18 @@
   "backToBook": "Về trang sách",
   "play": "Phát âm “{word}”",
   "stop": "Dừng audio",
-  "empty": "Sách chưa có từ vựng — quay lại sau nhé."
+  "empty": "Sách chưa có từ vựng — quay lại sau nhé.",
+  "reviewTitle": "Ôn tập từ vựng",
+  "dueToday": "Hôm nay cần ôn: {count, plural, other {# từ}}",
+  "reviewEmpty": "Hôm nay không có từ cần ôn — quay lại sau nhé.",
+  "flipHint": "Bấm vào thẻ để lật",
+  "flipBack": "Lật lại mặt trước",
+  "cardProgress": "Thẻ {current}/{total}",
+  "gradeGroup": "Chấm mức nhớ",
+  "gradeAgain": "Lại",
+  "gradeHard": "Nhớ-kho",
+  "gradeGood": "Nhớ",
+  "gradeEasy": "Dễ",
+  "reviewDone": "Đã ôn hết thẻ trong phiên này — giỏi lắm!",
+  "reviewError": "Không lưu được kết quả ôn — thử lại nhé."
 }
