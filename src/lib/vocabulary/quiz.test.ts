@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  QUIZ_SCOPE_MULTI_MAX_BOOKS,
   buildQuiz,
   gradeQuiz,
+  parseQuizScope,
   type QuizAnswer,
   type QuizQuestion,
   type QuizWord,
@@ -215,4 +217,77 @@ describe("gradeQuiz", () => {
     ]);
     expect(grade.score).toBe(1);
   });
+});
+
+describe("parseQuizScope (SF-3 t-3.2)", () => {
+  it('scope "all" → {kind:"all"}', () => {
+    expect(parseQuizScope({ scope: "all" })).toEqual({
+      ok: true,
+      scope: { kind: "all" },
+    });
+  });
+
+  it('scope "book" + bookId nguyên dương (number lẫn string) → scope book', () => {
+    expect(parseQuizScope({ scope: "book", bookId: 3 })).toEqual({
+      ok: true,
+      scope: { kind: "book", bookId: 3 },
+    });
+    expect(parseQuizScope({ scope: "book", bookId: "7" })).toEqual({
+      ok: true,
+      scope: { kind: "book", bookId: 7 },
+    });
+  });
+
+  it.each([undefined, 0, -1, "abc", 2.5, null])(
+    "scope book + bookId %j → invalidBookId",
+    (bookId) => {
+      expect(parseQuizScope({ scope: "book", bookId })).toEqual({
+        ok: false,
+        error: "invalidBookId",
+      });
+    },
+  );
+
+  it('scope "multi" + book_ids mảng → parse int, gộp trùng, giữ thứ tự', () => {
+    expect(parseQuizScope({ scope: "multi", bookIds: [3, "1", 3, 2] })).toEqual({
+      ok: true,
+      scope: { kind: "multi", bookIds: [3, 1, 2] },
+    });
+  });
+
+  it('scope "multi" + book_ids chuỗi querystring "1,2,3" → parse như mảng', () => {
+    expect(parseQuizScope({ scope: "multi", bookIds: "1,2,3" })).toEqual({
+      ok: true,
+      scope: { kind: "multi", bookIds: [1, 2, 3] },
+    });
+  });
+
+  it.each([
+    [undefined, "thiếu bookIds"],
+    ["", "bookIds rỗng"],
+    [[], "mảng rỗng"],
+    [[0], "chứa 0"],
+    [[-2], "chứa âm"],
+    [[1, "x"], "lẫn chữ"],
+    [[1, null], "lẫn null"],
+    [
+      Array.from({ length: QUIZ_SCOPE_MULTI_MAX_BOOKS + 1 }, (_, i) => i + 1),
+      "vượt trần 50 book",
+    ],
+  ])("scope multi %j (%s) → invalidBookIds", (bookIds, label) => {
+    expect(parseQuizScope({ scope: "multi", bookIds }), label).toEqual({
+      ok: false,
+      error: "invalidBookIds",
+    });
+  });
+
+  it.each(["", "gia-lập", "BOOK", 42, null])(
+    "scope %j → invalidScope (chỉ nhận all/book/multi nguyên văn)",
+    (scope) => {
+      expect(parseQuizScope({ scope: String(scope ?? "") })).toEqual({
+        ok: false,
+        error: "invalidScope",
+      });
+    },
+  );
 });

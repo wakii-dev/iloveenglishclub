@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import type { QuizQuestion, QuizType } from "@/lib/vocabulary/quiz";
+import type { QuizQuestion, QuizScope, QuizType } from "@/lib/vocabulary/quiz";
 
 /**
- * Quiz runner (SF-4 t-4.2) — client thuần, state local (không store mới,
- * cùng pattern ReviewFlashcards). Trắc nghiệm chọn ngay advances; điền từ
- * submit form; ghép nghĩa chọn đủ 5 cặp mới tiếp. Hết câu tự POST nộp bài;
- * 401 → mời đăng nhập lại, lỗi khác → nút gửi lại. "Làm lại" reload trang
- * (force-dynamic) để nhận đề xáo mới từ server.
+ * Quiz runner (SF-4 t-4.2; scope hub SF-3 t-3.2) — client thuần, state local
+ * (không store mới, cùng pattern ReviewFlashcards). Trắc nghiệm chọn ngay
+ * advances; điền từ submit form; ghép nghĩa chọn đủ 5 cặp mới tiếp. Hết câu
+ * tự POST nộp bài; 401 → mời đăng nhập lại, lỗi khác → nút gửi lại. "Làm
+ * lại" reload trang (force-dynamic) để nhận đề xáo mới từ server.
+ * Phạm vi: {bookId, bookSlug} (flow per-book cũ) hoặc scope all/multi (tab
+ * Quiz hub — POST mang scope thay book_id, loginNext là URL hub có query).
  */
 
 type QuizAnswer = { wordId: number; type: QuizType; response: string };
@@ -20,10 +22,16 @@ type SubmitResult = { score: number; correct: number; total: number };
 export function QuizRunner({
   bookId,
   bookSlug,
+  scope,
+  loginNext,
   questions,
 }: {
-  bookId: number;
-  bookSlug: string;
+  bookId?: number;
+  bookSlug?: string;
+  /** Tab Quiz hub: all/multi — POST body mang scope thay vì book_id. */
+  scope?: Exclude<QuizScope, { kind: "book" }>;
+  /** next= cho link đăng nhập lại khi dùng scope (URL hub có query → encode). */
+  loginNext?: string;
   questions: QuizQuestion[];
 }) {
   const t = useTranslations("vocabulary");
@@ -38,7 +46,9 @@ export function QuizRunner({
   const [authExpired, setAuthExpired] = useState(false);
 
   const current = questions[index];
-  const loginHref = `/login?next=/${locale}/books/${bookSlug}/quiz`;
+  const loginHref = loginNext
+    ? `/login?next=${encodeURIComponent(loginNext)}`
+    : `/login?next=/${locale}/books/${bookSlug}/quiz`;
 
   async function submit(queue: QuizAnswer[]) {
     setPending(true);
@@ -48,7 +58,11 @@ export function QuizRunner({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          book_id: bookId,
+          ...(scope
+            ? scope.kind === "all"
+              ? { scope: "all" }
+              : { scope: "multi", book_ids: scope.bookIds }
+            : { book_id: bookId }),
           mode: "mixed",
           answers: queue.map((a) => ({
             word_id: a.wordId,

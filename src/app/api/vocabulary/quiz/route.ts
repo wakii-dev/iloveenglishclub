@@ -1,13 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
-import {
-  buildBookQuiz,
-  submitQuizAttempt,
-} from "@/lib/vocabulary/quiz-store";
+import { buildHubQuiz, submitQuizAttempt } from "@/lib/vocabulary/quiz-store";
 import {
   QUIZ_MODE_DEFAULT,
   QUIZ_MODES,
   QUIZ_TYPES,
+  parseQuizScope,
+  type QuizScope,
   type QuizType,
 } from "@/lib/vocabulary/quiz";
 
@@ -24,29 +23,59 @@ function isQuizMode(value: unknown): value is (typeof QUIZ_MODES)[number] {
 }
 
 /**
- * GET /api/vocabulary/quiz?book_id=N (SF-4 t-4.1) — sinh đề cho book. Public
- * (nội dung public như trang vocabulary); đề xáo ngẫu nhiên mỗi lần gọi và
- * KHÔNG kèm đáp án (chấm ở POST soi pool phía server).
+ * GET /api/vocabulary/quiz (SF-4 t-4.1; scope hub SF-3 t-3.2) — sinh đề theo
+ * phạm vi: ?book_id=N (tương thích cũ) | ?scope=all | ?scope=multi&book_ids=
+ * 1,2,3 | ?scope=book&book_id=N. Public (nội dung public như trang
+ * vocabulary); đề xáo ngẫu nhiên mỗi lần gọi và KHÔNG kèm đáp án (chấm ở POST
+ * soi pool phía server). Response book scope vẫn kèm bookId (tương thích old
+ * client), scope khác kèm đúng scope đã parse.
  */
 export async function GET(req: NextRequest) {
-  const bookId = Number(req.nextUrl.searchParams.get("book_id"));
-  if (!Number.isInteger(bookId) || bookId <= 0) {
-    return NextResponse.json({ ok: false, error: "invalidBookId" }, { status: 400 });
+  const sp = req.nextUrl.searchParams;
+  const scopeParam = sp.get("scope");
+
+  let scope: QuizScope;
+  if (scopeParam === null || scopeParam === "") {
+    // contract cũ: ?book_id=N
+    const bookId = Number(sp.get("book_id"));
+    if (!Number.isInteger(bookId) || bookId <= 0) {
+      return NextResponse.json({ ok: false, error: "invalidBookId" }, { status: 400 });
+    }
+    scope = { kind: "book", bookId };
+  } else {
+    const parsed = parseQuizScope({
+      scope: scopeParam,
+      bookId: sp.get("book_id"),
+      bookIds: sp.get("book_ids"),
+    });
+    if (!parsed.ok) {
+      return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
+    }
+    scope = parsed.scope;
   }
 
-  const questions = await buildBookQuiz(bookId);
+  const questions = await buildHubQuiz(scope);
   return NextResponse.json({
     ok: true,
-    bookId,
+    ...(scope.kind === "book"
+      ? { bookId: scope.bookId }
+      : {
+          scope:
+            scope.kind === "all"
+              ? { kind: "all" }
+              : { kind: "multi", bookIds: scope.bookIds },
+        }),
     mode: QUIZ_MODE_DEFAULT,
     questions,
   });
 }
 
 /**
- * POST /api/vocabulary/quiz (SF-4 t-4.1) — nộp bài: chấm qua engine + lưu
- * quiz_attempts. User từ session (NextAuth) — 401 JSON khi chưa đăng nhập
- * (pattern /api/vocabulary/review). mode tùy chọn, mặc định "mixed".
+ * POST /api/vocabulary/quiz (SF-4 t-4.1; scope hub SF-3 t-3.2) — nộp bài:
+ * chấm qua engine + lưu quiz_attempts. User từ session (NextAuth) — 401 JSON
+ * khi chưa đăng nhập (pattern /api/vocabulary/review). mode tùy chọn, mặc
+ * định "mixed". Phạm vi: body.book_id=N (cũ) | body.scope="all" |
+ * body.scope="multi" + body.book_ids=[...] | body.scope="book" + book_id.
  */
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -65,9 +94,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "invalidJson" }, { status: 400 });
   }
 
-  const bookId = Number(body.book_id);
-  if (!Number.isInteger(bookId) || bookId <= 0) {
-    return NextResponse.json({ ok: false, error: "invalidBookId" }, { status: 400 });
+  const scopeRaw = body.scope;
+  let scope: QuizScope;
+  if (scopeRaw === undefined || scopeRaw === null || scopeRaw === "") {
+    // contract cũ: book_id bắt buộc
+    const bookId = Number(body.book_id);
+    if (!Number.isInteger(bookId) || bookId <= 0) {
+      return NextResponse.json({ ok: false, error: "invalidBookId" }, { status: 400 });
+    }
+    scope = { kind: "book", bookId };
+  } else {
+    if (typeof scopeRaw !== "string") {
+      return NextResponse.json({ ok: false, error: "invalidScope" }, { status: 400 });
+    }
+    const parsed = parseQuizScope({
+      scope: scopeRaw,
+      bookId: body.book_id,
+      bookIds: body.book_ids,
+    });
+    if (!parsed.ok) {
+      return NextResponse.json({ ok: false, error: parsed.error }, { status: 400 });
+    }
+    scope = parsed.scope;
   }
 
   const mode =
@@ -101,9 +149,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await submitQuizAttempt(userId, bookId, mode, answers);
+    const result = await submitQuizAttempt(userId, scope, mode, answers);
     if (!result.ok) {
-      return NextResponse.json({ ok: false, error: result.error }, { status: result.error === "bookNotFound" ? 404 : 400 });
+      const status =
+        result.error === "bookNotFound" || result.error === "poolNotFound"
+          ? 404
+          : 400;
+      return NextResponse.json({ ok: false, error: result.error }, { status });
     }
     return NextResponse.json({
       ok: true,

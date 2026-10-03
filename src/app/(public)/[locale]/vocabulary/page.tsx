@@ -4,16 +4,18 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
 import { HubLibrarySection } from "@/components/vocabulary/hub-library-section";
 import { HubOverviewSection } from "@/components/vocabulary/hub-overview-section";
+import { HubQuizSection } from "@/components/vocabulary/hub-quiz-section";
 import { HubReviewSection } from "@/components/vocabulary/hub-review-section";
 import { HubTabs } from "@/components/vocabulary/hub-tabs";
 import { resolveHubTab } from "@/lib/vocabulary/hub-status";
 
 /**
- * /vocabulary — Vocabulary Hub (SF-2 t-2.2): dispatcher 4 tab qua searchParams
- * ?tab= (mặc định: user → Tổng quan, guest → Thư viện — duyệt không cần đăng
- * nhập). Tổng quan là data cá nhân nên guest đòi tab đó → redirect login kèm
- * ?next (pattern me/page). Mỗi tab một section server component tự fetch —
- * chỉ tab active chạy query, force-dynamic (auth() đọc cookies).
+ * /vocabulary — Vocabulary Hub (SF-2 t-2.2; SF-3 đủ 4 tab): dispatcher qua
+ * searchParams ?tab= (mặc định: user → Tổng quan, guest → Thư viện — duyệt
+ * không cần đăng nhập). Tab data cá nhân (Tổng quan/Ôn tập/Kiểm tra) guest →
+ * redirect login kèm ?next (pattern me/page). Mỗi tab một section server
+ * component tự fetch — chỉ tab active chạy query, force-dynamic (auth() đọc
+ * cookies; "Làm lại" quiz nhận đề xáo mới).
  */
 export const dynamic = "force-dynamic"; // auth() đọc cookies
 
@@ -35,6 +37,8 @@ export default async function VocabularyHubPage({
   searchParams: Promise<{
     tab?: string;
     book?: string;
+    books?: string;
+    scope?: string;
     status?: string;
     search?: string;
     audio?: string;
@@ -48,9 +52,9 @@ export default async function VocabularyHubPage({
   const sp = await searchParams;
   const tab = resolveHubTab(sp.tab ?? "", userId !== null);
 
-  if ((tab === "overview" || tab === "review") && userId === null) {
+  if ((tab === "overview" || tab === "review" || tab === "quiz") && userId === null) {
     // Pattern me/page: redirect locale-prefix tường minh + ?next quay lại
-    // (tab data cá nhân — guest không thấy)
+    // (tab data cá nhân / nộp bài cần user — guest không thấy)
     redirect(`/${locale}/login?next=/${locale}/vocabulary`);
   }
 
@@ -74,10 +78,11 @@ export default async function VocabularyHubPage({
       {tab === "review" && userId !== null ? (
         <HubReviewSection userId={userId} />
       ) : null}
-      {tab === "quiz" ? (
-        <p className="mt-6 rounded-[18px] border-2 border-dashed border-border bg-card p-6 text-center text-[14px] font-semibold text-muted-foreground">
-          {t("hub.comingSoon")}
-        </p>
+      {tab === "quiz" && userId !== null ? (
+        <HubQuizSection
+          sp={{ scope: sp.scope, book: sp.book, books: sp.books }}
+          locale={locale}
+        />
       ) : null}
     </div>
   );

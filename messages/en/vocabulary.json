@@ -86,6 +86,23 @@
     "review": {
       "start": "Start review"
     },
+    "quiz": {
+      "pickerTitle": "Choose quiz scope",
+      "scope": {
+        "all": "All words",
+        "allHint": "Every word in the library, including words outside books",
+        "book": "Single book",
+        "bookHint": "Take the quiz on one book",
+        "multi": "Multiple books",
+        "multiHint": "Words of the selected books combined — shared words appear once"
+      },
+      "bookSelect": "Choose a book",
+      "bookPlaceholder": "Choose a book…",
+      "start": "Start",
+      "lead": "Quiz of {count} questions mixing multiple choice, word typing and matching.",
+      "changeScope": "Change scope",
+      "empty": "No words in this scope yet — try another one."
+    },
     "library": {
       "searchLabel": "Search words",
       "searchPlaceholder": "Search word or meaning…",

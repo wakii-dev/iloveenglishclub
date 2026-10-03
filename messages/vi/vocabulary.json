@@ -86,6 +86,23 @@
     "review": {
       "start": "Bắt đầu ôn"
     },
+    "quiz": {
+      "pickerTitle": "Chọn phạm vi bài kiểm tra",
+      "scope": {
+        "all": "Tất cả từ",
+        "allHint": "Mọi từ trong thư viện, kể cả từ ngoài sách",
+        "book": "Từng sách",
+        "bookHint": "Làm bài trên 1 sách",
+        "multi": "Nhiều sách",
+        "multiHint": "Hợp từ của các sách được chọn — từ chung chỉ vào đề 1 lần"
+      },
+      "bookSelect": "Chọn sách",
+      "bookPlaceholder": "Chọn sách…",
+      "start": "Bắt đầu",
+      "lead": "Bài kiểm tra {count} câu xen kẽ trắc nghiệm, điền từ và ghép nghĩa.",
+      "changeScope": "Đổi phạm vi",
+      "empty": "Phạm vi này chưa có từ vựng để tạo đề — chọn phạm vi khác nhé."
+    },
     "library": {
       "searchLabel": "Tìm từ vựng",
       "searchPlaceholder": "Tìm từ hoặc nghĩa…",

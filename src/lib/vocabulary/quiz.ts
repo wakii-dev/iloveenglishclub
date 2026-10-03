@@ -18,6 +18,84 @@ export const QUIZ_MODES = ["mixed", ...QUIZ_TYPES] as const;
 export type QuizMode = (typeof QUIZ_MODES)[number];
 export const QUIZ_MODE_DEFAULT: QuizMode = "mixed";
 
+/**
+ * Phạm vi pool đề (SF-3 t-3.2 — quiz tổng hub): 1 book (flow cũ), toàn bảng
+ * words (kể cả từ độc lập), hoặc hợp nhiều book (từ chung 2 book chỉ vào đề
+ * 1 lần). submitQuizAttempt persist quiz_attempts.book_id = bookId với scope
+ * book, NULL với all/multi (attempt không thuộc 1 book cụ thể).
+ */
+export type QuizScope =
+  | { kind: "book"; bookId: number }
+  | { kind: "all" }
+  | { kind: "multi"; bookIds: number[] };
+
+/** Giới hạn IN-list khi scope multi — chặn query phình vô hạn. */
+export const QUIZ_SCOPE_MULTI_MAX_BOOKS = 50;
+
+export type QuizScopeParseResult =
+  | { ok: true; scope: QuizScope }
+  | { ok: false; error: "invalidScope" | "invalidBookId" | "invalidBookIds" };
+
+function positiveInt(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/**
+ * Chuẩn hoá scope từ API/URL — pure để unit test trực tiếp. scope "book"
+ * cần bookId nguyên dương; "multi" cần bookIds 1..50 id nguyên dương (nhận
+ * mảng lẫn chuỗi "1,2,3" từ querystring, trùng id gộp lại); giá trị khác →
+ * invalidScope. caller tự xử lý trường hợp scope vắng mặt (tương thích
+ * contract cũ ?book_id=).
+ */
+export function parseQuizScope(raw: {
+  scope: string;
+  bookId?: unknown;
+  bookIds?: unknown;
+}): QuizScopeParseResult {
+  if (raw.scope === "all") return { ok: true, scope: { kind: "all" } };
+
+  if (raw.scope === "book") {
+    const bookId = positiveInt(raw.bookId);
+    return bookId !== null
+      ? { ok: true, scope: { kind: "book", bookId } }
+      : { ok: false, error: "invalidBookId" };
+  }
+
+  if (raw.scope === "multi") {
+    const rawIds: unknown[] = Array.isArray(raw.bookIds)
+      ? raw.bookIds
+      : typeof raw.bookIds === "string"
+        ? raw.bookIds.split(",")
+        : [];
+    const ids = [
+      ...new Set(
+        rawIds.map((id) =>
+          typeof id === "number" || typeof id === "string"
+            ? positiveInt(id)
+            : null,
+        ),
+      ),
+    ];
+    if (
+      ids.length === 0 ||
+      ids.some((id) => id === null) ||
+      ids.length > QUIZ_SCOPE_MULTI_MAX_BOOKS
+    ) {
+      return { ok: false, error: "invalidBookIds" };
+    }
+    return {
+      ok: true,
+      scope: {
+        kind: "multi",
+        bookIds: ids.filter((id): id is number => id !== null),
+      },
+    };
+  }
+
+  return { ok: false, error: "invalidScope" };
+}
+
 /** 1 từ trong pool đề — nguồn duy nhất cho cả sinh đề lẫn chấm (DB-owned). */
 export type QuizWord = {
   wordId: number;

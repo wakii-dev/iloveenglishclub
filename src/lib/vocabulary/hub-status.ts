@@ -6,6 +6,7 @@
  * rep2=6d, rep3+ interval giãn theo ease).
  */
 import { localize } from "@/lib/content/localize";
+import { parseQuizScope, type QuizScope } from "./quiz";
 
 export const MASTERED_REPS = 3;
 
@@ -95,6 +96,29 @@ export function formatBookTitles(
     : books
         .map((b) => localize(locale, { en: b.titleEn, vi: b.titleVi }))
         .join(", ");
+}
+
+/**
+ * Filter tab Quiz (SF-3 t-3.2) — ?scope=all | ?scope=book&book=<id> |
+ * ?scope=multi&books=1,2. Vắng/không hợp lệ → picker (URL lạ không vỡ trang,
+ * khách chỉ thấy lại form chọn phạm vi).
+ */
+export type QuizTabFilter =
+  | { kind: "picker" }
+  | { kind: "quiz"; scope: QuizScope };
+
+export function parseQuizTabFilters(raw: {
+  scope?: string;
+  book?: string;
+  books?: string;
+}): QuizTabFilter {
+  if (!raw.scope) return { kind: "picker" };
+  const parsed = parseQuizScope({
+    scope: raw.scope,
+    bookId: raw.book,
+    bookIds: raw.books,
+  });
+  return parsed.ok ? { kind: "quiz", scope: parsed.scope } : { kind: "picker" };
 }
 
 /** Trạng thái hiển thị 1 hàng: due đè lên mastered/learning (mốc thời gian). */
