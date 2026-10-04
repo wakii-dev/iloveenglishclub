@@ -177,7 +177,7 @@ export function CrawlEnrichPanel({
             </p>
           ) : null}
 
-          {phase === "preview" && !scanning && counts && wordIds.length > 0 ? (
+          {phase === "confirm" && counts && wordIds.length > 0 ? (
             <>
               <p className="mt-3 text-[13px] font-bold text-muted-foreground">
                 {t("enrich.previewTitle")}
