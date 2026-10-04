@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 // RED lúc viết: module chưa tồn tại (TDD — test trước)
-import { planSync } from "./audio-sync";
+import { AUDIO_SYNC_EXCLUDED_PREFIXES, planSync } from "./audio-sync";
 
 const listed = (pathname: string, size: number) => ({ pathname, size });
 
@@ -49,5 +49,29 @@ describe("planSync — chọn file cần tải từ Blob về public/audio", () 
     });
     expect(plan.unchanged).toBe(1);
     expect(plan.toDownload).toEqual([]);
+  });
+
+  // VU-32 SF-1: dictionary archive Oxford (audio/oxford/ — ~128k mp3) KHÔNG
+  // mirror git — audio-sync phải loại prefix này khỏi plan (acceptance 4).
+  it("prefix audio/oxford/ bị EXCLUDE — không toDownload, không unchanged", () => {
+    const plan = planSync(
+      [
+        listed("audio/oxford/tree.uk.mp3", 12345),
+        listed("audio/oxford/tree.us.mp3", 12345),
+        listed("audio/b/u/l/01.mp3", 100),
+      ],
+      { "audio/oxford/tree.uk.mp3": 12345 }, // local cũng có (hi hữu) → vẫn loại
+    );
+    expect(plan.toDownload).toEqual([listed("audio/b/u/l/01.mp3", 100)]);
+    expect(plan.unchanged).toBe(0);
+  });
+
+  it("prefix audio/oxford-tự-chi-định/ KHÔNG bị loại (chỉ prefix có / cuối)", () => {
+    const plan = planSync([listed("audio/oxford-tmp/x.mp3", 7)], {});
+    expect(plan.toDownload).toEqual([listed("audio/oxford-tmp/x.mp3", 7)]);
+  });
+
+  it("AUDIO_SYNC_EXCLUDED_PREFIXES chứa audio/oxford/", () => {
+    expect(AUDIO_SYNC_EXCLUDED_PREFIXES).toContain("audio/oxford/");
   });
 });

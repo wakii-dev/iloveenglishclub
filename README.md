@@ -76,7 +76,9 @@ Hướng dẫn deploy production (Vercel + Neon + Blob): [`docs/deploy.md`](docs
 | `npm run test:e2e` | E2E admin (Playwright, port 3000, globalSetup admin) |
 | `npm run test:e2e:dictation` | E2E dictation + progress + i18n (port 3110) |
 | `npm run test:coverage` | Vitest + coverage (threshold siết `src/lib/dictation/**`) |
+| `npm run test:store` | Store crawl_entries (DB dev thật — cần DATABASE_URL; `npm test` CI skip) |
 | `npm run db:generate` / `db:push` / `db:migrate` / `db:seed` | Drizzle schema + seed |
+| `npm run crawl:oxford` | Oxford crawl runner — xem section bên dưới |
 
 Scripts QA thêm: `scripts/lighthouse.mjs` (7 URL, median/3 runs, chỉ trên build
 prod) · `scripts/security-scan.mjs` (secrets, exec-bits, allowlist npm audit).
@@ -107,4 +109,36 @@ messages/{en,vi}/            # 8 namespace, parity key được test bảo vệ
 
 - Deploy production: [`docs/deploy.md`](docs/deploy.md)
 - Spec & story: `docs/superpowers/specs/`, `docs/superpowers/brackets/`
+
+## Oxford crawl (VU-32)
+
+Runner crawl TOÀN BỘ Oxford Learner's Dictionaries về data lake `crawl_entries`
+(~63.9k slugs sitemap) — nền cho enrich words (SF-2), admin UI (SF-3).
+
+```bash
+node scripts/oxford-crawl.ts enumerate [--apply]        # sitemap → pending (dry-run: chỉ đếm)
+node scripts/oxford-crawl.ts fetch --limit N [--apply]  # fetch + parse entries pending
+node scripts/oxford-crawl.ts audio --limit N --apply    # mp3 uk/us → Blob audio/oxford/
+```
+
+- **DRY-RUN MẶC ĐỊNH** — không `--apply` chỉ log, không ghi. Flags: `--rate N`
+  (req/s, mặc định **2**), `--limit N`, `--slug x` (fetch 1 slug debug),
+  `--skip-audio` (phase audio: scan-only log cái sẽ tải).
+- **Resumable**: DB là nguồn trạng thái — kill giữa chừng chạy lại tiếp đúng
+  chỗ, không dup. Single-runner assumption: CHỈ chạy 1 runner tại 1 thời điểm
+  (không lock — vi phạm = tự chịu).
+- **robots.txt runtime-guard**: trước mỗi run runner tự fetch robots.txt —
+  `/definition/english/` bị Disallow → từ chối chạy (exit 1). KHÔNG vòng qua.
+- **Token**: `BLOB_READ_WRITE_TOKEN` từ `.env.local` (`vercel env pull
+  --environment development`). Phase audio chỉ ghi Blob — thiếu token exit 1,
+  KHÔNG fallback local. Phase fetch không cần token.
+- **Politeness**: rate 2 r/s + retry backoff 429/5xx; UA riêng
+  `ILEC-VocabBot/1.0 (educational; +site)` (UA thương hiệu AI bị Disallow toàn
+  site — KHÔNG dùng); chỉ đụng `/definition/english/*` (academic/collocations
+  bị Disallow — không đụng). Audio-sync tự loại prefix `audio/oxford/` khỏi
+  mirror git.
+- **Attribution & takedown**: dữ liệu © Oxford University Press — attribution
+  "Nguồn: Oxford Learner's Dictionaries" hiển thị trong app (SF-3/SF-4); nếu
+  OUP yêu cầu dừng: tắt runner + xoá rows `crawl_entries` + prefix Blob
+  `audio/oxford/` là đủ.
 - Bằng chứng QA theo SF: `docs/superpowers/evidence/`, `docs/superpowers/audits/`

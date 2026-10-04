@@ -1,0 +1,173 @@
+# SF-1 demo thật — Gate 3 FI-460 proxy (CLI-equivalent — SF CLI-only, không browser walkthrough)
+# Date: 2026-10-03T21:06:46Z | HEAD: c568f3044e38da5a87060c461e97d404e7b072e7 | worktree sf-1-oxford-crawl-core
+
+## Bước 1: enumerate DRY-RUN (sitemap thật)
+$ node scripts/oxford-crawl.ts enumerate
+◇ injected env (6) from .env.local
+(node:90861) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/oxford-crawl.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[DRY-RUN] phase=enumerate rate=2/s
+Sitemap trả về 63937 slugs /definition/english/ (sample: the-yukon, twenty-four-seven, three-d_2, third-generation, fourth-generation…)
+DRY-RUN — sẽ upsert 63937 slugs (slug mới → pending; có sẵn giữ nguyên). Thêm --apply để ghi.
+[crawl_entries] pending=0 parsed=0 failed=0 (failed quá cap retry: 0)
+exit=0
+
+## Bước 2: enumerate --apply (ghi 63.937 pending)
+$ node scripts/oxford-crawl.ts enumerate --apply
+◇ injected env (6) from .env.local
+(node:91484) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/oxford-crawl.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=enumerate rate=2/s
+Sitemap trả về 63937 slugs /definition/english/ (sample: the-yukon, twenty-four-seven, three-d_2, third-generation, fourth-generation…)
+Đã upsert: 63937 mới (tổng 63937; slug có sẵn giữ nguyên trạng thái).
+[crawl_entries] pending=63937 parsed=0 failed=0 (failed quá cap retry: 0)
+exit=0
+
+## Bước 2b: đếm DB sau apply
+total rows: 63937 | distinct slugs: 63937 (bằng nhau = không dup)
+pending=63937
+
+## Bước 3: enumerate --apply CHẠY LẠI — idempotent, không dup (ACCEPTANCE 1)
+$ node scripts/oxford-crawl.ts enumerate --apply  # lần 2
+◇ injected env (6) from .env.local
+(node:6585) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/oxford-crawl.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=enumerate rate=2/s
+Sitemap trả về 63937 slugs /definition/english/ (sample: the-yukon, twenty-four-seven, three-d_2, third-generation, fourth-generation…)
+Đã upsert: 0 mới (tổng 63937; slug có sẵn giữ nguyên trạng thái).
+[crawl_entries] pending=63937 parsed=0 failed=0 (failed quá cap retry: 0)
+exit=0
+total rows sau lần 2: 63937 (phải vẫn 63937 — inserted 0)
+
+## Bước 4: fetch --limit 50 --apply (ACCEPTANCE 2)
+$ node scripts/oxford-crawl.ts fetch --limit 50 --apply
+◇ injected env (6) from .env.local
+(node:21610) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/oxford-crawl.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=fetch rate=2/s
+Fetch 50 entries pending
+  checkpoint 50/50 (parsed 50, failed 0, redirect 0)
+Xong fetch: parsed 50, failed 0, redirect 0
+[crawl_entries] pending=63887 parsed=50 failed=0 (failed quá cap retry: 0)
+exit=0
+
+### DB verify: mọi entry parsed có headword + raw; field theo entry
+parsed thiếu headword/raw: 0 (phải = 0)
+processed: parsed=50 (tổng = 50)
+  the-yukon → (the) Yukon | /ˈjuːkɒn/ | /ˈjuːkɑːn/ | cefr null | ox3000 false | pos noun | senses 1 | audio true true
+  twenty-four-seven → twenty-four seven | /ˌtwenti ˌfɔː ˈsevn/ | /ˌtwenti ˌfɔːr ˈsevn/ | cefr C2 | ox3000 false | pos adverb | senses 1 | audio true true
+  three-d_2 → three-D | /ˌθriː ˈdiː/ | /ˌθriː ˈdiː/ | cefr null | ox3000 false | pos adjective | senses 1 | audio true true
+  third-generation → third-generation | /ˌθɜːd dʒenəˈreɪʃn/ | /ˌθɜːrd dʒenəˈreɪʃn/ | cefr null | ox3000 false | pos adjective | senses 1 | audio true true
+  fourth-generation → fourth-generation | /ˌfɔːθ dʒenəˈreɪʃn/ | /ˌfɔːrθ dʒenəˈreɪʃn/ | cefr null | ox3000 false | pos adjective | senses 1 | audio true true
+
+## Bước 5: KILL giữa chừng → chạy lại tiếp đúng chỗ, không dup (ACCEPTANCE 5)
+$ (node scripts/oxford-crawl.ts fetch --limit 30 --apply &) ; sleep 8; kill %1  # hủy giữa chừng
+--- log lúc kill:
+◇ injected env (6) from .env.local
+(node:24687) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/oxford-crawl.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=fetch rate=2/s
+Fetch 30 entries pending
+exit-sau-kill: process đã bị SIGTERM
+DB sau kill: parsed=53 pending=63884
+$ node scripts/oxford-crawl.ts fetch --limit 30 --apply  # RESUME sau kill
+◇ injected env (6) from .env.local
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=fetch rate=2/s
+Fetch 30 entries pending
+Xong fetch: parsed 30, failed 0, redirect 0
+[crawl_entries] pending=63854 parsed=83 failed=0 (failed quá cap retry: 0)
+exit=0
+DB sau resume: parsed=83 pending=63854 | dup slugs: 0 | parsed thiếu headword/raw: 0
+tổng processed = 50 + 3 (trước kill) + 30 (resume) = 83 — khớp nghĩa là không dup không mất
+
+## Bước 6: audio --limit 20 --apply → Blob audio/oxford/ (ACCEPTANCE 3, đúng acceptance: limit 20 → ≤40 mp3)
+$ node scripts/oxford-crawl.ts audio --limit 20 --skip-audio  # scan-only trước
+◇ injected env (6) from .env.local
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[DRY-RUN] phase=audio rate=2/s
+Audio: 20 entries, 40 variants → audio/oxford/
+  sẽ tải the-yukon: uk, us
+  sẽ tải twenty-four-seven: uk, us
+
+$ node scripts/oxford-crawl.ts audio --limit 20 --apply
+◇ injected env (6) from .env.local
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[APPLY] phase=audio rate=2/s
+Audio: 20 entries, 40 variants → audio/oxford/
+Xong audio: uploaded 40, skipped 0, errors 0
+[crawl_entries] pending=63854 parsed=83 failed=0 (failed quá cap retry: 0)
+exit=0
+
+## Bước 7: verify Blob thật + audio-sync exclusion
+DB blobs: uk = 20 | us = 20
+  twenty-four-seven → https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/twenty-four
+  three-d_2 → https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/three-d_2.u
+
+$ node -e "list Blob prefix audio/oxford/"
+Blob audio/oxford/ count: 40 (= 40 mp3)
+sample: audio/oxford/a-e.uk.mp3, audio/oxford/a-e.us.mp3, audio/oxford/a-r.uk.mp3, audio/oxford/a-r.us.mp3
+path lệch prefix/shape: 0
+tổng size: 837KB
+
+$ npm run audio:sync  (dry-run mặc định — audio/oxford/ KHÔNG được liệt kê)
+(node:32651) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/scripts/audio-sync.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-1-oxford-crawl-core/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Không có gì mới — 2 file đã khớp (store: 42 entry).
+
+### grep audio/oxford trong output audio-sync:
+0
+0 — KHÔNG mirror (ACCEPTANCE 4 ✓)
+
+## KẾT QUẢ ACCEPTANCE SF-1 (verifier đối chiếu từng dòng)
+| # | Acceptance | Evidence | Kết quả |
+|---|---|---|---|
+| 1 | enumerate --apply đúng số slugs sitemap, re-run không dup | 63937 slugs sitemap → 63937 DB rows (total=distinct); lần 2 inserted 0 | ✅ |
+| 2 | fetch --limit 50 --apply → parsed\|failed, parsed có headword+raw, field theo entry | 50/50 parsed; 'parsed thiếu headword/raw: 0'; C2/null theo entry; uk≠us IPA | ✅ |
+| 3 | audio --limit 20 --apply → đúng số mp3 trên Blob audio/oxford/, thiếu token THROW | 40 variants (20×uk+us) uploaded, 0 errors; Blob list count 40, path shape 100%; thiếu token exit 1 (unit test + guard CLI) | ✅ |
+| 4 | audio-sync KHÔNG kéo audio/oxford/ vào git | dry-run 'Không có gì mới — store: 42 entry', grep audio/oxford = 0 (planSync exclude test RED→GREEN) | ✅ |
+| 5 | Kill giữa chừng → chạy lại tiếp đúng chỗ, không dup | 83 = 50 + 3(kill@8s) + 30(resume); dup slugs 0 | ✅ |
+
+Marker: CLI-equivalent proxy per FI-460 — SF-1 CLI-only (data/CLI SF, không đụng UI), KHÔNG browser walkthrough. Tất cả output ở trên là lệnh chạy THẬT (sitemap/network/DB Neon/Vercel Blob thật), không suy diễn.
+Token BLOB: có trong .env.local (vercel env pull) — phase audio chạy THẬT lên Blob store dự án.
+
+## Bổ sung (fix reviewer nhóm C):
+
+### a) fetch --slug DRY-RUN KHÔNG ghi DB nữa (P1)
+$ node scripts/oxford-crawl.ts fetch --slug zz-probe-dryrun   # slug chưa có + dry-run
+◇ injected env (6) from .env.local
+[DRY-RUN] phase=fetch rate=2/s
+Slug "zz-probe-dryrun" chưa có trong crawl_entries — DRY-RUN không ghi. Chạy --apply để upsert + fetch.
+Fetch 0 entries pending (dry-run — KHÔNG ghi)
+Xong fetch: parsed 0, failed 0, redirect 0 (dry-run — không ghi)
+[crawl_entries] pending=63854 parsed=83 failed=0 (failed quá cap retry: 0)
+rows zz-probe-dryrun sau dry-run: 0 (phải = 0 — dry-run SELECT-only)
+
+### b) thiếu BLOB token → exit 1 (P2 evidence — demo thật)
+$ BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply
+◇ injected env (5) from .env.local
+[APPLY] phase=audio rate=2/s
+Audio: 5 entries, 10 variants → audio/oxford/
+BLOB_READ_WRITE_TOKEN thiếu — phase audio chỉ ghi Blob (helper blob-only, KHÔNG fallback local). Chạy `vercel env pull --environment development`.
+exit=0 (PIPE-ARTIFACT — command chạy qua pipe `| grep -v`; exit=$? đo nhầm exit của grep. Capture ĐÚNG không pipe ở dòng bổ sung b bên dưới: exit=1)
+
+### c) chú thích evidence Bước 6 scan-only: output lúc capture bị cắt bởi head -8 (log thật in tối đa 10 dòng sample theo code slice(0,10)) — lệnh + exit code là thật.
+Bổ sung b (đo exit ĐÚNG — không pipe): BLOB_READ_WRITE_TOKEN= node scripts/oxford-crawl.ts audio --limit 5 --apply → in "[audio] BLOB_READ_WRITE_TOKEN thiếu…" và **exit=1** (đo trực tiếp, không qua pipe).

@@ -1,0 +1,19 @@
+hash: d27e5fd (code commit cuối — evidence commit ngay sau, parent-convention)
+tdd: RED→GREEN
+
+## Test run SF-1 (2026-10-03T21:53:37Z) — vi test suite + store DB-integration (store.integration.test.ts)
+$ npm test
+ Test Files  46 passed (46)
+      Tests  557 passed (557)
+error TS: 0 (npx tsc --noEmit)
+$ npm run test:store (DB dev thật — Neon)
+      Tests  8 passed (8)
+
+Flake note: 1 run (21:31Z) fail tạm thời — Neon pooler transient, re-run sạch.
+
+Marker: CLI-equivalent proxy per FI-460 — SF-1 CLI-only, KHÔNG browser walkthrough. Demo thật: demo-run.txt — 5/5 ACCEPTANCE SF-1 (sitemap/DB Neon/Vercel Blob thật) + token-missing exit=1 đo trực tiếp + --slug dry-run 0 rows.
+
+## RED→GREEN evidence (meta-test P1 fixes):
+- cefr attr: parser cũ → 2 FAIL; fix → 5/5
+- fetch mid-stream/sitemap 500/robots timeout/rate<=0: meta-test RED cũ — 32/32 sau fix (reviewer B APPROVED)
+- --slug dry-run ghi DB: reviewer C P1 — demo: 0 rows sau dry-run
