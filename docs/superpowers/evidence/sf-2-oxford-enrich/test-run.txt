@@ -1,4 +1,4 @@
-hash: e481712 (T10 — evidence commit ngay sau, parent-convention)
+hash: 3fd8208 (commit ngay trước evidence-refresh — parent-convention; code commit cuối: 408bf48 fix fetchCandidates)
 tdd: RED→GREEN
 
 ## Test run SF-2 (2026-10-04) — suite + typecheck + store DB-integration
