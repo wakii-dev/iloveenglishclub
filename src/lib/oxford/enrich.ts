@@ -10,7 +10,7 @@
  * UPDATE COALESCE(col, value) — race-safe, không clobber giá trị ghi giữa chừng.
  * Sau apply gọi revalidateContent() (pattern importVocabulary).
  */
-import { and, asc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, crawlEntries, words } from "@/db/schema";
 import { revalidateContent } from "@/lib/revalidate";
@@ -198,14 +198,18 @@ async function resolveWordRows(args: {
 
 /**
  * Fetch candidate crawl_entries cho cả batch (1 query — superset: slug exact
- * + slug homograph `base_N` + headword trim+lower). Winner chọn sau trong TS
- * (matchWord — pure, deterministic).
+ * + slug homograph `base_N` (1 regex composite — bind 1 param, drizzle KHÔNG
+ * bind được array JS thành text[]) + headword trim+lower). Winner chọn sau
+ * trong TS (matchWord — pure, deterministic).
  */
 async function fetchCandidates(rawWords: string[]): Promise<EnrichEntryData[]> {
   const hws = [...new Set(rawWords.map((w) => w.trim().toLowerCase()))].filter(Boolean);
   if (hws.length === 0) return [];
   const bases = [...new Set(hws.map(slugBase))];
-  const patterns = [...new Set(hws.flatMap(slugPatterns))];
+  // composite regex 1 param — ghép token giữa (slugPatterns trả ^token_[0-9]+$)
+  const homographRegex = `^(${[
+    ...new Set(hws.flatMap((w) => slugPatterns(w).map((p) => p.slice(1, -1)))),
+  ].join("|")})$`;
   return db
     .select({
       id: crawlEntries.id,
@@ -222,10 +226,14 @@ async function fetchCandidates(rawWords: string[]): Promise<EnrichEntryData[]> {
     .from(crawlEntries)
     .where(
       // status='parsed' — pending/failed chưa có data dùng được (spec status machine)
-      sql`${crawlEntries.status} = 'parsed'
-          AND (${crawlEntries.slug} = ANY(${bases}::text[])
-          OR ${crawlEntries.slug} ~ ANY(${patterns}::text[])
-          OR lower(trim(${crawlEntries.word})) = ANY(${hws}::text[]))`,
+      and(
+        eq(crawlEntries.status, "parsed"),
+        or(
+          inArray(crawlEntries.slug, bases),
+          sql`${crawlEntries.slug} ~ ${homographRegex}`,
+          inArray(sql`lower(trim(${crawlEntries.word}))`, hws),
+        ),
+      ),
     );
 }
 
