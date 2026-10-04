@@ -1,0 +1,71 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "VU-37",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-10-05T00:00:00.000Z",
+    "dest": "story-vu37-vocab-memrise",
+    "worktreeModel": "story-hub"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "Vocabulary Memrise-like — learning loop + XP + dashboard (VU-37)"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Nền tảng XP vocab + schema + libs thuần",
+      "tier": 0,
+      "summary": "Phase 1/2 (checkpoint sau tier 2: loop + dashboard live). Demo: migration chạy Neon (vocab_activity/goal/lapses/vocab_steps + leaderboard view UNION ALL cộng XP vocab); transaction award anti-farm (idempotency, lần-đầu-trong-ngày, cap 60/ngày, learn-complete 4 XP chỉ lần đầu); growth stage 8 mức + level chunk 10 trả đúng boundary qua vitest; user vocab-only hiện weekly /top-users.",
+      "design": "none"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Session engine + API /api/vocabulary/session",
+      "tier": 1,
+      "summary": "Demo: GET build phiên learn (level kế tiếp, queue reps=0, đan xen giới-thiệu→MC→nghe→gõ, degenerate 6 từ không crash) / review (due SQL-side) đầy đủ steps KHÔNG lộ đáp án; POST chấm server-side — MỘT grade SM-2/từ/lượt (không instant-mastery), XP rules §4, sai lapses+1, duplicate idempotency không ghi SRS lần 2; stateless sessionKey, reload GET lại queue còn lại.",
+      "design": "none"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Session UI learn + review (design-first)",
+      "tier": 2,
+      "summary": "Demo end-to-end: learn page /vocabulary/learn/[book] đi đủ chuỗi bằng chuột+bàn phím → tổng kết XP; /me/vocabulary review gõ-từ (prefill ?word=, ?scope=), sai requeue trong phiên + lapses+1, reload không mất; nghỉ hưu ReviewFlashcards + route quality cũ (grep = 0, 3311 retired, quiz 3312 vẫn xanh); e2e 3317/3318.",
+      "design": "mock-prototype"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Dashboard home Memrise-style (design-first)",
+      "tier": 1,
+      "summary": "Demo: đăng nhập /vi/vocabulary thấy dashboard — continue card level kế tiếp đúng (sách xong → hoàn thành), goal ring planted-hôm-nay/goal chỉnh được (5/10/20 lưu profiles), streak/due/XP đúng số, garden strip 8 stage, per-book progress bars, Khám phá giữ logic; guest/library/quiz không regression; PATCH goal API; e2e 3319 + update 3314.",
+      "design": "mock-prototype"
+    },
+    {
+      "id": "sf-5",
+      "kind": "sf",
+      "title": "Convergence + QA",
+      "tier": 3,
+      "summary": "Phase 2/2 — final. Demo: back-compat sweep URL cũ; /top-users XP vocab e2e + /me streak ngày vocab-only; toàn bộ vocab suites xanh liên tiếp (3311 retired); rehearsal 6 từ + ~5k rows không timeout; a11y/mobile 375 screenshots; design fidelity so hand-off; VU-32 coexistence (words read-only); security-audit checkpoint sạch P0/P1; runbook + evidence pack.",
+      "design": "none"
+    }
+  ],
+  "edges": [
+    { "from": "epic", "to": "sf-1", "rel": "contains" },
+    { "from": "epic", "to": "sf-2", "rel": "contains" },
+    { "from": "epic", "to": "sf-3", "rel": "contains" },
+    { "from": "epic", "to": "sf-4", "rel": "contains" },
+    { "from": "epic", "to": "sf-5", "rel": "contains" },
+    { "from": "sf-2", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-3", "to": "sf-2", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-5", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-5", "to": "sf-2", "rel": "depends-on" },
+    { "from": "sf-5", "to": "sf-3", "rel": "depends-on" },
+    { "from": "sf-5", "to": "sf-4", "rel": "depends-on" }
+  ]
+}
