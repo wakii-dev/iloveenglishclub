@@ -1,0 +1,35 @@
+# Lighthouse a11y SF-4 (VU-36 T6) — 2 trang đụng
+
+Protocol: lighthouse@12.8.2 (npx -y — KHÔNG sửa scripts/lighthouse.mjs của
+VU-15), --only-categories=accessibility, N=3/URL → MEDIAN, ngưỡng a11y ≥ 0.95
+(HARD). Server: `next start` PROD build (port 3340) — KHÔNG đo trên dev
+(dev-indicator nhiễm điểm — guard scripts/lighthouse.mjs). Fixture book
+qa-sf4-muto4lic seed TRƯỚC build → trang vocabulary prerender mang attribution.
+
+## Public vocabulary page — /vi/books/qa-sf4-muto4lic/vocabulary
+
+  run1 = 1.0 · run2 = 1.0 · run3 = 1.0 → MEDIAN 1.0 ✓ (0 failed audits)
+  File: vocab-vi-run{1,2,3}.json
+
+## Admin crawl dashboard — /admin/vocabulary/crawl (session cookie qua
+--extra-headers; login NextAuth credentials bằng script — không đo trang login)
+
+  run1 = 0.95 · run2 = 0.95 · run3 = 0.95 → MEDIAN 0.95 ✓ (đúng ngưỡng)
+  File: dashboard-run{1,2,3}.json; finalDisplayedUrl = dashboard (cookie nhận).
+
+## Deduction duy nhất (P2 — known-issue, KHÔNG fix trong SF-4)
+
+  audit `color-contrast`: tab active "Crawl Oxford" (admin-nav.tsx:34,
+  class active `bg-muted text-primary`) ~4.46:1 < 4.5:1 text 13px bold.
+  - Gate vẫn PASS (median 0.95 ≥ 0.95 — 3/3 ổn định).
+  - Không fix ở đây: admin-nav là UI toàn admin (story trước), boundary SF-4
+    "KHÔNG re-architect UI SF-1/2/3"; fix màu active-tab = quyết định design
+    nên đi qua 1 flag riêng. Nếu muốn đạt 1.0: đổi active thành
+    `text-foreground` (hoặc tăng đậm bg) — 1 dòng, để story design quyết.
+
+## Ghi chú kỹ thuật
+
+- Dashboard authed đo được nhờ cookie header (lighthouse không login được) —
+  fallback e2e a11y KHÔNG cần: đã đo thật trên prod build.
+- Perf score KHÔNG đo trong SF này (out of scope — chỉ a11y hard theo
+  context pack item 7).
