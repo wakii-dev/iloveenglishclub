@@ -25,7 +25,7 @@
   assertAdmin · `{counts:{pending,parsed,failed,failedMaxAttempts}, samples: failed[](slug+last_error, ≤20), lastRun: max(fetched_at)}` — DERIVED, không bảng mới; counts qua query riêng trong enrich.ts (import `RETRY_ATTEMPTS_CAP` từ store SF-1 — không sửa file).
 - [x] **T7 — route control** `POST /api/admin/vocabulary/crawl/control` + test
   assertAdmin · `refresh-sitemap`: fetchSlugs (SF-1) → diff vs DB slugs → delta >2000 → `{deltaTooLarge:true, hint}` KHÔNG ghi; ≤2000 → upsert chỉ slug mới (drizzle chunk 100, `UPSERT_BATCH_SIZE` import) → `{inserted}` · `retry-failed`: reset failed→pending attempts<5 → `{reset}`. Action khác → 400.
-- [ ] **T8 — route word preview** `POST /api/admin/vocabulary/crawl/word` + test
+- [x] **T8 — route word preview** `POST /api/admin/vocabulary/crawl/word` + test
   assertAdmin · `{word, bookId?}` → cache-first (crawl_entries parsed, winner theo T1) → `{found, from:'cache'|'live', entry:{slug,word,ipaUk,ipaUs,cefr,pos,audioUkBlob,audioUsBlob}|null}` · miss → fetchEntry+parseEntry (SF-1 — SSRF allowlist), KHÔNG ghi DB · outbound CHỈ qua fetchEntry (assertion test).
 - [ ] **T9 — route word approve** `POST /api/admin/vocabulary/crawl/word/approve` + test
   assertAdmin · `{entry (payload y như preview), meaning_vi (bắt buộc), bookId}` → tạo word (ipa uk→us, cefr, source='oxford-ld') + link book (duplicate → reuse + attach + COALESCE cefr/source) · AUDIO 1-mp3 exception: audioUkBlob payload → DB row blob → download qua `downloadMp3`+`putBlobAudio` (blob-only, UK→US) → throw → word VẪN tạo KHÔNG audio (không hotlink).

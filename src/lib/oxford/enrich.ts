@@ -16,6 +16,8 @@ import { bookWords, crawlEntries, words } from "@/db/schema";
 import { revalidateContent } from "@/lib/revalidate";
 import { RETRY_ATTEMPTS_CAP, UPSERT_BATCH_SIZE, type SqlClient } from "./store";
 import { fetchSlugs } from "./sitemap";
+import { fetchEntry } from "./fetch";
+import { parseEntry } from "./parse";
 import { matchWord } from "./match";
 
 export const ENRICH_MAX_WORDS = 200;
@@ -42,6 +44,7 @@ export type EnrichEntryData = {
   slug: string;
   word: string | null;
   cefr: string | null;
+  pos: string | null;
   ipaUk: string | null;
   ipaUs: string | null;
   audioUkBlob: string | null;
@@ -205,6 +208,7 @@ async function fetchCandidates(rawWords: string[]): Promise<EnrichEntryData[]> {
       slug: crawlEntries.slug,
       word: crawlEntries.word,
       cefr: crawlEntries.cefr,
+      pos: crawlEntries.pos,
       ipaUk: crawlEntries.ipaUk,
       ipaUs: crawlEntries.ipaUs,
       audioUkBlob: crawlEntries.audioUkBlob,
@@ -213,9 +217,11 @@ async function fetchCandidates(rawWords: string[]): Promise<EnrichEntryData[]> {
     })
     .from(crawlEntries)
     .where(
-      sql`${crawlEntries.slug} = ANY(${bases}::text[])
+      // status='parsed' — pending/failed chưa có data dùng được (spec status machine)
+      sql`${crawlEntries.status} = 'parsed'
+          AND (${crawlEntries.slug} = ANY(${bases}::text[])
           OR ${crawlEntries.slug} ~ ANY(${patterns}::text[])
-          OR lower(trim(${crawlEntries.word})) = ANY(${hws}::text[])`,
+          OR lower(trim(${crawlEntries.word})) = ANY(${hws}::text[]))`,
     );
 }
 
@@ -395,6 +401,77 @@ export async function refreshSitemapDb(): Promise<RefreshSitemapResult> {
     inserted += rows.length;
   }
   return { inserted };
+}
+
+// ---------------------------------------------------------------------------
+// Crawl-on-add preview (cache-first — spec §[api])
+// ---------------------------------------------------------------------------
+
+export type PreviewEntry = {
+  slug: string;
+  word: string;
+  ipaUk: string | null;
+  ipaUs: string | null;
+  cefr: string | null;
+  pos: string | null;
+  audioUkBlob: string | null;
+  audioUsBlob: string | null;
+};
+
+export type PreviewResult = {
+  found: boolean;
+  from: "cache" | "live";
+  entry: PreviewEntry | null;
+};
+
+function toPreviewEntry(row: EnrichEntryData): PreviewEntry {
+  return {
+    slug: row.slug,
+    word: row.word ?? row.slug,
+    ipaUk: row.ipaUk,
+    ipaUs: row.ipaUs,
+    cefr: row.cefr,
+    pos: row.pos,
+    audioUkBlob: row.audioUkBlob,
+    audioUsBlob: row.audioUsBlob,
+  };
+}
+
+/**
+ * Preview crawl-on-add: cache-first — crawl_entries parsed trúng (winner theo
+ * match rule) → KHÔNG gọi Oxford; miss → live fetchEntry + parseEntry (SF-1 —
+ * SSRF allowlist 2 host) KHÔNG ghi DB (spec: runner mới ghi).
+ * Lỗi mạng/HTTP từ fetchEntry ném ra — route map 502.
+ */
+export async function previewWordDb(word: string): Promise<PreviewResult> {
+  const candidates = await fetchCandidates([word]);
+  const picked = matchWord(word, candidates);
+  if (picked !== null) {
+    const full = candidates.find((c) => c.id === picked.id);
+    if (full) {
+      return { found: true, from: "cache", entry: toPreviewEntry(full) };
+    }
+  }
+  // live — slug candidate từ word (slug không có space; homograph _N qua regex
+  // chỉ match được khi đã cache — live thử đúng 1 slug gốc)
+  const result = await fetchEntry(slugBase(word));
+  if (result === null) return { found: false, from: "live", entry: null };
+  const parsed = parseEntry(result.html);
+  if (parsed === null) return { found: false, from: "live", entry: null };
+  return {
+    found: true,
+    from: "live",
+    entry: {
+      slug: result.finalSlug, // redirect-corrected (tree_1 → tree)
+      word: parsed.headword,
+      ipaUk: parsed.ipaUk,
+      ipaUs: parsed.ipaUs,
+      cefr: parsed.cefr,
+      pos: parsed.pos,
+      audioUkBlob: null, // live chưa tải blob — approve sẽ tải 1 mp3 qua helper
+      audioUsBlob: null,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

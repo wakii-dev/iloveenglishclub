@@ -42,11 +42,17 @@ vi.mock("@/lib/revalidate", () => ({ CONTENT_TAG: "content", revalidateContent }
 const sitemapMock = vi.hoisted(() => ({ fetchSlugs: vi.fn() }));
 vi.mock("./sitemap", () => ({ fetchSlugs: sitemapMock.fetchSlugs }));
 
+const fetchMock = vi.hoisted(() => ({ fetchEntry: vi.fn() }));
+vi.mock("./fetch", () => ({ fetchEntry: fetchMock.fetchEntry }));
+const parseMock = vi.hoisted(() => ({ parseEntry: vi.fn() }));
+vi.mock("./parse", () => ({ parseEntry: parseMock.parseEntry }));
+
 import {
   buildFill,
   crawlStatsDb,
   enrichWordsDb,
   ENRICH_MAX_WORDS,
+  previewWordDb,
   refreshSitemapDb,
   retryFailedDb,
   slugBase,
@@ -57,6 +63,7 @@ import {
 const entry = (over: Partial<EnrichEntryData> & { id: number; slug: string }): EnrichEntryData => ({
   word: null,
   cefr: null,
+  pos: null,
   ipaUk: null,
   ipaUs: null,
   audioUkBlob: null,
@@ -241,6 +248,92 @@ describe("refreshSitemapDb (diff upsert — chỉ slug mới)", () => {
   it("fetchSlugs lỗi (network/robots) → ném ra (route map 502)", async () => {
     sitemapMock.fetchSlugs.mockRejectedValue(new Error("HTTP 500"));
     await expect(refreshSitemapDb()).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("previewWordDb (crawl-on-add — cache-first, KHÔNG ghi DB)", () => {
+  it("cache trúng (parsed) → from:'cache', KHÔNG gọi Oxford", async () => {
+    dbState.queue = [
+      [
+        entry({
+          id: 10,
+          slug: "tree",
+          word: "tree",
+          ipaUk: "/triː/",
+          cefr: "A1",
+          example: "an oak tree",
+          audioUkBlob: "https://blob.example/tree.uk.mp3",
+        }),
+      ],
+    ];
+    const result = await previewWordDb("Tree");
+    expect(result).toEqual({
+      found: true,
+      from: "cache",
+      entry: {
+        slug: "tree",
+        word: "tree",
+        ipaUk: "/triː/",
+        ipaUs: null,
+        cefr: "A1",
+        pos: null,
+        audioUkBlob: "https://blob.example/tree.uk.mp3",
+        audioUsBlob: null,
+      },
+    });
+    expect(fetchMock.fetchEntry).not.toHaveBeenCalled();
+  });
+
+  it("cache miss → live fetch slugBase + parse → from:'live' (blob null — chưa tải)", async () => {
+    dbState.queue = [[]]; // không candidate
+    fetchMock.fetchEntry.mockResolvedValue({ html: "<html/>", finalSlug: "three-d" });
+    parseMock.parseEntry.mockReturnValue({
+      headword: "three-D",
+      pos: "noun",
+      ipaUk: null,
+      ipaUs: "/θriː/",
+      audioUkUrl: null,
+      audioUsUrl: "https://x/us.mp3",
+      cefr: null,
+      ox3000: false,
+      senses: [],
+      idioms: [],
+      phrasalVerbs: [],
+    });
+    const result = await previewWordDb("three d");
+    expect(fetchMock.fetchEntry).toHaveBeenCalledWith("three-d");
+    expect(result.found).toBe(true);
+    expect(result.from).toBe("live");
+    expect(result.entry).toEqual({
+      slug: "three-d",
+      word: "three-D",
+      ipaUk: null,
+      ipaUs: "/θriː/",
+      cefr: null,
+      pos: "noun",
+      audioUkBlob: null,
+      audioUsBlob: null,
+    });
+  });
+
+  it("live 404 (fetchEntry null) → {found:false, from:'live', entry:null}", async () => {
+    dbState.queue = [[]];
+    fetchMock.fetchEntry.mockResolvedValue(null);
+    const result = await previewWordDb("zzznotaword");
+    expect(result).toEqual({ found: false, from: "live", entry: null });
+  });
+
+  it("live parse không headword → found:false", async () => {
+    dbState.queue = [[]];
+    fetchMock.fetchEntry.mockResolvedValue({ html: "<html/>", finalSlug: "x" });
+    parseMock.parseEntry.mockReturnValue(null);
+    expect(await previewWordDb("broken")).toEqual({ found: false, from: "live", entry: null });
+  });
+
+  it("live fetch lỗi mạng → ném ra (route map 502)", async () => {
+    dbState.queue = [[]];
+    fetchMock.fetchEntry.mockRejectedValue(new Error("timeout"));
+    await expect(previewWordDb("tree")).rejects.toThrow("timeout");
   });
 });
 
