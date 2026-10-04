@@ -50,6 +50,14 @@ export async function downloadMp3(
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`downloadMp3: HTTP ${res.status} — ${url}`);
+  // fetch mặc định redirect:"follow" — re-check host TRÊN URL CUỐI (res.url)
+  // như fetch.ts:129 (SSRF defense-in-depth; review B P2 VU-36). Real fetch
+  // LUÔN set res.url; res.url rỗng chỉ xảy ra với Response mock (unit test).
+  if (res.url !== "" && !isAllowedAudioUrl(res.url)) {
+    throw new Error(
+      `downloadMp3: redirect ra host không thuộc allowlist Oxford — ${res.url}`,
+    );
+  }
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.byteLength > maxBytes) {
     throw new SizeCapError(maxBytes, url);

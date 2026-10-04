@@ -351,6 +351,8 @@ export type BookVocabWord = {
   meaningVi: string;
   example: string | null;
   audioUrl: string | null;
+  /** Nguồn dữ liệu (VU-32 SF-4 attribution) — 'oxford-ld' khi enrich/crawl-on-add đã điền; teacher-only → null. */
+  source: string | null;
 };
 
 /**
@@ -372,6 +374,7 @@ export async function getBookVocabulary(
           meaningVi: words.meaningVi,
           example: words.example,
           audioUrl: words.audioUrl,
+          source: words.source,
         })
         .from(bookWords)
         .innerJoin(words, eq(bookWords.wordId, words.id))

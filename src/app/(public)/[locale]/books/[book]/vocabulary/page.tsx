@@ -97,6 +97,11 @@ export default async function BookVocabularyPage({
                     {entry.example}
                   </span>
                 ) : null}
+                {entry.source === "oxford-ld" ? (
+                  <span className="mt-1 block text-[12px] font-medium text-muted-foreground">
+                    {t("source")}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}

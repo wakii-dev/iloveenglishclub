@@ -1,0 +1,55 @@
+# Rehearsal run SF-4 (VU-36 T3) — bulk rehearsal THẬT 100 từ
+
+Base DB: Neon dev shared (DATABASE_URL từ .env.local — vercel env pull).
+Baseline trước rehearsal: parsed=83, pending=63,854, failed=0 (enumerate đã
+có từ demo trước — KHÔNG re-enumerate, Phase 0 posted VU-36).
+Single-runner verified: fetch cuối trước rehearsal 2026-10-03T21:22,
+watchdog chỉ có sf-4 RUNNING.
+
+## Run 1 — fetch --limit 100 --apply, SIGKILL giữa chừng
+
+$ node scripts/oxford-crawl.ts fetch --limit 100 --apply   (background)
+  → robots guard PASS → "[APPLY] phase=fetch rate=2/s" → "Fetch 100 entries pending"
+$ sleep 28; kill -9 $PID
+
+Sau kill (log /tmp/sf4-rehearsal-run1.log):
+  parsed 83 → 111 (+28 trong 28s), pending 63,854 → 63,826
+  pending TRƯỚC id parsed đầu tiên = 0 (claim theo id — in-flight chưa mark
+  vẫn pending, không mất hàng, không dup)
+
+## Run 2 — resume (cùng lệnh, chạy lại)
+
+$ node scripts/oxford-crawl.ts fetch --limit 100 --apply
+  real 1m37.26s, exit 0 (log /tmp/sf4-rehearsal-run2.log)
+  checkpoint 50/100 (parsed 50, failed 0, redirect 0)
+  checkpoint 100/100 (parsed 100, failed 0, redirect 0)
+  [crawl_entries] pending=63,726 parsed=211 failed=0
+
+## KILL → RESUME CONTRACT (assert SQL trên set 100 id run 1 claim)
+
+Set run-1 = 28 parsed gần nhất + 72 pending id thấp nhất (/tmp/sf4-run1-ids.json,
+id 258..357). Sau resume:
+  total=100 · stillPending=0 · parsed=100 · failed=0 · dupSlugs=0 ·
+  maxAttempts=1 · mọi row parsed đều có headword
+→ resume TỪ ĐÚNG CHỖ DỪNG (72 in-flight re-fetch), không dup, không sót.
+
+Data thật (sample): ablative_1 → "ablative" /ˈæblətɪv/ C2 adjective.
+
+## Số liệu thật (vào runbook)
+
+- Tốc độ fetch THẬT: ~1.0 từ/s (run 2: 100 entries / 97s) — rate cap 2 req/s
+  là trần politeness, bottleneck thực = latency fetch+parse+DB write (Neon).
+- Parse-fail rate: 0/128 (0%) hôm nay; redirect: 0/100. (Rate thật theo ngày —
+  dashboard failed tăng = dấu hiệu Oxford redesign, runbook §monitor.)
+  ⚠ CƠ CHẾ attempts-tăng-trên-entry-lỗi CHƯA được chứng minh trên dữ liệu lỗi
+  thật (0 failed trong rehearsal — vacuous, review A P2#4): path markFailed
+  (attempts+1) có unit test + path kill-resume đã chứng minh (attempts giữ 0
+  cho in-flight bị kill, đúng thiết kế); verify trên entry lỗi thật là việc
+  operator khi chạy full crawl (dashboard hiển thị failed + attempts).
+- DB size: avg raw jsonb 709 B/entry + row content ~964 B; crawl_entries toàn
+  bảng 63,937 rows = 11.2 MB (pending không raw). Ước tính full crawl text-only:
+  63.9k × ~1.2 KB ≈ ~75 MB DB (thấp hơn ước tính spec 300MB).
+- Audio: KHÔNG tải trong rehearsal này (phase fetch text-only). Budget Blob
+  ghi ở runbook với cờ ước tính (mp3 Oxford ~10-30 KB/variant).
+- Thời gian full crawl text-only ước tính từ tốc độ thật: 63.9k / 1.03/s ≈
+  ~17 h (không phải 9h như ước tính spec — ghi số thật).
