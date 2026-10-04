@@ -87,6 +87,11 @@ test.describe("Full-chain SF-4", () => {
     await page.goto(`/admin/books/${slug}/vocabulary`);
     await expect(page).toHaveURL((u) => u.pathname === `/admin/books/${slug}/vocabulary`);
 
+    // GUARD hermetic runtime (review A P2#5): abort MỌI request tới host
+    // Oxford ở tầng browser — nếu regression làm preview live-fetch (đụng
+    // mạng thật) test fail ngay thay vì pass âm thầm
+    await page.route(/oxfordlearnersdictionaries\.com/, (route) => route.abort());
+
     // crawl-on-add dialog — preview cache-hit REAL (crawl entry qasf4maple seeded)
     await page.getByRole("button", { name: "Thêm từ từ Oxford" }).click();
     await expect(page.getByRole("heading", { name: "Thêm từ từ Oxford" })).toBeVisible();
@@ -127,6 +132,8 @@ test.describe("Full-chain SF-4", () => {
       audioUrl: AUDIO_REL_PATH,
       linked: 1,
     });
+
+    await page.unroute(/oxfordlearnersdictionaries\.com/);
   });
 
   test("full-chain: enrich REAL fill-empty → attribution xuất hiện trên public + tra từ thấy dữ liệu mới", async ({
@@ -231,15 +238,18 @@ test.describe("Full-chain SF-4", () => {
     page,
   }, testInfo) => {
     testInfo.setTimeout(240_000);
+    // email admin KHÔNG hardcode — cùng logic default như admin-lib.ts:197
+    // (review A P2#2): .env.local đổi ADMIN_EMAIL thì seed/cleanup theo đúng user
+    const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@ilec.dev").trim().toLowerCase();
     // due progress cho admin trên 2 từ CÓ audio (oak + elm sau enrich) —
     // xoá progress cũ của admin (tài khoản QA dùng chung) để đếm due deterministic
     const c = db();
-    await c`delete from user_word_progress where user_id = (select id from users where email = 'admin@ilec.dev')`;
+    await c`delete from user_word_progress where user_id = (select id from users where email = ${adminEmail})`;
     await c`
       insert into user_word_progress (user_id, word_id, ease, interval_days, due_at, reps)
       select u.id, w.id, 2.5, 0, now() - interval '1 hour', 0
       from users u join words w on w.word in ('qasf4oak', 'qasf4elm')
-      where u.email = 'admin@ilec.dev'`;
+      where u.email = ${adminEmail}`;
     await c.end();
 
     await loginAsAdmin(page);

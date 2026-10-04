@@ -12,10 +12,11 @@ import dotenv from "dotenv";
  * (`/\/oxford-crawl[^/]*\.spec\.ts$/`) KHÔNG nhặt chéo khi chạy
  * test:e2e:oxford (suite 7 test SF-3 phải đứng yên).
  *
- * Upstream Oxford MOCK: crawl-on-add preview cache-miss fulfill ở tầng BROWSER
- * (page.route) như SF-3 — approve đi REAL API (payload không audioUkUrl →
- * KHÔNG download mp3 → word tạo không audio, fallback documented). Enrich thuần
- * DB (fixture crawl entry seeded parsed). 0 gọi Oxford thật trong e2e.
+ * Upstream Oxford KHÔNG bị gọi trong e2e: crawl-on-add đi cache-hit REAL API
+ * (crawl entry seeded — resolveApproveAudio DB-lookup-first lấy audio từ entry,
+ * KHÔNG download) + test 3 route-abort mọi request tới host Oxford ở tầng
+ * browser làm guard hermetic runtime (regression làm preview live-fetch →
+ * test fail ngay). Enrich thuần DB (fixture crawl entry seeded parsed).
  */
 dotenv.config({ path: ".env.local" });
 

@@ -138,7 +138,10 @@ export async function ensureOxfordFullchainFixture(): Promise<FixtureInfo> {
 
   const run = Date.now().toString(36);
   const bookSlug = `${BOOK_SLUG_PREFIX}${run}`;
-  const bookId = 950000 + (Date.now() % 90000);
+  // dải id RỜI fixture SF-3 (910000..999999 — oxford-crawl-fixture.ts): base
+  // 1_000_000 + %30000 → 1000000..1029999, không giao nhau (2 lane song song
+  // 2 worktree trên DB chung không đè slug nhau qua on-conflict-id)
+  const bookId = 1000000 + (Date.now() % 30000);
   await c`
     insert into books (id, slug, title_en, title_vi, cefr_label, color, sort_order)
     values (${bookId}, ${bookSlug}, 'QA SF4 fullchain', 'QA SF4 fullchain', 'A1', '#000000', 950)

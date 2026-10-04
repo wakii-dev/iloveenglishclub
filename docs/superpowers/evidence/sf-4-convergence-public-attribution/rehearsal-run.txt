@@ -41,6 +41,11 @@ Data thật (sample): ablative_1 → "ablative" /ˈæblətɪv/ C2 adjective.
   là trần politeness, bottleneck thực = latency fetch+parse+DB write (Neon).
 - Parse-fail rate: 0/128 (0%) hôm nay; redirect: 0/100. (Rate thật theo ngày —
   dashboard failed tăng = dấu hiệu Oxford redesign, runbook §monitor.)
+  ⚠ CƠ CHẾ attempts-tăng-trên-entry-lỗi CHƯA được chứng minh trên dữ liệu lỗi
+  thật (0 failed trong rehearsal — vacuous, review A P2#4): path markFailed
+  (attempts+1) có unit test + path kill-resume đã chứng minh (attempts giữ 0
+  cho in-flight bị kill, đúng thiết kế); verify trên entry lỗi thật là việc
+  operator khi chạy full crawl (dashboard hiển thị failed + attempts).
 - DB size: avg raw jsonb 709 B/entry + row content ~964 B; crawl_entries toàn
   bảng 63,937 rows = 11.2 MB (pending không raw). Ước tính full crawl text-only:
   63.9k × ~1.2 KB ≈ ~75 MB DB (thấp hơn ước tính spec 300MB).
