@@ -111,15 +111,18 @@ async function seedWordsBatch(
   bookId: number,
   specs: SeedWordSpec[],
 ): Promise<Map<string, number>> {
+  // postgres.js EscapableArray là class nominal — multi-row VALUES qua helper
+  // cần cast kiểu (runtime postgres.js chấp nhận mảng thuần)
+  const wordRows = specs.map((s) => [s.word, s.ipa, s.meaning]) as unknown as postgres.EscapableArray[];
   const rows = await c<{ id: number; word: string }[]>`
     insert into words (word, ipa, meaning_vi)
-    values ${c(specs.map((s) => [s.word, s.ipa, s.meaning]))}
+    values ${c(wordRows)}
     on conflict (word) do update set meaning_vi = excluded.meaning_vi
     returning id, word`;
   const idByWord = new Map(rows.map((r) => [r.word, r.id]));
   const links = specs
     .map((s, i) => [bookId, idByWord.get(s.word), i + 1])
-    .filter((l): l is [number, number, number] => l[1] !== undefined);
+    .filter((l): l is [number, number, number] => l[1] !== undefined) as unknown as postgres.EscapableArray[];
   await c`
     insert into book_words (book_id, word_id, "order")
     values ${c(links)}
@@ -160,6 +163,18 @@ export async function ensureOxfordCrawlFixture(): Promise<FixtureInfo> {
     ipaUk: "/bʊk/",
     cefr: "A2",
     pos: "noun",
+  });
+  // crawl-on-add cache-hit approve: entry CÓ blob nhưng KHÔNG nằm trong book
+  // (không là word) → approve tạo word MỚI 201 + audioAttached. Không đụng
+  // enrich counts (không phải book word — match chỉ quét words của book).
+  await seedCrawlEntryMirror(c, {
+    slug: `${WORD_PREFIX}cache-add`,
+    word: "qasf3-cache-add",
+    ipaUk: "/kæʃ/",
+    cefr: "B1",
+    pos: "noun",
+    audioUkBlob: "https://blob.vercel-storage.com/audio/oxford/qasf3-cache-add.uk-fake.mp3",
+    example: "Warm the qasf3-cache-add.",
   });
   await seedCrawlEntryMirror(c, {
     slug: `${WORD_PREFIX}crash-me`,

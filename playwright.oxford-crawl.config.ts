@@ -27,7 +27,8 @@ export default defineConfig({
   testMatch: /\/oxford-crawl[^/]*\.spec\.ts$/,
   globalSetup: "./e2e/oxford-crawl-global-setup.ts",
   globalTeardown: "./e2e/oxford-crawl-global-teardown.ts",
-  timeout: 90_000,
+  timeout: 120_000,
+  expect: { timeout: 15_000 }, // pattern admin config — compile lạnh login/action
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
   retries: 0,
