@@ -19,8 +19,9 @@ qa-sf4-muto4lic seed TRƯỚC build → trang vocabulary prerender mang attribut
 
 ## Deduction duy nhất (P2 — known-issue, KHÔNG fix trong SF-4)
 
-  audit `color-contrast`: tab active "Crawl Oxford" (admin-nav.tsx:34,
-  class active `bg-muted text-primary`) ~4.46:1 < 4.5:1 text 13px bold.
+  audit `color-contrast`: tab active "Crawl Oxford" (admin-nav.tsx:38,
+  class active `bg-muted text-primary`) contrast 4.31:1 < 4.5:1 text 13px
+  bold (fg #c2482e / bg #fbeedd — theo details JSON cả 3 run).
   - Gate vẫn PASS (median 0.95 ≥ 0.95 — 3/3 ổn định).
   - Không fix ở đây: admin-nav là UI toàn admin (story trước), boundary SF-4
     "KHÔNG re-architect UI SF-1/2/3"; fix màu active-tab = quyết định design

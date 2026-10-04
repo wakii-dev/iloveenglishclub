@@ -46,14 +46,16 @@ node scripts/oxford-crawl.ts audio    [--limit N] [--apply] [--skip-audio]  # mp
 ## 3. Chạy dài: nohup / cron
 
 ```bash
-# nohup (khuyến nghị — log + pid rõ):
+# nohup (khuyến nghị — log + pid rõ; path GHI ĐƯỢC bởi user chạy app —
+# tránh /var/log, /var/run vì thường root-owned):
+mkdir -p /srv/ilec/logs
 nohup node scripts/oxford-crawl.ts fetch --limit 5000 --apply \
-  >> /var/log/oxford-fetch.log 2>&1 &
-echo $! > /var/run/oxford-fetch.pid
+  >> /srv/ilec/logs/oxford-fetch.log 2>&1 &
+echo $! > /srv/ilec/logs/oxford-fetch.pid
 
-# cron: chạyfetch theo khung giờ thấp điểm (mỗi lệnh tự dừng khi hết pending):
-# 17 3 * * *  cd /srv/ilec && node scripts/oxford-crawl.ts fetch --limit 5000 --apply >> log 2>&1
-# 47 4 * * *  cd /srv/ilec && node scripts/oxford-crawl.ts audio --limit 2000 --apply >> log 2>&1
+# cron: chạy fetch theo khung giờ thấp điểm (mỗi lệnh tự dừng khi hết pending):
+# 17 3 * * *  cd /srv/ilec && node scripts/oxford-crawl.ts fetch --limit 5000 --apply >> logs/oxford-fetch.log 2>&1
+# 47 4 * * *  cd /srv/ilec && node scripts/oxford-crawl.ts audio --limit 2000 --apply >> logs/oxford-audio.log 2>&1
 ```
 
 Mỗi run claim tối đa `--limit` rows pending (id tăng dần) — chạy nhiều lần
@@ -90,8 +92,12 @@ Khuyến nghị vận hành: chia full crawl thành nhiều đêm (fetch --limit
 # 1. TẮT runner: kill pid (an toàn giữa chừng — state trong DB) + gỡ cron
 kill $(cat /var/run/oxford-fetch.pid)
 
-# 2. XOÁ data crawl (toàn bộ entry):
-psql "$DATABASE_URL" -c "DELETE FROM crawl_entries;"
+# 2. XOÁ data crawl (toàn bộ entry) — REVIEW TRƯỚC KHI COMMIT (bulk delete
+#    vĩnh viễn): chạy trong transaction, nhìn count rồi mới commit:
+psql "$DATABASE_URL" -c "BEGIN; SELECT count(*), pg_size_pretty(pg_total_relation_size('crawl_entries')) FROM crawl_entries;"
+#    (kiểm số liệu đúng như kỳ vọng — rồi mới:)
+psql "$DATABASE_URL" -c "BEGIN; DELETE FROM crawl_entries; -- kiểm affected rows -- COMMIT;"
+#    rollback nếu sai: thay COMMIT bằng ROLLBACK;
 #    (words đã enrich/crawl-on-add có words.source='oxford-ld' giữ nguyên —
 #     là data đã vào books; xoá riêng nếu OUP yêu cầu: delete words where source='oxford-ld')
 

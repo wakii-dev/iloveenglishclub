@@ -53,6 +53,24 @@ describe("downloadMp3 — inject fetch", () => {
       }),
     ).rejects.toThrow(/size/i);
   });
+
+  // Review B P2 (VU-36): fetch mặc định redirect:"follow" — host CUỐI (res.url
+  // sau redirect) phải re-check allowlist như fetch.ts:129 — redirect ra host
+  // lạ → throw, KHÔNG trả buffer. (Response constructor không nhận url — mock
+  // plain object y shape downloadMp3 đọc: ok/status/url/arrayBuffer.)
+  it("redirect ra host ngoài allowlist (res.url lạ) → throw sau fetch", async () => {
+    const evilRes = {
+      ok: true,
+      status: 200,
+      url: "https://evil.example.com/redirected.mp3",
+      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
+    };
+    await expect(
+      downloadMp3(MP3_URL, {
+        fetchImpl: (async () => evilRes as unknown as Response) as typeof fetch,
+      }),
+    ).rejects.toThrow(/allowlist/);
+  });
 });
 
 describe("syncEntryAudio — resumable qua blob hiện có, throw propagation", () => {
