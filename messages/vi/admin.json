@@ -2,7 +2,8 @@
   "nav": {
     "dashboard": "Tổng quan",
     "books": "Sách",
-    "users": "Người dùng"
+    "users": "Người dùng",
+    "crawl": "Crawl Oxford"
   },
   "common": {
     "create": "Tạo mới",
@@ -235,5 +236,93 @@
     "newUsers": "Người dùng mới nhất",
     "usersEmpty": "Chưa có người dùng nào đăng ký.",
     "viewBook": "Mở sách"
+  },
+  "crawl": {
+    "title": "Crawl Oxford",
+    "lead": "Theo dõi tiến độ crawl từ điển Oxford Learner's Dictionaries về data lake nội bộ.",
+    "stats": {
+      "pending": "Chờ crawl",
+      "parsed": "Đã parse",
+      "failed": "Lỗi",
+      "failedMaxAttempts": "Lỗi quá 5 lần",
+      "samples": "Entry lỗi (slug + lỗi cuối)",
+      "samplesEmpty": "Không có entry lỗi.",
+      "lastRun": "Lần crawl cuối",
+      "never": "Chưa có",
+      "noError": "—"
+    },
+    "controls": {
+      "refreshSitemap": "Refresh sitemap",
+      "refreshing": "Đang refresh…",
+      "retryFailed": "Retry entry lỗi",
+      "retrying": "Đang retry…",
+      "refreshed": "Đã thêm {count} slug mới từ sitemap.",
+      "deltaTooLarge": "Delta {delta} slug vượt giới hạn request — chạy runner enumerate bên dưới.",
+      "retried": "Đã reset {count} entry lỗi về hàng chờ.",
+      "runnerHint": "Runner chạy nền ngoài API (cron/nohup):",
+      "cmdEnumerate": "node scripts/oxford-crawl.ts enumerate --apply",
+      "cmdFetch": "node scripts/oxford-crawl.ts fetch --apply",
+      "cmdAudio": "node scripts/oxford-crawl.ts audio --apply",
+      "copied": "Đã copy lệnh."
+    },
+    "attribution": "Nguồn: Oxford Learner's Dictionaries",
+    "enrich": {
+      "open": "Điền dữ liệu thiếu từ Oxford",
+      "title": "Điền dữ liệu thiếu từ Oxford",
+      "scanning": "Đang quét từ của sách…",
+      "previewTitle": "Xem trước (chưa ghi dữ liệu)",
+      "candidates": "Từ khớp crawl_entries",
+      "fillableIpa": "Điền được IPA",
+      "fillableExample": "Điền được ví dụ",
+      "fillableCefr": "Điền được CEFR",
+      "fillableAudio": "Điền được audio",
+      "confirm": "Chạy điền ({count} từ)",
+      "running": "Đang điền… ({done}/{total} từ)",
+      "reportTitle": "Kết quả từng từ",
+      "reportSummary": "{filled} từ được điền · {skipped} bỏ qua · {total} từ.",
+      "filled": "điền",
+      "skipped": "có sẵn",
+      "reasonNoMatch": "không khớp crawl_entries",
+      "reasonNoAudioBlob": "entry không có audio blob — chạy phase audio của runner",
+      "done": "Hoàn tất điền dữ liệu.",
+      "empty": "Sách chưa có từ nào.",
+      "chunkFailed": "Lô {index} lỗi — đã ghi vào report, tiếp tục các lô còn lại."
+    },
+    "add": {
+      "open": "Thêm từ từ Oxford",
+      "title": "Thêm từ từ Oxford",
+      "wordLabel": "Từ tiếng Anh",
+      "placeholder": "VD: tree",
+      "lookup": "Tra Oxford",
+      "looking": "Đang tra…",
+      "fromCache": "từ kho crawl",
+      "fromLive": "tải trực tiếp",
+      "notFound": "Không tìm thấy từ này trên Oxford.",
+      "fieldIpaUk": "IPA (UK)",
+      "fieldIpaUs": "IPA (US)",
+      "fieldPos": "Từ loại",
+      "fieldCefr": "CEFR",
+      "hasAudio": "Có audio phát âm",
+      "noAudio": "Chưa có audio — enrich sau bổ sung",
+      "meaningLabel": "Nghĩa tiếng Việt *",
+      "meaningHint": "Teacher tự điền — hệ thống không tự dịch.",
+      "approve": "Duyệt thêm vào sách",
+      "approving": "Đang thêm…",
+      "created": "Đã thêm từ “{word}” vào sách.",
+      "duplicateNote": "Từ đã có — đã gắn thêm vào sách này.",
+      "audioAttached": "kèm audio phát âm",
+      "noAudioAttached": "chưa có audio (tải thất bại — enrich sau bổ sung)"
+    },
+    "errors": {
+      "sitemapFetchFailed": "Không lấy được sitemap Oxford — thử lại sau.",
+      "liveFetchFailed": "Không kết nối được Oxford — thử lại sau.",
+      "tooManyWords": "Vượt 200 từ một request — chia lô nhỏ hơn.",
+      "meaningRequired": "Thiếu nghĩa tiếng Việt (bắt buộc).",
+      "meaningTooLong": "Nghĩa quá dài (tối đa 500 ký tự).",
+      "invalidWord": "Từ không hợp lệ.",
+      "invalidEntry": "Dữ liệu preview không hợp lệ — tra lại từ.",
+      "invalidBookId": "Sách không hợp lệ.",
+      "generic": "Có lỗi xảy ra — thử lại."
+    }
   }
 }
