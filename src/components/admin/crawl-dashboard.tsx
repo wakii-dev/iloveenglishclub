@@ -32,6 +32,7 @@ const RUNNER_COMMANDS = ["cmdEnumerate", "cmdFetch", "cmdAudio"] as const;
 
 export function CrawlDashboard() {
   const t = useTranslations("admin.crawl");
+  const tc = useTranslations("admin.common");
   const [stats, setStats] = useState<CrawlStats | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState<"refresh" | "retry" | null>(null);
@@ -67,9 +68,10 @@ export function CrawlDashboard() {
       if (action === "retry-failed") {
         toast.success(t("controls.retried", { count: Number(data.reset ?? 0) }));
       } else if (data.deltaTooLarge === true) {
-        toast.warning(
-          t("controls.deltaTooLarge", { delta: Number(data.delta ?? 0) }),
-        );
+        toast.warning(t("controls.deltaTooLarge", { delta: Number(data.delta ?? 0) }), {
+          // hint SF-2 trả kèm (chạy runner enumerate) — chuỗi kỹ thuật, không i18n
+          description: typeof data.hint === "string" ? data.hint : undefined,
+        });
       } else {
         toast.success(
           t("controls.refreshed", { count: Number(data.inserted ?? 0) }),
@@ -101,7 +103,7 @@ export function CrawlDashboard() {
           </p>
           <Button variant="outline" onClick={() => void loadStats()}>
             <RefreshCw aria-hidden className="size-4" />
-            {t("controls.retryFailed")}
+            {tc("retry")}
           </Button>
         </CardContent>
       </Card>
@@ -220,7 +222,9 @@ export function CrawlDashboard() {
         </CardHeader>
         <CardContent className="space-y-2 px-5 py-4">
           {RUNNER_COMMANDS.map((key) => {
-            const cmd = t(key);
+            // key nằm ở admin.crawl.controls.* (P1 review nhóm A — t(key) trụ
+            // namespace hiện tại render literal "admin.crawl.cmdEnumerate")
+            const cmd = t(`controls.${key}`);
             return (
               <div
                 key={key}
@@ -232,7 +236,7 @@ export function CrawlDashboard() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={t("controls.copied")}
+                  aria-label={cmd}
                   onClick={() => void copyCommand(cmd)}
                 >
                   <ClipboardCopy aria-hidden className="size-4" />
