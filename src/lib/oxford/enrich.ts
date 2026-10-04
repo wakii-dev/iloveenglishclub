@@ -18,7 +18,11 @@ import { RETRY_ATTEMPTS_CAP, UPSERT_BATCH_SIZE, type SqlClient } from "./store";
 import { fetchSlugs } from "./sitemap";
 import { fetchEntry } from "./fetch";
 import { parseEntry } from "./parse";
+import { downloadMp3, oxfordAudioPath } from "./audio";
 import { matchWord } from "./match";
+import { MEANING_MAX, WORD_MAX } from "@/lib/admin/vocabulary";
+import { createVocabularyWord } from "@/lib/admin/vocabulary-store";
+import { putBlobAudio } from "@/lib/storage-blob";
 
 export const ENRICH_MAX_WORDS = 200;
 
@@ -471,6 +475,129 @@ export async function previewWordDb(word: string): Promise<PreviewResult> {
       audioUkBlob: null, // live chưa tải blob — approve sẽ tải 1 mp3 qua helper
       audioUsBlob: null,
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Crawl-on-add approve (audio 1-mp3 exception — spec §[api] P0-3)
+// ---------------------------------------------------------------------------
+
+export type ApproveEntryInput = {
+  slug: string;
+  word: string;
+  ipaUk: string | null;
+  ipaUs: string | null;
+  cefr: string | null;
+  pos: string | null;
+  audioUkBlob: string | null;
+  audioUsBlob: string | null;
+};
+
+export type ApproveWordInput = {
+  entry: ApproveEntryInput;
+  /** Teacher gõ — BẮT BUỘC (crawl KHÔNG BAO GIỜ sinh nghĩa VI — không LLM). */
+  meaningVi: string;
+  bookId: number;
+};
+
+export type ApproveAudioDeps = {
+  download?: typeof downloadMp3;
+  put?: typeof putBlobAudio;
+};
+
+export type ApproveResult =
+  | { ok: true; id: number; duplicate: boolean; audioAttached: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Audio cho word mới: payload blob (preview cache) → DB row blob → tải ĐÚNG
+ * 1 mp3 UK (fallback US) qua downloadMp3 + putBlobAudio (BLOB-ONLY — throw
+ * khi thiếu token, propagation KHÔNG nuốt; catch ở đây → word VẪN tạo KHÔNG
+ * audio, không hotlink, không local path). Enrich sau bổ sung.
+ */
+async function resolveApproveAudio(
+  slug: string,
+  input: ApproveEntryInput,
+  deps: Required<ApproveAudioDeps>,
+): Promise<string | null> {
+  // 1. blob trong payload (cache preview) — chỉ nhận https (giá trị Blob CDN)
+  if (input.audioUkBlob && /^https:\/\//.test(input.audioUkBlob)) return input.audioUkBlob;
+  if (input.audioUsBlob && /^https:\/\//.test(input.audioUsBlob)) return input.audioUsBlob;
+
+  // 2. DB row theo slug — blob có sẵn hoặc URL mp3 gốc (provenance) để tải
+  const [row] = await db
+    .select({
+      ukBlob: crawlEntries.audioUkBlob,
+      usBlob: crawlEntries.audioUsBlob,
+      ukUrl: crawlEntries.audioUkUrl,
+      usUrl: crawlEntries.audioUsUrl,
+    })
+    .from(crawlEntries)
+    .where(eq(crawlEntries.slug, slug))
+    .limit(1);
+  if (!row) return null;
+  if (row.ukBlob) return row.ukBlob;
+  if (row.usBlob) return row.usBlob;
+
+  // 3. tải 1 mp3 — UK trước, fallback US; mỗi variant tự catch (UK fail vẫn
+  // thử US; cả hai fail → null — KHÔNG bao giờ hotlink)
+  for (const variant of ["uk", "us"] as const) {
+    const url = variant === "uk" ? row.ukUrl : row.usUrl;
+    if (!url) continue;
+    try {
+      const mp3 = await deps.download(url);
+      return await deps.put(oxfordAudioPath(slug, variant), mp3);
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+/**
+ * Approve crawl-on-add: tạo word (ipa uk→us, cefr, source='oxford-ld') + link
+ * book qua createVocabularyWord (duplicate → reuse + attach + COALESCE
+ * cefr/source — idempotent). meaning_vi teacher-owned bắt buộc.
+ */
+export async function approveWordDb(
+  input: ApproveWordInput,
+  deps: ApproveAudioDeps = {},
+): Promise<ApproveResult> {
+  const meaning = input.meaningVi.trim();
+  if (!meaning) return { ok: false, error: "meaningRequired" };
+  if (meaning.length > MEANING_MAX) return { ok: false, error: "meaningTooLong" };
+  const word = input.entry.word.trim();
+  if (!word || word.length > WORD_MAX || /[\r\n]/.test(word)) {
+    return { ok: false, error: "invalidEntryWord" };
+  }
+
+  const resolved = { download: deps.download ?? downloadMp3, put: deps.put ?? putBlobAudio };
+  let audioUrl: string | null = null;
+  try {
+    audioUrl = await resolveApproveAudio(input.entry.slug, input.entry, resolved);
+  } catch (error) {
+    // lookup DB lỗi bất ngờ vẫn không chặn tạo word (audio là best-effort)
+    console.error("[crawl:approve] audio resolve failed:", error);
+  }
+
+  const created = await createVocabularyWord(
+    {
+      word,
+      meaning_vi: meaning,
+      ipa: input.entry.ipaUk ?? input.entry.ipaUs,
+      example: null, // shape preview không có example — enrich sau bổ sung
+      audio_url: audioUrl,
+      cefr: input.entry.cefr,
+      source: "oxford-ld",
+    },
+    [input.bookId],
+  );
+  if (!created.ok) return { ok: false, error: created.error };
+  return {
+    ok: true,
+    id: created.id,
+    duplicate: created.duplicate,
+    audioAttached: audioUrl !== null,
   };
 }
 

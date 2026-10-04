@@ -10,11 +10,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 const dbState = vi.hoisted(() => ({
   queue: [] as unknown[],
+  failWith: null as unknown,
 }));
 
 function chainOf(): unknown {
   const result = dbState.queue.shift();
-  const p = Promise.resolve(result);
+  let p: Promise<unknown>;
+  if (dbState.failWith !== null && result === undefined) {
+    // queue cạn + failWith set → query kế tiếp rejects one-shot (test 23503
+    // nhắm đúng query trong transaction, không giết query trước nó)
+    const err = dbState.failWith;
+    dbState.failWith = null;
+    p = Promise.reject(err);
+  } else {
+    p = Promise.resolve(result);
+  }
   const proxy: unknown = new Proxy(function chain() {}, {
     get(_t, prop) {
       if (typeof prop === "symbol") return undefined;
@@ -34,6 +44,13 @@ vi.mock("@/db", () => ({
     select: () => chainOf(),
     update: () => chainOf(),
     insert: () => chainOf(),
+    transaction: (fn: (tx: unknown) => Promise<unknown>) =>
+      fn({
+        select: () => chainOf(),
+        insert: () => chainOf(),
+        update: () => chainOf(),
+        delete: () => chainOf(),
+      }),
   },
 }));
 const revalidateContent = vi.hoisted(() => vi.fn());
@@ -48,6 +65,7 @@ const parseMock = vi.hoisted(() => ({ parseEntry: vi.fn() }));
 vi.mock("./parse", () => ({ parseEntry: parseMock.parseEntry }));
 
 import {
+  approveWordDb,
   buildFill,
   crawlStatsDb,
   enrichWordsDb,
@@ -82,6 +100,7 @@ const emptyWord = {
 
 beforeEach(() => {
   dbState.queue = [];
+  dbState.failWith = null;
 });
 afterEach(() => {
   revalidateContent.mockClear();
@@ -334,6 +353,127 @@ describe("previewWordDb (crawl-on-add — cache-first, KHÔNG ghi DB)", () => {
     dbState.queue = [[]];
     fetchMock.fetchEntry.mockRejectedValue(new Error("timeout"));
     await expect(previewWordDb("tree")).rejects.toThrow("timeout");
+  });
+});
+
+describe("approveWordDb (crawl-on-add approve — audio 1-mp3 exception)", () => {
+  const okEntry = {
+    slug: "tree",
+    word: "tree",
+    ipaUk: "/triː/" as string | null,
+    ipaUs: null as string | null,
+    cefr: "A1" as string | null,
+    pos: "noun" as string | null,
+    audioUkBlob: null as string | null,
+    audioUsBlob: null as string | null,
+  };
+  const noDeps = { download: vi.fn(), put: vi.fn() };
+  const putUrl = "https://blob.example/audio/oxford/tree.uk.mp3";
+
+  beforeEach(() => {
+    noDeps.download.mockReset();
+    noDeps.put.mockReset();
+  });
+
+  it("payload đã có blob → dùng luôn, KHÔNG download/put", async () => {
+    dbState.queue = [
+      [{ id: 7 }], // insert words
+      [{ max: 0 }],
+      [{ wordId: 7 }],
+    ];
+    const result = await approveWordDb(
+      { entry: { ...okEntry, audioUkBlob: putUrl }, meaningVi: "cây", bookId: 1 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: true, id: 7, duplicate: false, audioAttached: true });
+    expect(noDeps.download).not.toHaveBeenCalled();
+    expect(noDeps.put).not.toHaveBeenCalled();
+  });
+
+  it("payload thiếu blob → DB row có blob → dùng; ipa uk→us; cefr+source set", async () => {
+    dbState.queue = [
+      [{ ukBlob: null, usBlob: "https://blob.example/t.us.mp3", ukUrl: "https://x/uk.mp3", usUrl: null }],
+      [{ id: 8 }], // insert
+      [{ max: 0 }],
+      [{ wordId: 8 }],
+    ];
+    const result = await approveWordDb(
+      { entry: { ...okEntry, ipaUk: null, ipaUs: "/triː/" }, meaningVi: "cây", bookId: 1 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: true, id: 8, duplicate: false, audioAttached: true });
+    expect(noDeps.download).not.toHaveBeenCalled();
+  });
+
+  it("DB row chỉ có URL mp3 → download UK → putBlobAudio blob-only", async () => {
+    dbState.queue = [
+      [{ ukBlob: null, usBlob: null, ukUrl: "https://www.oxfordlearnersdictionaries.com/media/x.mp3", usUrl: null }],
+      [{ id: 9 }],
+      [{ max: 0 }],
+      [{ wordId: 9 }],
+    ];
+    noDeps.download.mockResolvedValue(Buffer.from("mp3"));
+    noDeps.put.mockResolvedValue(putUrl);
+    const result = await approveWordDb(
+      { entry: okEntry, meaningVi: "cây", bookId: 1 },
+      noDeps,
+    );
+    expect(noDeps.download).toHaveBeenCalledWith("https://www.oxfordlearnersdictionaries.com/media/x.mp3");
+    expect(noDeps.put).toHaveBeenCalledWith("audio/oxford/tree.uk.mp3", Buffer.from("mp3"));
+    expect(result).toEqual({ ok: true, id: 9, duplicate: false, audioAttached: true });
+  });
+
+  it("throw khi tải (thiếu token/network) → word VẪN tạo KHÔNG audio", async () => {
+    dbState.queue = [
+      [{ ukBlob: null, usBlob: null, ukUrl: "https://x/uk.mp3", usUrl: "https://x/us.mp3" }],
+      // uk + us đều throw → không download thêm
+      [{ id: 10 }],
+      [{ max: 0 }],
+      [{ wordId: 10 }],
+    ];
+    noDeps.download.mockRejectedValue(new Error("BLOB_READ_WRITE_TOKEN thiếu"));
+    const result = await approveWordDb(
+      { entry: okEntry, meaningVi: "cây", bookId: 1 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: true, id: 10, duplicate: false, audioAttached: false });
+    expect(noDeps.download).toHaveBeenCalledTimes(2); // UK rồi fallback US
+  });
+
+  it("DB không có row theo slug → không audio, word vẫn tạo", async () => {
+    dbState.queue = [
+      [], // lookup crawl_entries → không row
+      [{ id: 11 }],
+      [{ max: 0 }],
+      [{ wordId: 11 }],
+    ];
+    const result = await approveWordDb(
+      { entry: okEntry, meaningVi: "cây", bookId: 1 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: true, id: 11, duplicate: false, audioAttached: false });
+  });
+
+  it("meaning_vi rỗng → {ok:false, error:'meaningRequired'} (teacher-owned bắt buộc)", async () => {
+    dbState.queue = [];
+    const result = await approveWordDb(
+      { entry: okEntry, meaningVi: "   ", bookId: 1 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: false, error: "meaningRequired" });
+    expect(dbState.queue).toHaveLength(0); // không chạm DB
+  });
+
+  it("bookId không tồn tại (23503) → {ok:false, error:'bookNotFound'}", async () => {
+    dbState.queue = [
+      [], // crawl lookup → không row (không audio)
+    ];
+    dbState.failWith = { code: "23503" }; // insert words trong transaction reject
+    const result = await approveWordDb(
+      { entry: okEntry, meaningVi: "cây", bookId: 99 },
+      noDeps,
+    );
+    expect(result).toEqual({ ok: false, error: "bookNotFound" });
   });
 });
 
