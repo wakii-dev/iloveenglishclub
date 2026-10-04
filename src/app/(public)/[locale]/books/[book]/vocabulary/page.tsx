@@ -5,11 +5,15 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getBook, getBooks, getBookVocabulary } from "@/lib/content/queries";
 import { WordPlayButton } from "@/components/content/word-play-button";
+import { BookStudyButton } from "@/components/vocabulary/book-study-button";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * /books/[book]/vocabulary — từ vựng của book theo thứ tự học (SF-2 t-2.1).
  * Public như trang books (middleware chỉ gate /admin); SSG + ISR 300 cùng
  * pattern book page — admin mutation gọi revalidateContent() (tag `content`).
+ * story vocabulary-learn t-1.1: mỗi từ có nút "Học từ này" → /me/vocabulary
+ * ?word=<id> (prefill thẻ flashcard có sẵn SF-2 tab Thư viện; guest → login).
  */
 export const revalidate = 300;
 
@@ -69,7 +73,17 @@ export default async function BookVocabularyPage({
           {t("empty")}
         </p>
       ) : (
-        <ol className="mt-6 flex flex-col gap-3">
+        <>
+          {/* story vocabulary-learn t-1.2: bulk seed lộ trình 5 từ/ngày cả
+              book — guest bấm → 401 → redirect login kèm ?next về trang này */}
+          <div className="mt-6">
+            <BookStudyButton
+              bookId={book.id}
+              locale={locale}
+              nextPath={`/${locale}/books/${bookSlug}/vocabulary`}
+            />
+          </div>
+          <ol className="mt-6 flex flex-col gap-3">
           {vocab.map((entry) => (
             <li
               key={entry.id}
@@ -103,9 +117,16 @@ export default async function BookVocabularyPage({
                   </span>
                 ) : null}
               </span>
+              <Link
+                href={`/me/vocabulary?word=${entry.id}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                {t("learnWord")}
+              </Link>
             </li>
           ))}
         </ol>
+        </>
       )}
     </div>
   );

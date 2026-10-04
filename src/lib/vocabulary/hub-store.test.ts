@@ -56,6 +56,7 @@ import {
   LIBRARY_PAGE_SIZE,
   getHubStats,
   getStudyWord,
+  listDiscoverBooks,
   listHubBooks,
   listHubWords,
   listLibraryWords,
@@ -325,6 +326,41 @@ describe("getStudyWord (SF-2 t-2.2)", () => {
     dbState.queue = [];
     dbState.failWith = new Error("boom");
     expect(await getStudyWord(1)).toBeNull();
+  });
+});
+
+describe("listDiscoverBooks (vocabulary-learn t-1.3)", () => {
+  const DISCOVER_ROWS = [
+    { id: 2, slug: "level-2", titleEn: "Level 2", titleVi: "Cấp độ 2", unlearned: 12 },
+    { id: 1, slug: "level-1", titleEn: "Level 1", titleVi: "Cấp độ 1", unlearned: 3 },
+  ];
+
+  it("user đang đọc (có lesson progress) → chỉ books đó, count từ chưa học", async () => {
+    dbState.queue = [[{ bookId: 2 }, { bookId: 1 }], DISCOVER_ROWS];
+    const result = await listDiscoverBooks("u1");
+    expect(result).toEqual(DISCOVER_ROWS);
+    // giới hạn số book Khám phá luôn đặt (chống phình khi fallback mọi book)
+    expect(dbState.calls).toContain(7);
+  });
+
+  it("chưa có lesson progress (người mới) → fallback MỌI book có từ (query 1 rỗng, query 2 không where book)", async () => {
+    dbState.queue = [[], DISCOVER_ROWS];
+    const result = await listDiscoverBooks("u1");
+    expect(result).toEqual(DISCOVER_ROWS);
+    // query 2 chạy KHÔNG điều kiện where (fallback all books) — call thứ 9 là
+    // where(undefined)
+    expect(dbState.calls[9]).toBeUndefined();
+  });
+
+  it("book trả [] (học hết / không có từ) → []", async () => {
+    dbState.queue = [[{ bookId: 1 }], []];
+    expect(await listDiscoverBooks("u1")).toEqual([]);
+  });
+
+  it("DB lỗi (bảng chưa migrate) → [] + log, không throw — build-safe", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    dbState.failWith = new Error('relation "user_lesson_progress" does not exist');
+    expect(await listDiscoverBooks("u1")).toEqual([]);
   });
 });
 

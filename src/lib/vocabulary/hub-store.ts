@@ -20,7 +20,15 @@ import {
   sql,
 } from "drizzle-orm";
 import { db } from "@/db";
-import { bookWords, books, userWordProgress, words } from "@/db/schema";
+import {
+  bookWords,
+  books,
+  lessons,
+  units,
+  userLessonProgress,
+  userWordProgress,
+  words,
+} from "@/db/schema";
 import {
   MASTERED_REPS,
   type HubStatusFilter,
@@ -306,6 +314,69 @@ export async function listLibraryWords(
   } catch (error) {
     console.error("[vocabulary:listLibraryWords] query failed:", error);
     return { rows: [], total: 0, page: filter.page, totalPages: 1 };
+  }
+}
+
+export const DISCOVER_BOOK_LIMIT = 7;
+
+export type DiscoverBook = {
+  id: number;
+  slug: string;
+  titleEn: string;
+  titleVi: string | null;
+  unlearned: number;
+};
+
+/**
+ * Sách "bạn đọc" còn từ chưa học (story vocabulary-learn t-1.3) — hàng Khám
+ * phá tab Tổng quan. "Đang đọc" = book có user_lesson_progress (qua lessons ⋈
+ * units); người mới chưa có tiến độ học bài → fallback MỌI book có từ (vẫn
+ * đúng tinh thần khám phá). unlearned = từ của book chưa có row
+ * user_word_progress của user (leftJoin đúng cặp user+word — không nhân dòng
+ * vì PK); book đã học hết bị having loại. DB lỗi → [] build-safe (cùng
+ * fallback listHubWords).
+ */
+export async function listDiscoverBooks(
+  userId: string,
+): Promise<DiscoverBook[]> {
+  try {
+    const reading = await db
+      .selectDistinct({ bookId: units.bookId })
+      .from(userLessonProgress)
+      .innerJoin(lessons, eq(lessons.id, userLessonProgress.lessonId))
+      .innerJoin(units, eq(units.id, lessons.unitId))
+      .where(eq(userLessonProgress.userId, userId));
+    const bookIds = reading.map((row) => row.bookId);
+
+    const rows = await db
+      .select({
+        id: books.id,
+        slug: books.slug,
+        titleEn: books.titleEn,
+        titleVi: books.titleVi,
+        unlearned:
+          sql<number>`count(*) filter (where ${userWordProgress.wordId} is null)`.mapWith(
+            Number,
+          ),
+      })
+      .from(books)
+      .innerJoin(bookWords, eq(bookWords.bookId, books.id))
+      .leftJoin(
+        userWordProgress,
+        and(
+          eq(userWordProgress.wordId, bookWords.wordId),
+          eq(userWordProgress.userId, userId),
+        ),
+      )
+      .where(bookIds.length > 0 ? inArray(books.id, bookIds) : undefined)
+      .groupBy(books.id)
+      .having(sql`count(*) filter (where ${userWordProgress.wordId} is null) > 0`)
+      .orderBy(asc(books.sortOrder))
+      .limit(DISCOVER_BOOK_LIMIT);
+    return rows;
+  } catch (error) {
+    console.error("[vocabulary:listDiscoverBooks] query failed:", error);
+    return [];
   }
 }
 
