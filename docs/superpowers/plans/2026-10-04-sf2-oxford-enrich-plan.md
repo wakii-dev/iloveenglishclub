@@ -23,7 +23,7 @@
   assertAdmin · body {bookId | wordIds[], dryRun?} · cap 200 (vượt → 400) · dryRun:true → counts, thiếu dryRun → apply report. Shape pin đúng context pack §4.
 - [x] **T6 — route stats** `GET /api/admin/vocabulary/crawl/stats` + test
   assertAdmin · `{counts:{pending,parsed,failed,failedMaxAttempts}, samples: failed[](slug+last_error, ≤20), lastRun: max(fetched_at)}` — DERIVED, không bảng mới; counts qua query riêng trong enrich.ts (import `RETRY_ATTEMPTS_CAP` từ store SF-1 — không sửa file).
-- [ ] **T7 — route control** `POST /api/admin/vocabulary/crawl/control` + test
+- [x] **T7 — route control** `POST /api/admin/vocabulary/crawl/control` + test
   assertAdmin · `refresh-sitemap`: fetchSlugs (SF-1) → diff vs DB slugs → delta >2000 → `{deltaTooLarge:true, hint}` KHÔNG ghi; ≤2000 → upsert chỉ slug mới (drizzle chunk 100, `UPSERT_BATCH_SIZE` import) → `{inserted}` · `retry-failed`: reset failed→pending attempts<5 → `{reset}`. Action khác → 400.
 - [ ] **T8 — route word preview** `POST /api/admin/vocabulary/crawl/word` + test
   assertAdmin · `{word, bookId?}` → cache-first (crawl_entries parsed, winner theo T1) → `{found, from:'cache'|'live', entry:{slug,word,ipaUk,ipaUs,cefr,pos,audioUkBlob,audioUsBlob}|null}` · miss → fetchEntry+parseEntry (SF-1 — SSRF allowlist), KHÔNG ghi DB · outbound CHỈ qua fetchEntry (assertion test).

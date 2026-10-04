@@ -33,16 +33,21 @@ vi.mock("@/db", () => ({
   db: {
     select: () => chainOf(),
     update: () => chainOf(),
+    insert: () => chainOf(),
   },
 }));
 const revalidateContent = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/revalidate", () => ({ CONTENT_TAG: "content", revalidateContent }));
+
+const sitemapMock = vi.hoisted(() => ({ fetchSlugs: vi.fn() }));
+vi.mock("./sitemap", () => ({ fetchSlugs: sitemapMock.fetchSlugs }));
 
 import {
   buildFill,
   crawlStatsDb,
   enrichWordsDb,
   ENRICH_MAX_WORDS,
+  refreshSitemapDb,
   retryFailedDb,
   slugBase,
   slugPatterns,
@@ -208,6 +213,34 @@ describe("retryFailedDb", () => {
   it("trả số row reset (failed→pending, attempts < cap)", async () => {
     dbState.queue = [[{ id: 1 }, { id: 2 }, { id: 3 }]];
     expect(await retryFailedDb()).toEqual({ reset: 3 });
+  });
+});
+
+describe("refreshSitemapDb (diff upsert — chỉ slug mới)", () => {
+  it("delta ≤ 2000 → upsert slug mới, trả inserted", async () => {
+    sitemapMock.fetchSlugs.mockResolvedValue(["tree", "house", "wander"]);
+    dbState.queue = [
+      [{ slug: "tree" }, { slug: "wander" }], // existing — house là slug mới
+      [{ id: 11 }], // insert chunk 1 (house)
+    ];
+    expect(await refreshSitemapDb()).toEqual({ inserted: 1 });
+    expect(sitemapMock.fetchSlugs).toHaveBeenCalledTimes(1);
+  });
+
+  it("delta > 2000 → deltaTooLarge + hint, KHÔNG upsert (không query insert)", async () => {
+    sitemapMock.fetchSlugs.mockResolvedValue(
+      Array.from({ length: 2001 }, (_, i) => `new-slug-${i}`),
+    );
+    dbState.queue = [[]]; // chỉ query existing slugs
+    const result = await refreshSitemapDb();
+    expect(result).toMatchObject({ deltaTooLarge: true, delta: 2001 });
+    expect("hint" in result && result.hint.length > 0).toBe(true);
+    expect(dbState.queue).toHaveLength(0); // không tiêu thụ query insert
+  });
+
+  it("fetchSlugs lỗi (network/robots) → ném ra (route map 502)", async () => {
+    sitemapMock.fetchSlugs.mockRejectedValue(new Error("HTTP 500"));
+    await expect(refreshSitemapDb()).rejects.toThrow("HTTP 500");
   });
 });
 

@@ -14,7 +14,8 @@ import { and, asc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, crawlEntries, words } from "@/db/schema";
 import { revalidateContent } from "@/lib/revalidate";
-import { RETRY_ATTEMPTS_CAP, type SqlClient } from "./store";
+import { RETRY_ATTEMPTS_CAP, UPSERT_BATCH_SIZE, type SqlClient } from "./store";
+import { fetchSlugs } from "./sitemap";
 import { matchWord } from "./match";
 
 export const ENRICH_MAX_WORDS = 200;
@@ -357,6 +358,43 @@ export async function retryFailedDb(): Promise<{ reset: number }> {
     )
     .returning({ id: crawlEntries.id });
   return { reset: rows.length };
+}
+
+export const SITEMAP_DELTA_MAX = 2000;
+
+export type RefreshSitemapResult =
+  | { inserted: number }
+  | { deltaTooLarge: true; delta: number; hint: string };
+
+/**
+ * refresh-sitemap (control): fetchSlugs (SF-1 — network, control-op admin
+ * bấm) → diff vs DB → upsert CHỈ slug mới. Delta > ${SITEMAP_DELTA_MAX} →
+ * deltaTooLarge + hint runner, KHÔNG upsert cưỡng bức trong request (spec §[api]).
+ */
+export async function refreshSitemapDb(): Promise<RefreshSitemapResult> {
+  const slugs = await fetchSlugs();
+  const existingRows = await db.select({ slug: crawlEntries.slug }).from(crawlEntries);
+  const existing = new Set(existingRows.map((r) => r.slug));
+  const fresh = slugs.filter((s) => !existing.has(s));
+  if (fresh.length > SITEMAP_DELTA_MAX) {
+    return {
+      deltaTooLarge: true,
+      delta: fresh.length,
+      hint: `delta ${fresh.length} > ${SITEMAP_DELTA_MAX} — chạy runner: node scripts/oxford-crawl.ts enumerate --apply`,
+    };
+  }
+  let inserted = 0;
+  for (let i = 0; i < fresh.length; i += UPSERT_BATCH_SIZE) {
+    const chunk = fresh.slice(i, i + UPSERT_BATCH_SIZE);
+    if (chunk.length === 0) continue;
+    const rows = await db
+      .insert(crawlEntries)
+      .values(chunk.map((slug) => ({ slug })))
+      .onConflictDoNothing({ target: crawlEntries.slug })
+      .returning({ id: crawlEntries.id });
+    inserted += rows.length;
+  }
+  return { inserted };
 }
 
 // ---------------------------------------------------------------------------
