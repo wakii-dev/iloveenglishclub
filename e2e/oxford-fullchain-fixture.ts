@@ -172,6 +172,20 @@ export async function ensureOxfordFullchainFixture(): Promise<FixtureInfo> {
     source: null,
   });
 
+  // crawl entry cho crawl-on-add cache-hit (T2 test 3) — KHÔNG example:
+  // approve tạo word (ipa/cefr/audio từ entry) nhưng example vẫn null →
+  // enrich dryRun counts deterministic (maple chỉ vào `candidates`, không
+  // vào fillableExample — chỉ elm là fillable cả 4 field)
+  await seedCrawlEntryMirror(c, {
+    slug: `${WORD_PREFIX}maple`,
+    word: `${WORD_PREFIX}maple`,
+    ipaUk: "meɪpəl",
+    cefr: "B1",
+    pos: "noun",
+    audioUkBlob: AUDIO_REL_PATH,
+    example: null,
+  });
+
   // crawl entry cho qasf4elm — enrich fill-empty (T2): example/ipa/cefr/audio
   await seedCrawlEntryMirror(c, {
     slug: `${WORD_PREFIX}elm`,
