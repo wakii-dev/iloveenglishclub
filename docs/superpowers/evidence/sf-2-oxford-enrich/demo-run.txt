@@ -1,0 +1,54 @@
+## SF-2 DEMO RUN — 2026-10-04T05:07:29Z — dev server :3212, DB Neon dev thật, Blob Vercel thật
+Seed: book 1 có 4 words demo — a (all NULL) · twenty-four seven (teacher example) · fifth-generation (teacher cefr=C1, example='') · zzz-no-match-word (không có trong crawl)
+
+--- [1] GUARD: POST enrich KHÔNG cookie → 401
+HTTP 401
+{"ok":false,"error":"not-authenticated"}
+--- [2] POST enrich dryRun:true (bookId 1) — counts
+{"ok":false,"error":"generic"}
+--- [2] POST enrich dryRun:true (bookId 1) — counts
+{"ok":true,"candidates":3,"fillableIpa":3,"fillableExample":1,"fillableCefr":2,"fillableAudio":3}
+--- [3] POST enrich apply (bookId 1, KHÔNG dryRun) — report per-word
+{"ok":true,"report":[{"word":"a","filled":["ipa","example","cefr","audio"],"skipped":[]},{"word":"twenty-four seven","filled":["ipa","cefr","audio"],"skipped":["example"]},{"word":"fifth-generation","filled":["ipa","audio"],"skipped":["example","cefr"]},{"word":"zzz-no-match-word","filled":[],"skipped":[],"reason":"noMatch"}]}
+--- [4] DB sau apply — teacher values GIỮ NGUYÊN? source set?
+{"word":"a","ipa":"/ə/","example":"a man/horse/unit","audio_url":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/a_1.uk.mp3","cefr":"A1","source":"oxford-ld"}
+{"word":"twenty-four seven","ipa":"/ˌtwenti ˌfɔː ˈsevn/","example":"Shop open twenty-four seven.","audio_url":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/twenty-four-seven.uk.mp3","cefr":"C2","source":"oxford-ld"}
+{"word":"fifth-generation","ipa":"/ˌfɪfθ dʒenəˈreɪʃn/","example":"","audio_url":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/fifth-generation.uk.mp3","cefr":"C1","source":"oxford-ld"}
+{"word":"zzz-no-match-word","ipa":null,"example":null,"audio_url":null,"cefr":null,"source":null}
+--- [5] Audio blob phát được (HEAD uk blob của word a)
+audio_url(a) = https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/a_1.uk.mp3
+HEAD 200 content-type=audio/mpeg size=0
+--- [6] GET crawl/stats (admin)
+{"ok":true,"counts":{"pending":63854,"parsed":83,"failed":0,"failedMaxAttempts":0},"samples":[],"lastRun":"2026-10-03T21:22:24.393Z"}
+--- [7] GET crawl/stats KHÔNG cookie → 401
+HTTP 401
+--- [8] POST crawl/control retry-failed
+{"ok":true,"reset":0}
+--- [9] POST crawl/control action lạ → 400
+{"ok":false,"error":"invalidAction"}
+--- [10] POST crawl/control refresh-sitemap (fetch sitemap thật + diff, ~64k slugs)
+{"ok":true,"inserted":0}
+--- [11] POST crawl/word preview "a" — CACHE-HIT (from=cache, không gọi Oxford)
+{"ok":true,"found":true,"from":"cache","entry":{"slug":"a_1","word":"a","ipaUk":"/ə/","ipaUs":"/ə/","cefr":"A1","pos":"indefinite article","audioUkBlob":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/a_1.uk.mp3","audioUsBlob":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/a_1.us.mp3"}}curl -s -b /tmp/sf2-audit/cookies.txt -X POST  -H  -d '{"word":"a"}'  0.00s user 0.00s system 0% cpu 1.419 total
+
+--- [12] POST crawl/word preview "wander" — không ở cache parsed → LIVE fetch Oxford thật
+{"ok":true,"found":true,"from":"live","entry":{"slug":"wander_1","word":"wander","ipaUk":"/ˈwɒndə(r)/","ipaUs":"/ˈwɑːndər/","cefr":"B2","pos":"verb","audioUkBlob":null,"audioUsBlob":null}}curl -s -b /tmp/sf2-audit/cookies.txt -X POST  -H  -d '{"word":"wander"}'  0.00s user 0.00s system 0% cpu 2.358 total
+
+--- [13] POST crawl/word KHÔNG word → 400
+{"ok":false,"error":"invalidWord"}
+--- [14] POST word/approve thiếu meaning_vi → 400 (teacher-owned bắt buộc)
+{"ok":false,"error":"meaningRequired"}
+--- [15] POST word/approve "abacus" (meaning VI teacher gõ; entry chưa blob → DOWNLOAD mp3 UK thật → Blob qua helper BLOB-ONLY)
+{"ok":true,"id":541,"duplicate":false,"audioAttached":true}
+--- [16] word sau approve: audio_url = Blob? source=oxford-ld?
+{"word":"abacus","ipa":"/ˈæbəkəs/","audio_url":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/abacus.uk.mp3","cefr":null,"source":"oxford-ld"}
+--- [17] re-approve "abacus" → duplicate:true (reuse + attach idempotent)
+{"ok":true,"id":541,"duplicate":true,"audioAttached":true}
+--- [18] approve "wander" (entry pending trong DB — không blob không URL) → word VẪN tạo KHÔNG audio
+{"ok":true,"id":543,"duplicate":false,"audioAttached":false}
+    DB {"word":"abacus","audio_url":"https://spolemfdqytf66uz.public.blob.vercel-storage.com/audio/oxford/abacus.uk.mp3","cefr":"A2","source":"oxford-ld"}
+    DB {"word":"wander","audio_url":null,"cefr":"B2","source":"oxford-ld"}
+--- [19] enrich apply LẦN 2 (idempotent — không đụng gì nữa)
+{"ok":true,"candidates":4,"fillableIpa":0,"fillableExample":0,"fillableCefr":0,"fillableAudio":0}
+--- [20] HEAD blob abacus.uk.mp3
+HEAD 200 content-type=audio/mpeg

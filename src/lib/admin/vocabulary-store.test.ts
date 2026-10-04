@@ -107,6 +107,50 @@ describe("createVocabularyWord", () => {
     expect(result).toEqual({ ok: true, id: 7, duplicate: true });
   });
 
+  it("word đã tồn tại + input cefr/source (crawl-on-add) → vẫn attach + COALESCE set SF-2", async () => {
+    dbState.queue = [
+      [], // insert onConflictDoNothing → không trả
+      [{ id: 7 }], // select existing
+      [{ id: 7 }], // update coalesce cefr/source (word đã có giữ nguyên)
+      [{ max: 1 }],
+      [{ wordId: 7 }],
+    ];
+    const result = await createVocabularyWord(
+      {
+        word: "apple",
+        meaning_vi: "quả táo",
+        ipa: "/ˈæp.əl/",
+        example: null,
+        audio_url: null,
+        cefr: "A1",
+        source: "oxford-ld",
+      },
+      [1],
+    );
+    expect(result).toEqual({ ok: true, id: 7, duplicate: true });
+  });
+
+  it("word mới + cefr/source (SF-2) → insert ghi đủ", async () => {
+    dbState.queue = [
+      [{ id: 9 }],
+      [{ max: 0 }],
+      [{ wordId: 9 }],
+    ];
+    const result = await createVocabularyWord(
+      {
+        word: "tree",
+        meaning_vi: "cây",
+        ipa: null,
+        example: null,
+        audio_url: null,
+        cefr: "A1",
+        source: "oxford-ld",
+      },
+      [1],
+    );
+    expect(result).toEqual({ ok: true, id: 9, duplicate: false });
+  });
+
   it("FK 23503 (book không tồn tại) → bookNotFound, không crash", async () => {
     dbState.queue = [[{ id: 7 }], [{ max: 0 }]];
     dbState.failWith = { code: "23503" };
@@ -204,10 +248,12 @@ describe("listVocabulary", () => {
     meaningVi: "quả táo",
     example: null,
     audioUrl: null,
+    cefr: "A1",
+    source: "oxford-ld",
     createdAt: new Date("2026-10-01T00:00:00Z"),
   };
 
-  it("list + total + bookIds gom 1 query (không fan-out)", async () => {
+  it("list + total + bookIds gom 1 query (không fan-out) + cefr/source (SF-2)", async () => {
     dbState.queue = [
       [wordRow], // page rows
       [{ n: 1 }], // count
@@ -221,6 +267,8 @@ describe("listVocabulary", () => {
       meaning_vi: "quả táo",
       example: null,
       audio_url: null,
+      cefr: "A1",
+      source: "oxford-ld",
       createdAt: wordRow.createdAt,
       bookIds: [2],
     });
