@@ -66,6 +66,11 @@
       "mastered": "Mastered"
     },
     "wordsTitle": "Your words",
+    "discover": {
+      "title": "Discover",
+      "lead": "New words from books you're reading",
+      "unlearned": "{count, plural, one {# word to learn} other {# words to learn}}"
+    },
     "emptyAll": "You haven't started learning any words yet —",
     "emptyFiltered": "No words match these filters.",
     "ctaBrowseBooks": "browse the books to begin.",

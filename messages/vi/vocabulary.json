@@ -66,6 +66,11 @@
       "mastered": "Đã thành thạo"
     },
     "wordsTitle": "Từ của bạn",
+    "discover": {
+      "title": "Khám phá",
+      "lead": "Từ mới từ sách bạn đang đọc",
+      "unlearned": "{count, plural, other {# từ chưa học}}"
+    },
     "emptyAll": "Bạn chưa học từ nào —",
     "emptyFiltered": "Không có từ nào khớp bộ lọc.",
     "ctaBrowseBooks": "xem các sách để bắt đầu nhé.",

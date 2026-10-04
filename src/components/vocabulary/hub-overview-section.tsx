@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { StatsCards } from "@/components/gamification/stats-cards";
 import { localize } from "@/lib/content/localize";
 import { HubFilters } from "@/components/vocabulary/hub-filters";
+import { BookStudyButton } from "@/components/vocabulary/book-study-button";
 import {
   displayStatus,
   formatBookTitles,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/vocabulary/hub-status";
 import {
   getHubStats,
+  listDiscoverBooks,
   listHubBooks,
   listHubWords,
 } from "@/lib/vocabulary/hub-store";
@@ -19,6 +21,8 @@ import {
  * Tab Tổng quan (SF-1 t-1.2) — tách khỏi page.tsx khi SF-2 thêm tab Thư viện:
  * KPI mọi book + bảng từ đang học ⋈ filter book/trạng thái. Như cũ, data cá
  * nhân → query live; guest không bao giờ render section này (page điều phối).
+ * story vocabulary-learn t-1.3: thêm hàng Khám phá — sách bạn đọc còn từ chưa
+ * học, nút bulk seed (t-1.2) ngay trên hàng để học luôn không rời hub.
  */
 export async function HubOverviewSection({
   userId,
@@ -33,10 +37,11 @@ export async function HubOverviewSection({
 }) {
   const t = await getTranslations("vocabulary");
   const filter = parseHubFilters(sp);
-  const [stats, books, rows] = await Promise.all([
+  const [stats, books, rows, discover] = await Promise.all([
     getHubStats(userId),
     listHubBooks(),
     listHubWords(userId, filter),
+    listDiscoverBooks(userId),
   ]);
   const bookOptions = books.map((book) => ({
     id: book.id,
@@ -55,6 +60,48 @@ export async function HubOverviewSection({
           ]}
         />
       </div>
+
+      {discover.length > 0 ? (
+        <section
+          aria-labelledby="hub-discover-heading"
+          className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
+        >
+          <h2
+            id="hub-discover-heading"
+            className="font-display text-[20px] font-bold"
+          >
+            {t("hub.discover.title")}
+          </h2>
+          <p className="mt-1 text-[14px] font-semibold text-muted-foreground">
+            {t("hub.discover.lead")}
+          </p>
+          <ul className="mt-4 flex flex-col gap-3">
+            {discover.map((book) => (
+              <li
+                key={book.id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] border-2 border-border bg-background/40 p-4"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-display text-[16px] font-bold">
+                    {localize(locale, {
+                      en: book.titleEn,
+                      vi: book.titleVi,
+                    })}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] font-semibold text-muted-foreground tabular-nums">
+                    {t("hub.discover.unlearned", { count: book.unlearned })}
+                  </span>
+                </span>
+                <BookStudyButton
+                  bookId={book.id}
+                  locale={locale}
+                  nextPath={`/${locale}/vocabulary`}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section
         aria-labelledby="hub-words-heading"
