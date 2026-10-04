@@ -40,8 +40,10 @@ vi.mock("@/lib/revalidate", () => ({ CONTENT_TAG: "content", revalidateContent }
 
 import {
   buildFill,
+  crawlStatsDb,
   enrichWordsDb,
   ENRICH_MAX_WORDS,
+  retryFailedDb,
   slugBase,
   slugPatterns,
   type EnrichEntryData,
@@ -164,6 +166,48 @@ describe("slugBase + slugPatterns", () => {
   it("slugPatterns: escape regex specials + anchor _N suffix", () => {
     expect(slugPatterns("a.b")).toEqual(["^a\\.b_[0-9]+$"]);
     expect(slugPatterns("bank")).toEqual(["^bank_[0-9]+$"]);
+  });
+});
+
+describe("crawlStatsDb (stats DERIVED — không bảng mới)", () => {
+  it("counts groupBy status + failedMaxAttempts (attempts≥cap) + samples ≤20 + lastRun max(fetched_at)", async () => {
+    dbState.queue = [
+      [
+        { status: "parsed", n: 83, maxed: 0 },
+        { status: "failed", n: 30, maxed: 12 },
+        { status: "pending", n: 63854, maxed: 0 },
+      ],
+      [{ slug: "ghost", lastError: "http:404" }, { slug: "x", lastError: null }],
+      [{ max: new Date("2026-10-04T10:00:00Z") }],
+    ];
+    const stats = await crawlStatsDb();
+    expect(stats.counts).toEqual({
+      pending: 63854,
+      parsed: 83,
+      failed: 30,
+      failedMaxAttempts: 12,
+    });
+    expect(stats.samples).toEqual([
+      { slug: "ghost", lastError: "http:404" },
+      { slug: "x", lastError: null },
+    ]);
+    expect(stats.lastRun).toBe("2026-10-04T10:00:00.000Z");
+  });
+
+  it("DB rỗng → counts 0 + samples [] + lastRun null", async () => {
+    dbState.queue = [[], [], [{ max: null }]];
+    expect(await crawlStatsDb()).toEqual({
+      counts: { pending: 0, parsed: 0, failed: 0, failedMaxAttempts: 0 },
+      samples: [],
+      lastRun: null,
+    });
+  });
+});
+
+describe("retryFailedDb", () => {
+  it("trả số row reset (failed→pending, attempts < cap)", async () => {
+    dbState.queue = [[{ id: 1 }, { id: 2 }, { id: 3 }]];
+    expect(await retryFailedDb()).toEqual({ reset: 3 });
   });
 });
 

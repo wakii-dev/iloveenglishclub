@@ -10,11 +10,11 @@
  * UPDATE COALESCE(col, value) — race-safe, không clobber giá trị ghi giữa chừng.
  * Sau apply gọi revalidateContent() (pattern importVocabulary).
  */
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, crawlEntries, words } from "@/db/schema";
 import { revalidateContent } from "@/lib/revalidate";
-import type { SqlClient } from "./store";
+import { RETRY_ATTEMPTS_CAP, type SqlClient } from "./store";
 import { matchWord } from "./match";
 
 export const ENRICH_MAX_WORDS = 200;
@@ -295,6 +295,68 @@ function emptyCounts(): DryRunCounts {
     fillableCefr: 0,
     fillableAudio: 0,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Stats + retry (control-plane reads — DERIVED, KHÔNG bảng crawl_runs: spec cấm)
+// ---------------------------------------------------------------------------
+
+export type CrawlStats = {
+  counts: {
+    pending: number;
+    parsed: number;
+    failed: number;
+    failedMaxAttempts: number;
+  };
+  /** failed samples (slug + last_error, ≤20) — dashboard debug. */
+  samples: { slug: string; lastError: string | null }[];
+  /** max(fetched_at) ISO — DERIVED (semantics như store.stats SF-1). */
+  lastRun: string | null;
+};
+
+const STATS_SAMPLES_MAX = 20;
+
+export async function crawlStatsDb(): Promise<CrawlStats> {
+  const byStatus = await db
+    .select({
+      status: crawlEntries.status,
+      n: sql<number>`count(*)`.mapWith(Number),
+      maxed: sql<number>`count(*) filter (where ${crawlEntries.attempts} >= ${RETRY_ATTEMPTS_CAP})`.mapWith(Number),
+    })
+    .from(crawlEntries)
+    .groupBy(crawlEntries.status);
+  const pick = (status: string) => byStatus.find((r) => r.status === status);
+  const samples = await db
+    .select({ slug: crawlEntries.slug, lastError: crawlEntries.lastError })
+    .from(crawlEntries)
+    .where(eq(crawlEntries.status, "failed"))
+    .orderBy(asc(crawlEntries.id))
+    .limit(STATS_SAMPLES_MAX);
+  const [lastRun] = await db
+    .select({ max: sql<Date | null>`max(${crawlEntries.fetchedAt})` })
+    .from(crawlEntries);
+  return {
+    counts: {
+      pending: pick("pending")?.n ?? 0,
+      parsed: pick("parsed")?.n ?? 0,
+      failed: pick("failed")?.n ?? 0,
+      failedMaxAttempts: pick("failed")?.maxed ?? 0,
+    },
+    samples,
+    lastRun: lastRun?.max ? new Date(lastRun.max).toISOString() : null,
+  };
+}
+
+/** reset failed→pending với attempts < cap (giữ last_error — store SF-1 semantics). */
+export async function retryFailedDb(): Promise<{ reset: number }> {
+  const rows = await db
+    .update(crawlEntries)
+    .set({ status: "pending" })
+    .where(
+      and(eq(crawlEntries.status, "failed"), lt(crawlEntries.attempts, RETRY_ATTEMPTS_CAP)),
+    )
+    .returning({ id: crawlEntries.id });
+  return { reset: rows.length };
 }
 
 // ---------------------------------------------------------------------------

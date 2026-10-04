@@ -21,7 +21,7 @@
   `WordInput` thêm `cefr?/source?` optional; `createVocabularyWord` ghi 2 trường (insert + duplicate-path COALESCE giữ giá trị có sẵn — 6 importer hiện có KHÔNG break); `listVocabulary` select thêm cefr/source.
 - [x] **T5 — route enrich** `POST /api/admin/vocabulary/crawl/enrich` + test
   assertAdmin · body {bookId | wordIds[], dryRun?} · cap 200 (vượt → 400) · dryRun:true → counts, thiếu dryRun → apply report. Shape pin đúng context pack §4.
-- [ ] **T6 — route stats** `GET /api/admin/vocabulary/crawl/stats` + test
+- [x] **T6 — route stats** `GET /api/admin/vocabulary/crawl/stats` + test
   assertAdmin · `{counts:{pending,parsed,failed,failedMaxAttempts}, samples: failed[](slug+last_error, ≤20), lastRun: max(fetched_at)}` — DERIVED, không bảng mới; counts qua query riêng trong enrich.ts (import `RETRY_ATTEMPTS_CAP` từ store SF-1 — không sửa file).
 - [ ] **T7 — route control** `POST /api/admin/vocabulary/crawl/control` + test
   assertAdmin · `refresh-sitemap`: fetchSlugs (SF-1) → diff vs DB slugs → delta >2000 → `{deltaTooLarge:true, hint}` KHÔNG ghi; ≤2000 → upsert chỉ slug mới (drizzle chunk 100, `UPSERT_BATCH_SIZE` import) → `{inserted}` · `retry-failed`: reset failed→pending attempts<5 → `{reset}`. Action khác → 400.
