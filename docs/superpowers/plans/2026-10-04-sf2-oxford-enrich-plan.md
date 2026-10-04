@@ -13,9 +13,9 @@
 
 - [x] **T1 — match rule** `src/lib/oxford/match.ts` + `match.test.ts`
   `normalizeMatch(x)` = trim + lowercase + strip `_\d+$` + '-'→space + collapse whitespace; `normalizeHeadword` = trim+lowercase (không strip). Winner: headword exact > slug match → cefr non-null → id nhỏ nhất. PURE.
-- [ ] **T2 — fill builder (pure)** trong `enrich.ts` + test
+- [x] **T2 — fill builder (pure)** trong `enrich.ts` + test
   `buildFill(word{ipa,example,cefr,audioUrl}|null, entry)` → fills theo rule: ipa uk→us→skip · example senses[0].examples[0]→skip · cefr thô→skip nếu null · audio audio_uk_blob→audio_us_blob→skip('noAudioBlob'). Empty = CHỈ `null` (chuỗi rỗng teacher = tôn trọng). `filled[]`/`skipped[]`/`reason?` derive từ fills.
-- [ ] **T3 — enrich DB leg + seed helper** trong `enrich.ts` + test (mock `@/db`)
+- [x] **T3 — enrich DB leg + seed helper** trong `enrich.ts` + test (mock `@/db`)
   `enrichWordsDb({bookId|wordIds, dryRun})`: resolve ≤200 words (JOIN book_words khi bookId) → fetch candidates (1 query batch: slug IN bases + slug ~ ANY `^base_[0-9]+$` + lower(trim(word)) = ANY) → winner qua T1 → dryRun counts `{candidates, fillableIpa, fillableExample, fillableCefr, fillableAudio}` | apply re-read DB (apply-time emptiness) → UPDATE chỉ field fill + `source='oxford-ld'` khi ≥1 fill → report per-word `{word, filled[], skipped[], reason?}` ('noMatch' khi không có entry thắng) → `revalidateContent()`. `seedCrawlEntry(sql, row)` export (test + SF-3 e2e).
 - [ ] **T4 — store mở rộng** `vocabulary.ts` + `vocabulary-store.ts` + test update
   `WordInput` thêm `cefr?/source?` optional; `createVocabularyWord` ghi 2 trường (insert + duplicate-path COALESCE giữ giá trị có sẵn — 6 importer hiện có KHÔNG break); `listVocabulary` select thêm cefr/source.
