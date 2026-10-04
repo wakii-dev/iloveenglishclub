@@ -1,0 +1,50 @@
+# Perf run SF-4 (VU-36 T4) — dashboard + enrich trên crawl_entries 63.9k rows
+
+State đo: 63,937 rows (63,726 pending / 211 parsed / 0 failed) — sau rehearsal
+T3. Dev server port 3330 (webpack dev, KHÔNG turbopack), Neon pooler. Mọi
+EXPLAIN = `EXPLAIN (ANALYZE, TIMING OFF)` chạy trực tiếp trên DATABASE_URL.
+
+## P1 — crawlStatsDb (GROUP BY toàn bảng) — dashboard GET /api/admin/vocabulary/crawl/stats
+
+  Seq Scan on crawl_entries (63,937 rows) — Execution Time: 14.308 ms (in-DB)
+  HTTP (dev, admin session): 2,590 / 2,001 / 1,920 ms — status 200,
+  counts: {pending:63726, parsed:211, failed:0, failedMaxAttempts:0}
+  → 1 scan/request ~14ms in-DB; ~2s HTTP là overhead dev server (compile +
+  instrumentation) — KHÔNG timeout, dashboard sống.
+
+## P2 — claimPending LIMIT 100 (fetch runner)
+
+  Index Scan using crawl_entries_pkey, stop tại LIMIT — 0.195 ms
+  → không quét hết bảng khi claim batch.
+
+## P3 — failed samples (dashboard debug block)
+
+  Index Scan using crawl_entries_status_idx — 0.032 ms (0 failed rows).
+
+## P4 — enrich fetchCandidates batch (188 headword thật, state hiện tại 211 parsed)
+
+  Index Scan using crawl_entries_status_idx (driver = status='parsed') —
+  Execution Time: 1.132 ms warm in-DB; first-call 485 ms (plan + 400 bind
+  params + Neon RTT). Rows trả 206.
+  → Ở state hiện tại query KHÔNG đụng 63.9k pending — scale theo PARSED count.
+
+## P5 — future-state (mô phỏng full crawl ~63.9k parsed: bỏ filter status)
+
+  Seq Scan on crawl_entries — Execution Time: 213.271 ms in-DB;
+  warm end-to-end ×3: 767 / 721 / 707 ms per 200-word batch (Neon RTT).
+  → ĐÚNG requirement "không seq-scan per-word": 1 scan/BATCH (regex homograph
+  + lower(trim(word)) không indexable → planner chọn 1 seq scan khi parsed ≈
+  toàn bảng; vẫn ~0.7s/chunk-200 từ — trong budget enrich cap 200/chunk).
+  Nếu sau full crawl cần tối ưu: expression index `lower(trim(word))` là
+  đường đi — KHÔNG làm trong SF này (surgical scope).
+
+## P6 — enrich dryRun HTTP trên book thật (level-3, admin session, dev)
+
+  1,705 / 1,125 / 1,059 ms — status 200, counts hợp lệ. Dev overhead trội;
+  in-DB ~1-15ms (P4/P1).
+
+## Kết luận ACCEPTANCE 4
+
+Dashboard + enrich KHÔNG timeout ở 63.9k rows; mọi query nóng dùng index
+(pkey/status_idx) hoặc 1 seq-scan/batch đúng thiết kế. Số liệu bỏ vào
+runbook (kèm P1 ~14ms/request dashboard in-DB).

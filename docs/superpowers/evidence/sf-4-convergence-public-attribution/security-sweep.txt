@@ -1,0 +1,42 @@
+# Security sweep SF-4 (VU-36 T5) — crawl surface
+
+Sweep trên state sau T4 (diff fa478ab..50cf35b + toàn bộ crawl surface SF-1/2/3
+vì SF-4 là convergence — sweep CHÍNH route crawl, KHÔNG sửa code).
+
+## 1. assertAdmin — MỌI route crawl
+
+- src/app/api/admin/vocabulary/crawl/stats/route.ts:23   await assertAdmin()
+- src/app/api/admin/vocabulary/crawl/enrich/route.ts:25   await assertAdmin()
+- src/app/api/admin/vocabulary/crawl/control/route.ts:26  await assertAdmin()
+- src/app/api/admin/vocabulary/crawl/word/route.ts:26     await assertAdmin()
+- src/app/api/admin/vocabulary/crawl/word/approve/route.ts:52 await assertAdmin()
+Unit test 403 có sẵn ở CẢ 5 route.test.ts (stats/control/enrich/word/approve).
+
+## 2. SSRF — 2-host allowlist Oxford
+
+- src/lib/oxford/fetch.ts:18 ENTRY_HOST_SUFFIX = ".oxfordlearnersdictionaries.com";
+  :90 isAllowedHost (exact hoặc endsWith suffix); :129-130 kiểm TRÊN URL CUỐI
+  (res.url — sau mọi redirect) — redirect escape bị chặn.
+- src/lib/oxford/audio.ts:33 cùng allowlist cho mp3 download; :46 throw rõ khi
+  host lạ. Runner (scripts/oxford-crawl.ts:108-115) robots runtime-guard TRƯỚC
+  MỌI run — Disallow → exit 1, không vòng qua.
+
+## 3. Diff hygiene (git diff fa478ab..HEAD)
+
+- Secrets: KHÔNG có giá trị secret nào — chỉ TÊN env var (process.env.*) trong
+  code + chữ trong plan/evidence docs. Scan pattern: secret|password|api_key|
+  token|PRIVATE KEY|sk-*. .env.local KHÔNG nằm trong git (chỉ .env.example).
+- Exec-bit mới: không (git diff --summary rỗng phần mode change).
+- File .env/.pem/.key trong diff: không.
+- LLM/API key: crawl stack KHÔNG gọi LLM bên nào (fetch Oxford + DB + Blob) —
+  grep không thấy client key nào trong src/lib/oxford/** + crawl routes.
+
+## 4. Auth surface phụ (đụng trong fullchain e2e)
+
+- POST /api/vocabulary/review — session-required (401 not-authenticated);
+- GET /api/vocabulary/lookup — PUBLIC theo design (từ điển public), trả đúng
+  {word, ipa, meaning_vi, example, audio_url} của book — không đụng trong SF-4.
+
+## Kết luận
+
+KHÔNG có P0/P1. Không cần fix code trong T5.

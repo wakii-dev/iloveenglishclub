@@ -20,13 +20,17 @@ export function resolveStoredAudioUrl(value: string): string {
   return /^https?:\/\//.test(value) ? value : `/${value}`;
 }
 
-/** Field word input — snake_case khớp cột DB (body import/API dùng y nguyên). */
+/** Field word input — snake_case khớp cột DB (body import/API dùng y nguyên).
+ *  cefr/source (SF-2): optional — chỉ crawl-on-add approve set; import hiện có
+ *  (6 caller) không đụng, type additive không break. */
 export type WordInput = {
   word: string;
   ipa: string | null;
   meaning_vi: string;
   example: string | null;
   audio_url: string | null;
+  cefr?: string | null;
+  source?: string | null;
 };
 
 /** 1 dòng hợp lệ sau validate — line để report lỗi theo dòng (t-1.2). */

@@ -33,6 +33,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MAX_AUDIO_BYTES, mimeToAudioExt } from "@/lib/admin/audio-mapping";
 import { resolveStoredAudioUrl } from "@/lib/admin/vocabulary";
+import { CrawlAddDialog } from "@/components/admin/crawl-add-dialog";
+import { CrawlEnrichPanel } from "@/components/admin/crawl-enrich-panel";
 
 /**
  * Quản lý từ theo book (SF-1 t-1.3): bảng word/IPA/nghĩa/audio + form
@@ -48,6 +50,9 @@ export type AdminWordRow = {
   meaning_vi: string;
   example: string | null;
   audio_url: string | null;
+  // SF-3 crawl UI (VU-35): badge CEFR + marker nguồn — chỉ ĐỌC (store SF-2 ghi)
+  cefr?: string | null;
+  source?: string | null;
 };
 
 type ImportReportUi = {
@@ -290,6 +295,8 @@ export function VocabularyManager({
           {t("count", { count: rows.length })}
         </span>
         <div className="ml-auto flex gap-2">
+          <CrawlEnrichPanel bookId={bookId} onDone={() => void refetch()} />
+          <CrawlAddDialog bookId={bookId} onAdded={() => void refetch()} />
           <Button
             variant="outline"
             className="rounded-[14px]"
@@ -479,7 +486,21 @@ export function VocabularyManager({
                   key={row.id}
                   className="border-b border-border/60 last:border-0"
                 >
-                  <td className="px-4 py-3 font-bold">{row.word}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold">{row.word}</span>
+                      {/* SF-3 (VU-35): badge CEFR + marker nguồn — đọc cefr/
+                          source store đã mở rộng (SF-2); chỉ hiển thị */}
+                      {row.cefr ? (
+                        <Badge variant="secondary" className="tabular-nums">
+                          {row.cefr}
+                        </Badge>
+                      ) : null}
+                      {row.source === "oxford-ld" ? (
+                        <Badge variant="outline">{t("badgeOxford")}</Badge>
+                      ) : null}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {row.ipa ? (
                       <span className="font-mono text-[13px]">{row.ipa}</span>

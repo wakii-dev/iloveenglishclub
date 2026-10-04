@@ -5,6 +5,7 @@
   "play": "Phát âm “{word}”",
   "stop": "Dừng audio",
   "empty": "Sách chưa có từ vựng — quay lại sau nhé.",
+  "source": "Nguồn: Oxford Learner's Dictionaries",
   "learnWord": "Học từ này",
   "reviewTitle": "Ôn tập từ vựng",
   "dueToday": "Hôm nay cần ôn: {count, plural, other {# từ}}",

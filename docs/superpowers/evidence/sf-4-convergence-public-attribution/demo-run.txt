@@ -1,0 +1,53 @@
+# Browser verify SF-4 (VU-36 T9 — Rule 0) — TỰ ĐI flow, TỰ NHÌN màn hình
+
+Server: `next start` PROD build (rebuild SAU review-B fix — build2 exit 0),
+port 3340, fixture qa-sf4-mutp1tek (id 1004460) seed trước build. Orca browser
+(embedded) — snapshot DOM + SCREENSHOT PNG (67082 bytes mỗi ảnh, đựng trong
+evidence/screenshots/), audio state đọc qua eval (paused/currentTime).
+
+## Flow đã tự đi + thấy bằng mắt
+
+1. **/vi/books/qa-sf4-mutp1tek/vocabulary** — `01-vocab-attribution-vi.png`:
+   qasf4oak có nút Play + IPA /oʊk/ + example italic + dòng
+   "Nguồn: Oxford Learner's Dictionaries"; qasf4fern + qasf4elm KHÔNG có dòng
+   nguồn (teacher-only) — attribution đúng điều kiện.
+2. **Bấm Play THẬT** — `02-vocab-audio-playing.png`: nút đổi icon Pause;
+   eval xác nhận `{stopBtn: true, paused: false, currentTime: 1.33}`; file
+   audio src=/audio/qa-sf4/sample.mp3 phát hết 3.6s ở lần click đầu
+   (currentTime chạy 0→3.6 = playback thật, không phải URL chết).
+3. **/admin/vocabulary/crawl** — `03-dashboard-63k.png`: 63,726 Chờ crawl /
+   213 Đã parse / 0 Lỗi / 0 Lỗi quá 5 lần; "Lần crawl cuối: 17:12 04/10/2026"
+   (= rehearsal run 2); failed-samples rỗng; hint lệnh runner. KHÔNG timeout.
+4. **Lookup API** (fetch từ page context): hit `qasf4oak` → 200 {word, ipa
+   "oʊk", meaning_vi, example, audio_url}; miss `qasf4zebra` → **404
+   {"error":"not_in_vocabulary"}** — contract giữ nguyên (UI popover do lane
+   word-lookup.spec bảo vệ — lesson page cần published lesson).
+5. **Enrich panel trên book QA** — `04-enrich-preview-live.png`: preview mở
+   thật: "Từ khớp crawl_entries 1 · Điền được IPA 1 · ví dụ 1 · CEFR 1 ·
+   audio 1 · Chạy điền (3 từ)" — KHÔNG bấm apply (state giữ sạch; apply path
+   do fullchain e2e test 4 chứng minh + report từng từ).
+6. **Crawl-on-add LIVE với Oxford thật** — `05-crawl-on-add-live-tree.png`:
+   dialog tra "tree" → "tải trực tiếp" (live path) → tree A1 noun /triː/ UK/US
+   — data THẬT Oxford render đúng; "Chưa có audio — enrich sau bổ sung" đúng
+   spec (KHÔNG duyệt — không tạo word rác). Đây là demo live-path (1 call
+   Oxford thật, trong hạn mức rehearsal — khác hẳn e2e vốn route-abort Oxford).
+
+## Linear posts (VU-36) — trạng thái verify
+
+Phase 0 / Plan / probe / Review A verdict posts trả `linear_write_unconfirmed`
+NHƯNG kèm comment id (343fb985…, 7b7549ba…, …) — write đã apply ở mức API
+(false-negative đã biết của orca; KHÔNG retry tránh dup). Browser không xem
+được linear.app (profile chưa login Linear) — coordinator sẽ thấy các comment
+khi đọc VU-36 trước merge; nếu thiếu, re-post theo evidence trong file này.
+
+## Ghi chú
+
+- sample.mp3 nguồn (Review B hỏi): copy từ `e2e/fixtures/01.mp3` của repo
+  (fixture audio dictation story trước — KHÔNG phải mp3 Oxford) — 10.8KB,
+  MPEG-1 L3, phát được thật; không có vấn đề license OUP.
+- Flashcards UI walkthrough không lặp lại bằng tay: fullchain e2e test 5 đi
+  TRỌN flow đó (seed due → lật → play thật → grade → due giảm) trên cùng
+  build; tôi tự thấy qua browser: attribution + audio + dashboard + enrich +
+  crawl-on-add.
+- Fix review B sau verify (commit cuối): audio.ts post-redirect allowlist
+  check RED→GREEN (test mới: redirect host lạ → throw; suite 681/681).

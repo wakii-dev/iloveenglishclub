@@ -5,6 +5,7 @@
   "play": "Play “{word}”",
   "stop": "Stop audio",
   "empty": "No words in this book yet — check back soon.",
+  "source": "Source: Oxford Learner's Dictionaries",
   "learnWord": "Learn this word",
   "reviewTitle": "Review vocabulary",
   "dueToday": "{count, plural, one {# word to review today} other {# words to review today}}",

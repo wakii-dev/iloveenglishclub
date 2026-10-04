@@ -1,0 +1,42 @@
+hash: 3fd8208 (commit ngay trước evidence-refresh — parent-convention; code commit cuối: 408bf48 fix fetchCandidates)
+tdd: RED→GREEN
+
+## Test run SF-2 (2026-10-04) — suite + typecheck + store DB-integration
+$ npm test
+ Test Files  53 passed (53)
+      Tests  666 passed (666)   (baseline SF-1: 557 — +109 test SF-2)
+error TS: 0 (npx tsc --noEmit)
+$ npm run lint
+ 0 errors (4 warnings — pre-existing e2e + scripts/oxford-crawl.ts của SF-1, không file SF-2)
+$ npm run test:store (DB dev thật — Neon)
+      Tests  8 passed (8)      (audio-sync exclusion + oxford store — test exclusion SF-1 vẫn xanh, KHÔNG viết mới theo context pack §6)
+
+## RED→GREEN evidence (per task):
+- T1 match: normalizeMatch/winner 15 test — RED (module thiếu) → GREEN
+- T2/T3 enrich builder+DB: 11 test — RED (buildFill not exported) → GREEN
+- T4 store cefr/source: listVocabulary toEqual RED → GREEN (34/34 vocabulary)
+- T5 enrich route: guards 401/403 + cap + shapes 16 test
+- T6 stats route: shape pin + derived 3 test (+ crawlStatsDb/retryFailedDb unit)
+- T7 control route: action validation + deltaTooLarge + 502 sitemap 12 test
+- T8 word preview: cache-first không gọi Oxford (assert) + live 5 + route 15 test
+- T9 approve: audio exception (payload→DB→download→throw) 7 + route 18 test
+
+## BUG TÌM THẤY QUA DEMO (mock không bắt được — SQL thật):
+- drizzle flatten array JS → `( $1,$2,$3,$4 )::text[]` INVALID — fetchCandidates
+  đổi: inArray() + composite homograph regex bind 1 param. Fix trong demo session
+  (commit sau evidence); unit test mock chain không validate SQL text → demo curl
+  là integration test thật (dryRun 200 counts đúng sau fix).
+
+## Demo thật (demo-run.txt — curl trên DB dev + Blob thật):
+- audio --limit 1 --apply → aargh.uk/us.mp3 blob thật (provenance runner SF-1)
+- enrich dryRun counts đúng 4 chiều; apply report per-word đúng; teacher values
+  ('' + C1 + example có sẵn) GIỮ NGUYÊN; source chỉ khi fill; audio HEAD 200
+- stats derived (pending 63854/parsed 83) + control retry-failed + refresh-sitemap
+  (fetch sitemap thật ~64k → inserted 0 — diff đúng)
+- preview 'a' CACHE-HIT (winner homograph a_1 cefr A1) không gọi Oxford;
+  preview 'wander' LIVE thật (redirect → wander_1); approve abacus DOWNLOAD mp3
+  Oxford → Blob thật (audio/oxford/abacus.uk.mp3) + source set; approve wander
+  không audio → word VẪN tạo; re-approve duplicate:true idempotent + COALESCE cefr
+- enrich re-run: fillable 0/0/0/0 — idempotent, không đụng gì thêm
+- demo words giữ lại trong DB dev (a, twenty-four seven, fifth-generation,
+  abacus, wander, zzz-no-match-word) — dữ liệu thật cho demo SF-3 kế

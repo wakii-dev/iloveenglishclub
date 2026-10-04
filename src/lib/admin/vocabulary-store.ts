@@ -43,6 +43,8 @@ export async function listVocabulary({
       meaningVi: words.meaningVi,
       example: words.example,
       audioUrl: words.audioUrl,
+      cefr: words.cefr,
+      source: words.source,
       createdAt: words.createdAt,
     })
     .from(words)
@@ -98,6 +100,8 @@ export async function listVocabulary({
       meaning_vi: w.meaningVi,
       example: w.example,
       audio_url: w.audioUrl,
+      cefr: w.cefr,
+      source: w.source,
       createdAt: w.createdAt,
       bookIds: byWord.get(w.id) ?? [],
     })),
@@ -128,6 +132,9 @@ export async function createVocabularyWord(
           meaningVi: input.meaning_vi,
           example: input.example,
           audioUrl: input.audio_url,
+          // SF-2 crawl-on-add: cefr/source chỉ có khi approve set — import không đụng
+          cefr: input.cefr ?? null,
+          source: input.source ?? null,
         })
         .onConflictDoNothing({ target: words.word })
         .returning({ id: words.id });
@@ -141,6 +148,17 @@ export async function createVocabularyWord(
           .where(eq(words.word, input.word))
           .limit(1);
         id = existing?.id;
+        // SF-2: word reuse vẫn set cefr/source — COALESCE giữ giá trị có sẵn
+        // (fill-empty spirit; import path không có 2 trường này → no-op)
+        if (id !== undefined && (input.cefr !== undefined || input.source !== undefined)) {
+          await tx
+            .update(words)
+            .set({
+              cefr: sql`coalesce(${words.cefr}, ${input.cefr ?? null})`,
+              source: sql`coalesce(${words.source}, ${input.source ?? null})`,
+            })
+            .where(eq(words.id, id));
+        }
       }
       if (id === undefined) throw new Error("word insert/select returned none");
 

@@ -1,0 +1,43 @@
+hash: c019372 (parent-convention — commit code cuối trước evidence commit; refresh sau fix review B)
+tdd: RED→GREEN (T1 + review-B audio post-redirect test) + skipped-tdd (T2 test-only — chain code SF-2/3 đã merge)
+
+## Test run SF-4 (2026-10-04) — full suite + build + regression lanes
+
+$ npm test                                        → 681/681 passed (exit 0 — refresh SAU
+  fix review B: +1 test audio post-redirect allowlist; run trước fix: 680/680)
+$ npx tsc --noEmit                                → 0 errors
+$ npx eslint .                                    → 0 errors (4 warnings PRE-EXISTING:
+  admin-upload:199, dictation-store-edge:38, i18n-sitemap:54, oxford-crawl.ts:101 —
+  file story cũ, không phải diff SF-4)
+$ npm run build                                   → exit 0 ×2 (lần 1 ở T6 cho lighthouse;
+  lần 2 rebuild SAU review-B fix cho browser verify — .next bị e2e dev server
+  ghi đè giữa chừng là bình thường, dev/prod dùng chung .next)
+$ npm run test:e2e:vocabulary                     → 2 passed (28.7s)
+$ npm run test:e2e:vocabulary-lookup              → 1 passed (24.2s) — 404 contract không vỡ
+$ npm run test:e2e:oxford                         → 7 passed (2.8m) — SF-3 regression nguyên vẹn
+$ npm run test:e2e:oxford-fullchain               → 5 passed exit 0 (final3 sau fix review A
+  server FRESH; final4 sau fix review B trên code cuối — audio.ts nằm trong
+  import graph approve route, hành vi không đổi vì approve đi DB-lookup-first;
+  lần fail trung gian ChunkLoadError do stale dev server — QA-2 lesson disclosed)
+
+## RED→GREEN evidence
+
+- T1 attribution: RED = e2e case attribution chạy FAIL khi page chưa render
+  dòng nguồn (/tmp/sf4-fullchain-red.log — "unexpected value qasf4oak/oʊk/…"
+  thiếu 'Nguồn:'); GREEN = 2/2 pass sau implement (queries.source + i18n en/vi
+  + page render `=== 'oxford-ld'`). Unit queries.test 3/3 (shape additive).
+- T2 full-chain: skipped-tdd — deliverable LÀ test cho code đã merge (SF-2/3);
+  RED không khả thi mà không break hợp đồng đã merged. 3 bug thật e2e bắt
+  được (fix trong lúc authoring): count "Chạy điền (4 từ)" (quên maple vào
+  book ở leg trước), reload-sau-grade abort fetch review (chờ "Thẻ 2/2" trước
+  reload), selector "Nhớ" đụng "Nhớ-kho" (exact:true).
+
+## Reviews (rolling — CHECK 3)
+
+- Review A (T1-T4, độc lập): APPROVED — 0 P0/P1, 5 P2 → ĐÃ FIX tất cả (addb1a3)
+  + re-run fullchain xanh. Verdict post VU-36 (kèm CHECKLIST-4Q).
+- Review B (T5-T8): chạy sau khi T8 xong — trước story-verify.
+
+## Browser verify (Rule 0)
+
+Screenshots + walkthrough: demo-run.txt (CHECK 4) — chạy sau T8.
