@@ -6,7 +6,7 @@
     "generatedAt": "2026-10-04T00:00:00.000Z",
     "dest": "story-vu32-oxford-vocab-crawl",
     "worktreeModel": "story-hub",
-    "updatedAt": "2026-10-04T05:50:00Z"
+    "updatedAt": "2026-10-04T06:47:00Z"
   },
   "nodes": [
     {
@@ -38,7 +38,8 @@
       "title": "Admin UI: crawl dashboard + enrich panel + crawl-on-add",
       "tier": 2,
       "summary": "Phase 2/2 — shippable: UI + convergence. Demo: teacher mở dashboard (dữ liệu seeded) thấy counts/failed/refresh/retry/hint lệnh runner + attribution; bấm enrich theo book thấy preview counts → chạy → report từng từ; dialog crawl-on-add: gõ từ → preview (IPA/def/audio) → điền nghĩa VI → duyệt thêm vào book",
-      "linear": "VU-35"
+      "linear": "VU-35",
+      "state": "done"
     },
     {
       "id": "sf-4",
