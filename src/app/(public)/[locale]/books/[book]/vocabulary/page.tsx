@@ -5,11 +5,14 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getBook, getBooks, getBookVocabulary } from "@/lib/content/queries";
 import { WordPlayButton } from "@/components/content/word-play-button";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * /books/[book]/vocabulary — từ vựng của book theo thứ tự học (SF-2 t-2.1).
  * Public như trang books (middleware chỉ gate /admin); SSG + ISR 300 cùng
  * pattern book page — admin mutation gọi revalidateContent() (tag `content`).
+ * story vocabulary-learn t-1.1: mỗi từ có nút "Học từ này" → /me/vocabulary
+ * ?word=<id> (prefill thẻ flashcard có sẵn SF-2 tab Thư viện; guest → login).
  */
 export const revalidate = 300;
 
@@ -98,6 +101,12 @@ export default async function BookVocabularyPage({
                   </span>
                 ) : null}
               </span>
+              <Link
+                href={`/me/vocabulary?word=${entry.id}`}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                {t("learnWord")}
+              </Link>
             </li>
           ))}
         </ol>
