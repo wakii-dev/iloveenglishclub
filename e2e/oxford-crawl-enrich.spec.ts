@@ -111,10 +111,11 @@ test.describe("Enrich panel (SF-3)", () => {
     expect(book?.source).toBe("oxford-ld"); // ≥1 fill → source set
     await c.end();
 
-    // badge CEFR + marker nguồn sau onDone refetch
-    const tableRow = page.locator("table tbody tr").filter({ hasText: "qasf3-tree" });
+    // badge CEFR + marker nguồn sau onDone refetch — assert trên qasf3-book:
+    // tree là row 201 alphabetically, bảng load limit 200 không render nó
+    const tableRow = page.locator("table tbody tr").filter({ hasText: "qasf3-book" });
     await expect(tableRow).toHaveCount(1);
-    await expect(tableRow).toContainText("A1");
+    await expect(tableRow).toContainText("A2");
     await expect(tableRow).toContainText("Oxford");
   });
 });
