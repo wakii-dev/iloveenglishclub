@@ -16,6 +16,7 @@ export function AdminNav() {
   const items = [
     { href: "/admin", label: t("dashboard") },
     { href: "/admin/books", label: t("books") },
+    { href: "/admin/vocabulary/crawl", label: t("crawl") },
     { href: "/admin/users", label: t("users") },
   ];
 
