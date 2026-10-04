@@ -1,0 +1,56 @@
+hash: 48ed6ac (parent-convention — commit code cuối trước evidence commit)
+tdd: RED→GREEN
+
+## Test run SF-3 (2026-10-04) — unit + typecheck + lint + e2e
+$ npm test
+ Test Files  54 passed (54)
+      Tests  680 passed (680)   (baseline SF-2: 666 — +14 crawl-batch.test.ts)
+$ npx tsc --noEmit
+ 0 errors
+$ npx eslint <12 file mới/sửa SF-3>
+ 0 errors 0 warnings
+$ npm run test:e2e:oxford  (run3 — /tmp/sf3-e2e-run3.log)
+ 7 passed (2.8m) — port 3320, fixture seed QA book 201 từ, upstream MOCK
+ (0 gọi Oxford thật: cache-hit REAL API + miss fulfill browser-route từ
+  fixture HTML SF-1 qua parseEntry; refresh-sitemap fulfill browser-route)
+
+## RED→GREEN evidence (per task):
+- T2 crawl-batch pure: chunkIds/sumDryRunCounts/runChunked/formatCrawlTimestamp —
+  14 test RED (module thiếu) → GREEN (3 expectation sửa theo ICU thật: vi-VN
+  giờ-trước-ngày + String(Error) prefix — implementation đúng chuẩn locale)
+- T1 i18n: parity test auto (3/3) — vi+en cùng keys crawl namespace
+- T3/T4/T5/T6/T7 UI: RED qua e2e (suite 7 test bắt 3 bug thật — bên dưới);
+  unit RED không khả thi cho client components (không DOM test infra — đúng
+  context pack: e2e là tầng kiểm)
+- T9 fixture: seed/cleanup standalone probe — sweep leftover run crash thật
+  (run bị kill để lại 201 words → sweep dọn sạch trước seed mới)
+
+## BUG BẮT ĐƯỢC (3 — tất cả fix + commit):
+1. P1 review A (c786145): runner hint `t(key)` render literal
+   "admin.crawl.cmdEnumerate" (key thật ở controls.*) → `t(\`controls.${key}\`)`.
+   Meta-test PASS: e2e assert text lệnh thật — RED trên code cũ.
+2. Panel enrich TRẮNG sau scan (91e9c84): openPanel set phase="confirm" sau
+   dryRun nhưng JSX render counts/confirm dưới điều kiện phase==="preview" →
+   không branch nào match → panel trắng (teacher thật cũng gặp). e2e chụp
+   snapshot chứng minh trạng thái: title + attribution only.
+3. Fixture seed raw double-encoded (d3f7b84): JSON.stringify(...)::jsonb bị
+   postgres.js bind thành jsonb STRING → `raw->'senses'->0->'examples'->>0`
+   = null → example không bao giờ fillable. Fix `c.json(raw)` mirror
+   `sql.json` của seedCrawlEntry SF-2. Kèm de-contaminate enrich spec:
+   specs chạy alphabet (add → dashboard → enrich), approve-duplicate COALESCE
+   cefr/source vào word seed + tạo 2 từ mới vào QA book → enrich counts lệch;
+   restore pristine đầu test (khớp pattern fixture unique-per-run admin-lib).
+
+## Rolling reviews (verdict post VU-35):
+- A/3 T1-T4 (0f7a86c..8820639 + c786145): APPROVED sau fix P1
+- B/3 T5-T7 (948d221, 542514c, 906e362 + d3f7b84): APPROVED sau fix P1
+- C/3 T9-T10 e2e (accc516, 0242ea5 + fixes): APPROVED — 0 P0/P1, 4 P2 audit-log
+  (P2 đáng chú ý: retry-failed e2e mutate entries failed ngoài prefix QA trên
+  shared dev DB — nhẹ, runner re-fetch sau; đã note fixture comment)
+
+## Boundary check:
+- Không sửa src/app/api/admin/vocabulary/crawl/**, src/lib/oxford/** (chỉ
+  import type), src/lib/admin/vocabulary-store.ts, src/lib/admin/vocabulary.ts
+- Không public pages (SF-4), không runner CLI (SF-1), không migration
+- e2e không gọi Oxford thật (verify: network trace — chỉ localhost + blob CDN
+  cho audio preview play)

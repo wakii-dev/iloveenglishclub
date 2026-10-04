@@ -1,0 +1,50 @@
+# Demo run SF-3 (2026-10-04) — Browser verify Rule 0 (Orca embedded browser, dev server :3300)
+
+Seed demo: fixture QA book `qa-sf3-mutiwydy` id 929942 (201 từ + 4 crawl entries
+qasf3-*, mirror seedCrawlEntry SF-2). Login admin thật (upsertAdmin từ e2e
+globalSetup). Đã TỰ đi trọn flow bằng mắt + screenshot — screenshots/:
+
+## Flow đã đi:
+1. `/vi/login` → login sf3-admin@ilec.dev → vào /admin (nav "Crawl Oxford" mới)
+2. `/admin/vocabulary/crawl` — dashboard:
+   - 4 count cards: 63855 Chờ crawl / 86 Đã parse / 1 Lỗi (đỏ) / 0 quá 5 lần
+     (counts khớp DB seed + data thật SF-1/2: 63.8k pending từ enumerate demo)
+   - Failed sample: `qasf3-crash-me` + "HTTP 500 — QA mock failure" (mono slug)
+   - lastRun "04:22 04/10/2026" (formatCrawlTimestamp vi-VN)
+   - 3 lệnh runner + nút copy → toast "Đã copy lệnh." (click fetch cmd)
+   - attribution "Nguồn: Oxford Learner's Dictionaries"
+   - Screenshot 01-dashboard.png
+   - Click "Retry entry lỗi" (REAL API): busy "Đang retry…" → toast
+     "Đã reset 1 entry lỗi về hàng chờ." → refetch: Lỗi 1→0, Chờ crawl
+     63855→63856, samples → "Không có entry lỗi." — screenshot 02-dashboard-after-retry.png
+3. `/admin/books/qa-sf3-mutiwydy/vocabulary` — enrich panel:
+   - "Điền dữ liệu thiếu từ Oxford" → scanning → preview counts ĐÚNG seed:
+     candidates 2 · IPA 1 · ví dụ 1 · CEFR 2 · audio 1 — screenshot 03-enrich-preview.png
+   - "Chạy điền (201 từ)" (2 chunks 200+1 qua wordIds) → report
+     "2 từ được điền · 199 bỏ qua · 201 từ." + per-word: qasf3-book (CEFR badge
+     + IPA · có sẵn + note noAudioBlob), fillers "không khớp crawl_entries"
+     — screenshot 04-enrich-report.png
+   - DB sau apply: qasf3-tree ipa /triː/ + example + cefr A1 + audio blob +
+     source='oxford-ld'; qasf3-book GIỮ IPA preset "/bʊk-preset/" (contract
+     fill-empty) + cefr A2 + source set
+4. Crawl-on-add dialog — "Thêm từ từ Oxford":
+   - Gõ "aardvark" (crawl entry THẬT của SF-1, audio Blob thật) → "Tra Oxford"
+     → preview < 3s: badge "từ kho crawl", C2, IPA UK /ˈɑːdvɑːk/ + US, noun,
+     "Có audio phát âm" + nút play — approve DISABLED khi nghĩa rỗng (gating)
+   - Click play → network trace chứng minh mp3 blob được fetch thật
+     (aardvark.uk.mp3 từ blob.vercel-storage.com) — screenshot 05-crawl-add-preview.png
+   - Điền nghĩa "Con lợn đất châu Phi" → approve ENABLED → click → toast
+     "Đã thêm từ "aardvark" vào sách. kèm audio phát âm" — screenshot 06-crawl-add-approved.png
+   - Bảng words: row aardvark hiện badge "C2" + marker "Oxford" + audio
+   - DB: word aardvark {ipa, meaning_vi teacher, cefr C2, source='oxford-ld',
+     audio_url blob} + link book QA
+
+## Cleanup sau demo:
+fixture sweep (books 0, qasf3-words 0) + xoá word aardvark (không thuộc prefix)
++ kill dev server :3300 + đóng tab Orca.
+
+## Quan sát ngoài scope (flag — KHÔNG fix chéo):
+- Import panel (SF-1 sở hữu): placeholder textarea render literal
+  "admin.vocabulary.import.placeholder" — chuỗi mẫu JSON chứa {} bị next-intl
+  ICU parser nuốt → fallback key. Bug pre-existing, UI vẫn dùng được (hint
+  phía trên giải thích format). Cho story owner quyết.
