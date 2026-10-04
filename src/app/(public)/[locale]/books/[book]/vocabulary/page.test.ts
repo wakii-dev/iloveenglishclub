@@ -25,6 +25,13 @@ vi.mock("next/navigation", () => ({
   notFound: () => {
     throw new Error("notFound called");
   },
+  // BookStudyButton (client) — SSR chỉ render markup, router không chạy
+  useRouter: () => ({ push: () => {} }),
+}));
+
+// BookStudyButton dùng hook client next-intl — dùng chung translator messages thật
+vi.mock("next-intl", () => ({
+  useTranslations: () => makeT(localeState.locale),
 }));
 
 vi.mock("@/i18n/navigation", () => ({
@@ -66,6 +73,11 @@ function loadDict(locale: "en" | "vi"): Record<string, unknown> {
   return JSON.parse(
     readFileSync(path.join(MESSAGES_DIR, locale, "vocabulary.json"), "utf8"),
   ) as Record<string, unknown>;
+}
+
+/** bookStudy.cta — section lồng nhau cần cast tường minh (loadDict trả unknown). */
+function bookStudyCta(locale: "en" | "vi"): string {
+  return (loadDict(locale).bookStudy as { cta: string }).cta;
 }
 
 function makeT(locale: "en" | "vi") {
@@ -175,5 +187,24 @@ describe("trang từ vựng per-book — nút Học từ này (t-1.1)", () => {
     const html = await renderPage();
     expect(learnHrefs(html)).toEqual([]);
     expect(html).toContain(loadDict("en").empty);
+  });
+});
+
+describe("trang từ vựng per-book — nút Bắt đầu học sách này (t-1.2)", () => {
+  it("[en] sách có từ → render nút bulk seed lộ trình", async () => {
+    const html = await renderPage();
+    expect(html).toContain(bookStudyCta("en"));
+  });
+
+  it("[vi] nhãn bulk theo messages vi", async () => {
+    localeState.locale = "vi";
+    const html = await renderPage();
+    expect(html).toContain(bookStudyCta("vi"));
+  });
+
+  it("sách chưa có từ → không render nút bulk (seed rỗng vô nghĩa)", async () => {
+    fixtures.vocab = [];
+    const html = await renderPage();
+    expect(html).not.toContain(bookStudyCta("en"));
   });
 });

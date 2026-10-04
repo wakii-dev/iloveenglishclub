@@ -44,6 +44,13 @@
   "lookupMiss": "Từ này chưa có trong bộ từ vựng của sách",
   "lookupError": "Không tra được từ — thử lại nhé.",
   "lookupAria": "Nghĩa của từ “{word}”",
+  "bookStudy": {
+    "cta": "Bắt đầu học sách này",
+    "pending": "Đang thêm vào lộ trình…",
+    "added": "Đã thêm {count, plural, other {# từ}} vào lộ trình — {perDay} từ/ngày.",
+    "already": "Sách này đã có trong lộ trình học của bạn.",
+    "error": "Không thêm được sách vào lộ trình — thử lại nhé."
+  },
   "hub": {
     "title": "Tổng quan từ vựng",
     "tabs": {

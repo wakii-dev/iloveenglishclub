@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getBook, getBooks, getBookVocabulary } from "@/lib/content/queries";
 import { WordPlayButton } from "@/components/content/word-play-button";
+import { BookStudyButton } from "@/components/vocabulary/book-study-button";
 import { buttonVariants } from "@/components/ui/button";
 
 /**
@@ -72,7 +73,17 @@ export default async function BookVocabularyPage({
           {t("empty")}
         </p>
       ) : (
-        <ol className="mt-6 flex flex-col gap-3">
+        <>
+          {/* story vocabulary-learn t-1.2: bulk seed lộ trình 5 từ/ngày cả
+              book — guest bấm → 401 → redirect login kèm ?next về trang này */}
+          <div className="mt-6">
+            <BookStudyButton
+              bookId={book.id}
+              locale={locale}
+              nextPath={`/${locale}/books/${bookSlug}/vocabulary`}
+            />
+          </div>
+          <ol className="mt-6 flex flex-col gap-3">
           {vocab.map((entry) => (
             <li
               key={entry.id}
@@ -110,6 +121,7 @@ export default async function BookVocabularyPage({
             </li>
           ))}
         </ol>
+        </>
       )}
     </div>
   );
