@@ -6,7 +6,7 @@
     "generatedAt": "2026-10-04T00:00:00.000Z",
     "dest": "story-vu32-oxford-vocab-crawl",
     "worktreeModel": "story-hub",
-    "updatedAt": "2026-10-04T06:47:00Z"
+    "updatedAt": "2026-10-04T11:27:00Z"
   },
   "nodes": [
     {
@@ -47,7 +47,8 @@
       "title": "Convergence: public attribution + bulk rehearsal + QA",
       "tier": 3,
       "summary": "Demo: vocabulary page public hiện attribution nguồn khi source='oxford-ld'; từ đã enrich phát audio Blob trên flashcards + tra từ thấy IPA/example mới; rehearsal thật 100 từ kill/resume không dup; dashboard sống với ~60k rows (enumerate-pending); runbook có số thật",
-      "linear": "VU-36"
+      "linear": "VU-36",
+      "state": "done"
     }
   ],
   "edges": [
