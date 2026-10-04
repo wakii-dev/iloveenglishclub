@@ -152,6 +152,7 @@
     "fieldAudioUrl": "URL audio (tuỳ chọn)",
     "hasAudio": "Có audio",
     "noAudio": "Chưa có",
+    "badgeOxford": "Oxford",
     "play": "Phát audio",
     "stop": "Dừng phát",
     "upload": "Tải audio lên",

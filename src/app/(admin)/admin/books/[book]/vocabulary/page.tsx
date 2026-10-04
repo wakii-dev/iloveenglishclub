@@ -64,6 +64,9 @@ export default async function AdminVocabularyPage({
           meaning_vi: w.meaning_vi,
           example: w.example,
           audio_url: w.audio_url,
+          // SF-3 (VU-35): badge CEFR + nguồn — store SF-2 đã select 2 trường
+          cefr: w.cefr,
+          source: w.source,
         }))}
       />
 

@@ -152,6 +152,7 @@
     "fieldAudioUrl": "Audio URL (optional)",
     "hasAudio": "Has audio",
     "noAudio": "None",
+    "badgeOxford": "Oxford",
     "play": "Play audio",
     "stop": "Stop playing",
     "upload": "Upload audio",
