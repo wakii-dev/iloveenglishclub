@@ -6,7 +6,7 @@
     "generatedAt": "2026-10-04T00:00:00.000Z",
     "dest": "story-vu32-oxford-vocab-crawl",
     "worktreeModel": "story-hub",
-    "updatedAt": "2026-10-04T05:38:21Z"
+    "updatedAt": "2026-10-04T05:50:00Z"
   },
   "nodes": [
     {
@@ -29,7 +29,8 @@
       "title": "Enrichment fill-empty + admin API (crawl/enrich, stats, control, word)",
       "tier": 1,
       "summary": "Demo: audio --limit 1 trước cho có blob → curl POST /api/admin/vocabulary/crawl/enrich dryRun hiện counts → apply → words thiếu IPA/example/audio/cefr được điền đúng entry thắng theo match rule, KHÔNG đụng field teacher đã có, words.source='oxford-ld', revalidate chạy; crawl-on-add preview cache-first không gọi Oxford khi trúng cache",
-      "linear": "VU-34"
+      "linear": "VU-34",
+      "state": "done"
     },
     {
       "id": "sf-3",
