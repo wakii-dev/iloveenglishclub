@@ -30,7 +30,7 @@
 - [x] **T9 — route word approve** `POST /api/admin/vocabulary/crawl/word/approve` + test
   assertAdmin · `{entry (payload y như preview), meaning_vi (bắt buộc), bookId}` → tạo word (ipa uk→us, cefr, source='oxford-ld') + link book (duplicate → reuse + attach + COALESCE cefr/source) · AUDIO 1-mp3 exception: audioUkBlob payload → DB row blob → download qua `downloadMp3`+`putBlobAudio` (blob-only, UK→US) → throw → word VẪN tạo KHÔNG audio (không hotlink).
 - [x] **T10 — suite xanh** — `npm test` (audio-sync exclusion SF-1 vẫn xanh) + `typecheck` + `lint` + `test:store` (nếu DB).
-- [ ] **T11 — demo + verify + ship** — audio `--limit 1 --apply` blob thật → seed words demo → curl dryRun/apply/stats/control/word/approve trên DB dev (admin session thật) → evidence `docs/superpowers/evidence/sf-2-oxford-enrich/test-run.txt` + `demo-run.txt` → code-reviewer ĐỘC LẬP trên diff SF → push `wakii-dev/sf-2-oxford-enrich` → DONE comment VU-34 → `story-verify sf-2`.
+- [x] **T11 — demo + verify + ship** — audio `--limit 1 --apply` blob thật → seed words demo → curl dryRun/apply/stats/control/word/approve trên DB dev (admin session thật) → evidence `docs/superpowers/evidence/sf-2-oxford-enrich/test-run.txt` + `demo-run.txt` → code-reviewer ĐỘC LẬP trên diff SF → push `wakii-dev/sf-2-oxford-enrich` → DONE comment VU-34 → `story-verify sf-2`.
 
 ## Verify checklist (ACCEPTANCE context pack — Phase 5 kiểm từng dòng)
 1. audio blob thật → enrich dryRun counts đúng → apply điền đúng entry thắng; audio blob phát được.
