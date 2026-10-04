@@ -4,6 +4,7 @@ import { StatsCards } from "@/components/gamification/stats-cards";
 import { localize } from "@/lib/content/localize";
 import { HubFilters } from "@/components/vocabulary/hub-filters";
 import { BookStudyButton } from "@/components/vocabulary/book-study-button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   displayStatus,
   formatBookTitles,
@@ -16,11 +17,14 @@ import {
   listHubBooks,
   listHubWords,
 } from "@/lib/vocabulary/hub-store";
+import { getDailyPlan } from "@/lib/vocabulary/daily-plan-store";
 
 /**
  * Tab Tổng quan (SF-1 t-1.2) — tách khỏi page.tsx khi SF-2 thêm tab Thư viện:
  * KPI mọi book + bảng từ đang học ⋈ filter book/trạng thái. Như cũ, data cá
  * nhân → query live; guest không bao giờ render section này (page điều phối).
+ * story vocabulary-learn t-1.5: hàng Lộ trình hôm nay (X từ mới + Y ôn due +
+ * streak derive từ user_word_progress — không bảng mới) + CTA vào phiên ôn.
  * story vocabulary-learn t-1.3: thêm hàng Khám phá — sách bạn đọc còn từ chưa
  * học, nút bulk seed (t-1.2) ngay trên hàng để học luôn không rời hub.
  */
@@ -37,11 +41,12 @@ export async function HubOverviewSection({
 }) {
   const t = await getTranslations("vocabulary");
   const filter = parseHubFilters(sp);
-  const [stats, books, rows, discover] = await Promise.all([
+  const [stats, books, rows, discover, plan] = await Promise.all([
     getHubStats(userId),
     listHubBooks(),
     listHubWords(userId, filter),
     listDiscoverBooks(userId),
+    getDailyPlan(userId, now),
   ]);
   const bookOptions = books.map((book) => ({
     id: book.id,
@@ -60,6 +65,41 @@ export async function HubOverviewSection({
           ]}
         />
       </div>
+
+      {plan.total > 0 ? (
+        <section
+          aria-labelledby="hub-roadmap-heading"
+          className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2
+                id="hub-roadmap-heading"
+                className="font-display text-[20px] font-bold"
+              >
+                {t("hub.roadmap.title")}
+              </h2>
+              <p className="mt-1 text-[14px] font-semibold text-muted-foreground tabular-nums">
+                {t("hub.roadmap.summary", {
+                  newCount: plan.newDue,
+                  reviewCount: plan.reviewDue,
+                })}
+              </p>
+              {plan.streakDays > 0 ? (
+                <p className="mt-1 text-[13px] font-bold text-secondary tabular-nums">
+                  {t("hub.roadmap.streak", { count: plan.streakDays })}
+                </p>
+              ) : null}
+            </div>
+            <Link
+              href="/me/vocabulary"
+              className={buttonVariants({ variant: "default" })}
+            >
+              {t("hub.roadmap.cta")}
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {discover.length > 0 ? (
         <section

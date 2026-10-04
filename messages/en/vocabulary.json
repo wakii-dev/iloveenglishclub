@@ -66,6 +66,12 @@
       "mastered": "Mastered"
     },
     "wordsTitle": "Your words",
+    "roadmap": {
+      "title": "Today's plan",
+      "summary": "{newCount, plural, one {# new word} other {# new words}} · {reviewCount, plural, one {# word to review} other {# words to review}}",
+      "streak": "{count}-day streak",
+      "cta": "Start today's session"
+    },
     "discover": {
       "title": "Discover",
       "lead": "New words from books you're reading",

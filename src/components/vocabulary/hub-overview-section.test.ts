@@ -25,6 +25,15 @@ const storeState = vi.hoisted(() => ({
     titleVi: string | null;
     unlearned: number;
   }[],
+  plan: {
+    newDue: 0,
+    reviewDue: 0,
+    totalDue: 0,
+    upcoming: 0,
+    total: 0,
+    mastered: 0,
+    streakDays: 0,
+  },
 }));
 
 vi.mock("next-intl/server", () => ({
@@ -53,6 +62,10 @@ vi.mock("@/lib/vocabulary/hub-store", () => ({
   listHubBooks: async () => storeState.books,
   listHubWords: async () => storeState.rows,
   listDiscoverBooks: async () => storeState.discover,
+}));
+
+vi.mock("@/lib/vocabulary/daily-plan-store", () => ({
+  getDailyPlan: async () => storeState.plan,
 }));
 
 const { HubOverviewSection } = await import("./hub-overview-section");
@@ -120,6 +133,88 @@ beforeEach(() => {
   storeState.books = [];
   storeState.rows = [];
   storeState.discover = [];
+  storeState.plan = {
+    newDue: 0,
+    reviewDue: 0,
+    totalDue: 0,
+    upcoming: 0,
+    total: 0,
+    mastered: 0,
+    streakDays: 0,
+  };
+});
+
+describe("HubOverviewSection — Lộ trình hôm nay (vocabulary-learn t-1.5)", () => {
+  it("[en] có lộ trình → tiêu đề + summary X mới/Y ôn + streak + CTA /me/vocabulary", async () => {
+    storeState.plan = {
+      newDue: 5,
+      reviewDue: 3,
+      totalDue: 8,
+      upcoming: 4,
+      total: 12,
+      mastered: 1,
+      streakDays: 2,
+    };
+    const html = await renderSection();
+    expect(html).toContain(esc(msg("en", "hub.roadmap.title")));
+    expect(html).toContain(
+      makeT("en")("hub.roadmap.summary", { newCount: 5, reviewCount: 3 }),
+    );
+    expect(html).toContain(makeT("en")("hub.roadmap.streak", { count: 2 }));
+    expect(html).toContain(esc(msg("en", "hub.roadmap.cta")));
+    expect(html).toContain('href="/me/vocabulary"');
+  });
+
+  it("[vi] nhãn lộ trình theo messages vi", async () => {
+    localeState.locale = "vi";
+    storeState.plan = {
+      newDue: 5,
+      reviewDue: 3,
+      totalDue: 8,
+      upcoming: 4,
+      total: 12,
+      mastered: 1,
+      streakDays: 2,
+    };
+    const html = await renderSection();
+    expect(html).toContain(msg("vi", "hub.roadmap.title"));
+    expect(html).toContain(
+      makeT("vi")("hub.roadmap.summary", { newCount: 5, reviewCount: 3 }),
+    );
+    expect(html).toContain(makeT("vi")("hub.roadmap.streak", { count: 2 }));
+    expect(html).toContain(msg("vi", "hub.roadmap.cta"));
+  });
+
+  it("streak 0 (mới seed chưa ôn) → không có dòng streak", async () => {
+    storeState.plan = {
+      newDue: 5,
+      reviewDue: 0,
+      totalDue: 5,
+      upcoming: 7,
+      total: 12,
+      mastered: 0,
+      streakDays: 0,
+    };
+    const html = await renderSection();
+    expect(html).toContain(esc(msg("en", "hub.roadmap.title")));
+    expect(html).not.toContain(
+      makeT("en")("hub.roadmap.streak", { count: 0 }),
+    );
+  });
+
+  it("chưa có từ nào trong lộ trình → không render section lộ trình", async () => {
+    storeState.plan = {
+      newDue: 0,
+      reviewDue: 0,
+      totalDue: 0,
+      upcoming: 0,
+      total: 0,
+      mastered: 0,
+      streakDays: 0,
+    };
+    const html = await renderSection();
+    expect(html).not.toContain(msg("en", "hub.roadmap.title"));
+  });
 });
 
 describe("HubOverviewSection — Khám phá (vocabulary-learn t-1.3)", () => {

@@ -66,6 +66,12 @@
       "mastered": "Đã thành thạo"
     },
     "wordsTitle": "Từ của bạn",
+    "roadmap": {
+      "title": "Lộ trình hôm nay",
+      "summary": "{newCount, plural, other {# từ mới}} · {reviewCount, plural, other {# từ cần ôn}}",
+      "streak": "Chuỗi {count} ngày liên tục",
+      "cta": "Học ngay"
+    },
     "discover": {
       "title": "Khám phá",
       "lead": "Từ mới từ sách bạn đang đọc",
