@@ -327,6 +327,8 @@
       "invalidWord": "Từ không hợp lệ.",
       "invalidEntry": "Dữ liệu preview không hợp lệ — tra lại từ.",
       "invalidBookId": "Sách không hợp lệ.",
+      "not-authenticated": "Phiên hết hạn — tải lại trang.",
+      "forbidden": "Chỉ quản trị viên.",
       "generic": "Có lỗi xảy ra — thử lại."
     }
   }

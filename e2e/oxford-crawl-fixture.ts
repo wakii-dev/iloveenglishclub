@@ -82,13 +82,16 @@ async function seedCrawlEntryMirror(
           phrasalVerbs: [],
         }
       : null;
+  // c.json(raw) — NHƯ seedCrawlEntry SF-2 (sql.json): serialize object thành
+  // jsonb ĐÚNG. JSON.stringify(...)::jsonb bị postgres.js bind thành jsonb
+  // STRING (double-encoded) → raw->'senses'->0->'examples'->>0 = null.
   await c`
     insert into crawl_entries (slug, word, ipa_uk, ipa_us, cefr, pos,
                                audio_uk_blob, audio_us_blob, raw, status,
                                attempts, last_error)
     values (${row.slug}, ${row.word ?? null}, ${row.ipaUk ?? null}, ${row.ipaUs ?? null},
             ${row.cefr ?? null}, ${row.pos ?? null}, ${row.audioUkBlob ?? null},
-            ${row.audioUsBlob ?? null}, ${raw === null ? null : JSON.stringify(raw)}::jsonb,
+            ${row.audioUsBlob ?? null}, ${raw === null ? null : c.json(raw)},
             ${status}, ${row.attempts ?? 0}, ${row.lastError ?? null})
     on conflict (slug) do update set
       word = excluded.word, ipa_uk = excluded.ipa_uk, ipa_us = excluded.ipa_us,

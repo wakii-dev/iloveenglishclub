@@ -226,11 +226,11 @@ export function CrawlAddDialog({
                   <dd>{entry.pos ?? "—"}</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-muted-foreground">
+                  <dt className="font-bold text-muted-foreground">
                     {entry.audioUkBlob || entry.audioUsBlob
                       ? t("add.hasAudio")
                       : t("add.noAudio")}
-                  </span>
+                  </dt>
                   {entry.audioUkBlob || entry.audioUsBlob ? (
                     <Button
                       variant="ghost"

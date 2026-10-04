@@ -327,6 +327,8 @@
       "invalidWord": "Invalid word.",
       "invalidEntry": "Preview data is invalid — look the word up again.",
       "invalidBookId": "Invalid book.",
+      "not-authenticated": "Session expired — reload the page.",
+      "forbidden": "Admins only.",
       "generic": "Something went wrong — try again."
     }
   }

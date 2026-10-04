@@ -37,6 +37,23 @@ test.describe("Enrich panel (SF-3)", () => {
     testInfo.setTimeout(240_000); // 2 route compile lạnh + 4 POST chunk Neon
     const slug = await qaBookSlug();
 
+    // De-contaminate: specs chạy alphabet (add → dashboard → enrich trong 1
+    // suite) — add.spec approve-duplicate đã COALESCE cefr/source vào
+    // qasf3-tree (fill-empty path của createVocabularyWord) + tạo qasf3-
+    // cache-add/qasf3-color gia nhập QA book → enrich counts lệch. Khôi phục
+    // pristine CHÍNH XÁC fixture ban đầu (202→201 từ) trước khi mở panel.
+    const c0 = db();
+    await c0`delete from words where word in ('qasf3-cache-add', 'qasf3-color')`;
+    await c0`update words set ipa = null, cefr = null, source = null, audio_url = null, example = null
+            where word like 'qasf3-%' and word != 'qasf3-book'`;
+    await c0`update words set ipa = '/bʊk-preset/', cefr = null, source = null, audio_url = null, example = null
+            where word = 'qasf3-book'`;
+    const [wc] = await c0<{ n: number }[]>`
+      select count(*)::int as n from book_words bw
+      join books b on b.id = bw.book_id where b.slug = ${slug}`;
+    expect(wc?.n).toBe(201);
+    await c0.end();
+
     await loginAsAdmin(page);
     await page.goto(`/admin/books/${slug}/vocabulary`);
     await expect(page).toHaveURL((u) =>
@@ -88,8 +105,8 @@ test.describe("Enrich panel (SF-3)", () => {
       select ipa, example, cefr, audio_url as "audioUrl", source
       from words where word = 'qasf3-book'`;
     expect(book?.ipa).toBe("/bʊk-preset/"); // teacher value KHÔNG bị đụng
-    expect(book?.example).not.toBeNull();
-    expect(book?.cefr).toBe("A2");
+    expect(book?.example).toBeNull(); // entry book không có example → không fill
+    expect(book?.cefr).toBe("A2"); // duy nhất cefr được fill
     expect(book?.audioUrl).toBeNull();
     expect(book?.source).toBe("oxford-ld"); // ≥1 fill → source set
     await c.end();

@@ -58,6 +58,7 @@ export function CrawlEnrichPanel({
   onDone: () => void;
 }) {
   const t = useTranslations("admin.crawl");
+  const tc = useTranslations("admin.common");
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("preview");
   const [scanning, setScanning] = useState(false);
@@ -210,7 +211,7 @@ export function CrawlEnrichPanel({
                   variant="ghost"
                   onClick={() => setOpen(false)}
                 >
-                  {t("cancel")}
+                  {tc("cancel")}
                 </Button>
               </div>
             </>
@@ -224,6 +225,15 @@ export function CrawlEnrichPanel({
                 total: totalChunks,
               })}
             </p>
+          ) : null}
+
+          {phase === "report" && !report ? (
+            // apply error giữa chừng — review B P2: không để panel trắng
+            <div className="mt-3 flex gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                {tc("cancel")}
+              </Button>
+            </div>
           ) : null}
 
           {phase === "report" && report ? (
@@ -273,7 +283,7 @@ export function CrawlEnrichPanel({
               </ul>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>
-                  {t("cancel")}
+                  {tc("cancel")}
                 </Button>
               </div>
             </div>
