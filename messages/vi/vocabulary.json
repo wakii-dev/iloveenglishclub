@@ -5,6 +5,7 @@
   "play": "Phát âm “{word}”",
   "stop": "Dừng audio",
   "empty": "Sách chưa có từ vựng — quay lại sau nhé.",
+  "learnWord": "Học từ này",
   "reviewTitle": "Ôn tập từ vựng",
   "dueToday": "Hôm nay cần ôn: {count, plural, other {# từ}}",
   "reviewEmpty": "Hôm nay không có từ cần ôn — quay lại sau nhé.",
@@ -43,6 +44,13 @@
   "lookupMiss": "Từ này chưa có trong bộ từ vựng của sách",
   "lookupError": "Không tra được từ — thử lại nhé.",
   "lookupAria": "Nghĩa của từ “{word}”",
+  "bookStudy": {
+    "cta": "Bắt đầu học sách này",
+    "pending": "Đang thêm vào lộ trình…",
+    "added": "Đã thêm {count, plural, other {# từ}} vào lộ trình — {perDay} từ/ngày.",
+    "already": "Sách này đã có trong lộ trình học của bạn.",
+    "error": "Không thêm được sách vào lộ trình — thử lại nhé."
+  },
   "hub": {
     "title": "Tổng quan từ vựng",
     "tabs": {
@@ -58,6 +66,17 @@
       "mastered": "Đã thành thạo"
     },
     "wordsTitle": "Từ của bạn",
+    "roadmap": {
+      "title": "Lộ trình hôm nay",
+      "summary": "{newCount, plural, other {# từ mới}} · {reviewCount, plural, other {# từ cần ôn}}",
+      "streak": "Chuỗi {count} ngày liên tục",
+      "cta": "Học ngay"
+    },
+    "discover": {
+      "title": "Khám phá",
+      "lead": "Từ mới từ sách bạn đang đọc",
+      "unlearned": "{count, plural, other {# từ chưa học}}"
+    },
     "emptyAll": "Bạn chưa học từ nào —",
     "emptyFiltered": "Không có từ nào khớp bộ lọc.",
     "ctaBrowseBooks": "xem các sách để bắt đầu nhé.",
