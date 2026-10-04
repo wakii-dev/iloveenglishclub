@@ -64,12 +64,12 @@ describe("POST /api/admin/vocabulary/crawl/enrich — guards", () => {
 
 describe("POST /api/admin/vocabulary/crawl/enrich — body validation", () => {
   it("body không phải JSON → 400 invalidJson", async () => {
-    const res = await POST("không-phải-json");
+    const res = await POST(post("không-phải-json"));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false, error: "invalidJson" });
   });
 
-  it.each([
+  const badBodies: Array<[unknown, string]> = [
     [{}, "thiếu cả hai"],
     [{ bookId: 1, wordIds: [1] }, "có cả hai"],
     [{ bookId: 0 }, "bookId = 0"],
@@ -78,7 +78,8 @@ describe("POST /api/admin/vocabulary/crawl/enrich — body validation", () => {
     [{ wordIds: [] }, "wordIds rỗng"],
     [{ wordIds: [1, "x"] }, "wordIds phần tử lệch"],
     [{ wordIds: [1, 0] }, "wordIds có 0"],
-  ])("%s (%s) → 400 invalidBody", async (body) => {
+  ];
+  it.each(badBodies)("%s (%s) → 400 invalidBody", async (body: unknown) => {
     const res = await POST(post(body));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ ok: false, error: "invalidBody" });

@@ -91,6 +91,7 @@ const entry = (over: Partial<EnrichEntryData> & { id: number; slug: string }): E
 });
 
 const emptyWord = {
+  id: 1,
   word: "tree",
   ipa: null,
   example: null,
@@ -132,7 +133,7 @@ describe("buildFill (pure)", () => {
 
   it("teacher đã có giá trị (kể cả chuỗi rỗng) → skipped, KHÔNG đụng", () => {
     const out = buildFill(
-      { word: "tree", ipa: "/old/", example: "", audioUrl: null, cefr: "B2" },
+      { id: 1, word: "tree", ipa: "/old/", example: "", audioUrl: null, cefr: "B2" },
       entry({
         id: 1,
         slug: "tree",
@@ -172,7 +173,7 @@ describe("buildFill (pure)", () => {
 
   it("audio_url teacher đã có → không đụng, không reason noAudioBlob", () => {
     const out = buildFill(
-      { ...emptyWord, audioUrl: "https://blob.example/teacher.mp3" },
+      { ...emptyWord, id: 1, audioUrl: "https://blob.example/teacher.mp3" },
       entry({ id: 1, slug: "tree" }),
     );
     expect(out.filled).toEqual([]);
@@ -181,7 +182,7 @@ describe("buildFill (pure)", () => {
   });
 
   it("entry null (noMatch) → không fill, skipped = field đã có", () => {
-    const out = buildFill({ ...emptyWord, ipa: "/x/" }, null);
+    const out = buildFill({ ...emptyWord, id: 1, ipa: "/x/" }, null);
     expect(out.fills).toEqual({});
     expect(out.skipped).toEqual(["ipa"]);
   });
