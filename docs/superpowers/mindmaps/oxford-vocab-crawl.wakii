@@ -5,7 +5,8 @@
     "generator": "story-workflow CREATE",
     "generatedAt": "2026-10-04T00:00:00.000Z",
     "dest": "story-vu32-oxford-vocab-crawl",
-    "worktreeModel": "story-hub"
+    "worktreeModel": "story-hub",
+    "updatedAt": "2026-10-04T05:38:21Z"
   },
   "nodes": [
     {
@@ -19,7 +20,8 @@
       "title": "Crawl-core: enumerate + fetch + parse + store + runner",
       "tier": 0,
       "summary": "Phase 1/2 — shippable: pipeline + API. Demo: node scripts/oxford-crawl.ts fetch --limit 20 --apply → 20 entries Oxford parsed vào crawl_entries (IPA/audio-URL/senses/cefr); kill giữa chừng → chạy lại tiếp, không dup; phase audio tải mp3 uk/us về Blob audio/oxford/ qua helper blob-only (throw khi thiếu token); audio-sync không mirror prefix đó vào git",
-      "linear": "VU-33"
+      "linear": "VU-33",
+      "state": "done"
     },
     {
       "id": "sf-2",
