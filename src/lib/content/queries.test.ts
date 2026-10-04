@@ -39,13 +39,19 @@ vi.mock("next/cache", () => ({
 
 import { getBookVocabulary } from "./queries";
 
-const row = (id: number, word: string, audioUrl: string | null) => ({
+const row = (
+  id: number,
+  word: string,
+  audioUrl: string | null,
+  source: string | null = null,
+) => ({
   id,
   word,
   ipa: "ˈæp.əl",
   meaningVi: "quả táo",
   example: null,
   audioUrl,
+  source,
 });
 
 afterEach(() => {
@@ -56,11 +62,11 @@ afterEach(() => {
 
 describe("getBookVocabulary", () => {
   it("trả rows phẳng theo thứ tự query (book_words.order — sort nằm ở SQL)", async () => {
-    dbState.queue = [[row(2, "banana", null), row(1, "apple", "https://cdn/a.mp3")]];
+    dbState.queue = [[row(2, "banana", null), row(1, "apple", "https://cdn/a.mp3", "oxford-ld")]];
     const result = await getBookVocabulary("level-3");
     expect(result).toEqual([
-      { id: 2, word: "banana", ipa: "ˈæp.əl", meaningVi: "quả táo", example: null, audioUrl: null },
-      { id: 1, word: "apple", ipa: "ˈæp.əl", meaningVi: "quả táo", example: null, audioUrl: "https://cdn/a.mp3" },
+      { id: 2, word: "banana", ipa: "ˈæp.əl", meaningVi: "quả táo", example: null, audioUrl: null, source: null },
+      { id: 1, word: "apple", ipa: "ˈæp.əl", meaningVi: "quả táo", example: null, audioUrl: "https://cdn/a.mp3", source: "oxford-ld" },
     ]);
   });
 

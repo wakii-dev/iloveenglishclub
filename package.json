@@ -31,7 +31,8 @@
     "test:e2e:vocabulary-lookup": "playwright test --config playwright.vocabulary-lookup.config.ts",
     "test:e2e:vocabulary-hub": "playwright test --config playwright.vocabulary-hub.config.ts",
     "test:e2e:vocabulary-hub-quiz": "playwright test --config playwright.vocabulary-hub-quiz.config.ts",
-    "test:e2e:oxford": "playwright test --config playwright.oxford-crawl.config.ts"
+    "test:e2e:oxford": "playwright test --config playwright.oxford-crawl.config.ts",
+    "test:e2e:oxford-fullchain": "playwright test --config playwright.oxford-fullchain.config.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
