@@ -224,3 +224,51 @@ export function buildLearnSteps(input: BuildLearnStepsInput): SessionStep[] {
   }
   return steps;
 }
+
+export type BuildReviewStepsInput = {
+  /** Due queue (≤ DUE_LIMIT, oldest-due-first — store SQL-side chọn). */
+  words: readonly SessionWord[];
+  /** Pool nhiễu MC — meaning_vi cùng book (scoped) hoặc due rows (all). */
+  distractorPool: readonly string[];
+  rng?: Rng;
+};
+
+/**
+ * Build phiên REVIEW (epic §2.2): per từ — nghe-chọn khi có audio, ngược lại
+ * mc nhìn-từ-chọn-nghĩa — rồi gõ từ. KHÔNG introduce (từ đã học). Degenerate
+ * pool <2 nghĩa → bỏ mc, từ đó chỉ còn type.
+ */
+export function buildReviewSteps(input: BuildReviewStepsInput): SessionStep[] {
+  const rng = input.rng ?? Math.random;
+  const steps: SessionStep[] = [];
+  let stepIndex = 0;
+
+  for (const word of input.words) {
+    const options = buildMcOptions(word.meaningVi, input.distractorPool, rng);
+    if (word.audioUrl != null) {
+      steps.push({
+        stepIndex: stepIndex++,
+        kind: "listen",
+        wordId: word.wordId,
+        audioUrl: word.audioUrl,
+        options: options ? [...options] : undefined,
+      });
+    } else if (options) {
+      steps.push({
+        stepIndex: stepIndex++,
+        kind: "mc",
+        wordId: word.wordId,
+        word: word.word,
+        ipa: word.ipa,
+        options,
+      });
+    }
+    steps.push({
+      stepIndex: stepIndex++,
+      kind: "type",
+      wordId: word.wordId,
+      meaningVi: word.meaningVi,
+    });
+  }
+  return steps;
+}

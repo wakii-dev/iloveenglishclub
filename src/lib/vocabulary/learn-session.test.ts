@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
  */
 import {
   buildLearnSteps,
+  buildReviewSteps,
   isSessionKind,
   isStepKind,
   LEARN_SESSION_WORDS,
@@ -205,5 +206,57 @@ describe("buildLearnSteps — payload KHÔNG lộ đáp án (epic MUST-NOT)", ()
     expect(intro?.meaningVi).toBe("quả táo");
     expect(intro?.example).toContain("apple");
     expect(intro?.audioUrl).toBeTruthy();
+  });
+});
+
+describe("buildReviewSteps — per từ (listen|mc)→type (context pack #3)", () => {
+  it("có audio → listen; không audio → mc nghĩa; mỗi từ kết bằng type", () => {
+    const words = [mkWord(1, "apple", "quả táo"), mkWord(2, "house", "ngôi nhà", null)];
+    const pool = ["quả táo", "ngôi nhà", "nước", "quyển sách"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(5) });
+    expect(shape(steps)).toEqual(["listen#1", "type#1", "mc#2", "type#2"]);
+    expect(steps.map((s) => s.stepIndex)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("KHÔNG introduce step trong review", () => {
+    const words = [mkWord(1, "apple", "quả táo", null)];
+    const pool = ["quả táo", "ngôi nhà", "nước"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(2) });
+    expect(steps.every((s) => s.kind !== "introduce")).toBe(true);
+  });
+
+  it("degenerate: không audio + pool <2 nghĩa → chỉ type (bỏ mc)", () => {
+    const words = [mkWord(1, "run", "chạy", null)];
+    const pool = ["chạy"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(4) });
+    expect(shape(steps)).toEqual(["type#1"]);
+  });
+
+  it("no-leak: listen ẩn word/ipa; mc hiện word + không meaningVi; type chỉ prompt", () => {
+    const words = [mkWord(1, "apple", "quả táo"), mkWord(2, "house", "ngôi nhà", null)];
+    const pool = ["quả táo", "ngôi nhà", "nước", "quyển sách"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(6) });
+    const listen = steps.find((s) => s.kind === "listen");
+    expect(listen?.word).toBeUndefined();
+    expect(listen?.ipa).toBeUndefined();
+    expect(listen?.options).toContain("quả táo");
+    const mc = steps.find((s) => s.kind === "mc");
+    expect(mc?.word).toBe("house");
+    expect(mc?.meaningVi).toBeUndefined();
+    expect(mc?.options).toContain("ngôi nhà");
+    const type = steps.find((s) => s.kind === "type" && s.wordId === 2);
+    expect(type?.word).toBeUndefined();
+    expect(type?.meaningVi).toBe("ngôi nhà");
+  });
+
+  it("words rỗng (due hết) → steps rỗng", () => {
+    expect(buildReviewSteps({ words: [], distractorPool: [], rng: seededRng(1) })).toEqual([]);
+  });
+
+  it("prefill 1 từ = queue 1 từ — cùng contract (store truyền 1 word)", () => {
+    const words = [mkWord(9, "water", "nước", null)];
+    const pool = ["nước", "quả táo", "ngôi nhà"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(8) });
+    expect(shape(steps)).toEqual(["mc#9", "type#9"]);
   });
 });
