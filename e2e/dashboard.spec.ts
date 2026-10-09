@@ -9,7 +9,7 @@ import {
  * mục 9 + acceptance 1-6). Số liệu pin fixture `qa-dash-*` (xem
  * vocabulary-dashboard-fixture.ts header): garden [3,2,1,1,1,0,0,5] · continue
  * Level 2 · Từ 11–20 · 0/10 planted · ring 3/5 · streak 2 · due 1 · XP 1248 ·
- * lộ trình level-5 10/25 + level-6 0/10.
+ * lộ trình: 3 books (level-1 0/6 Chưa bắt đầu, level-5 10/25, level-6 0/10).
  * Continue-card CHỈ assert href — KHÔNG navigate vào learn runner (route SF-3
  * có thể chưa merge). Goal chỉnh qua UI → PATCH → reload giữ (acceptance #2).
  */
@@ -84,12 +84,13 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     const garden = page.locator('section[aria-label*="Vườn từ vựng"]');
     await expect(garden).toBeVisible();
 
-    // lộ trình 2 sách: level-5 10/25 Đang học · level-6 0/10 Chưa bắt đầu
-    await expect(page.getByText("Lộ trình 2 sách")).toBeVisible();
-    await expect(page.getByText("10/25")).toBeVisible();
-    await expect(page.getByText("0/10")).toBeVisible();
+    // lộ trình 3 books: level-1 0/6 · level-5 10/25 Đang học · level-6 0/10 Chưa bắt đầu
+    await expect(page.getByText("Lộ trình 3 sách")).toBeVisible();
+    await expect(page.getByText("10/25", { exact: true })).toBeVisible();
+    await expect(page.getByText("0/10", { exact: true })).toBeVisible();
     await expect(page.getByText("Đang học", { exact: true })).toBeVisible();
-    await expect(page.getByText("Chưa bắt đầu", { exact: true })).toBeVisible();
+    // level-1 (0/6) + level-6 (0/10) đều Chưa bắt đầu
+    await expect(page.getByText("Chưa bắt đầu", { exact: true })).toHaveCount(2);
   });
 
   test("goal 5→10 qua popover → reload giữ 10, ring cập nhật (acceptance #2)", async ({
@@ -186,7 +187,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     for (const block of [
       page.getByRole("link", { name: /Học 10 từ mới/ }),
       page.getByText("13 từ đang lớn dần"),
-      page.getByText("Lộ trình 2 sách"),
+      page.getByText("Lộ trình 3 sách"),
     ]) {
       await expect(block).toBeVisible();
       await block.scrollIntoViewIfNeeded();
