@@ -70,7 +70,12 @@ export default async function VocabularyHubPage({
       <HubTabs active={tab} loggedIn={userId !== null} />
 
       {tab === "overview" && userId !== null ? (
-        <HubOverviewSection userId={userId} sp={sp} locale={locale} now={now} />
+        <HubOverviewSection
+          userId={userId}
+          locale={locale}
+          now={now}
+          name={session?.user?.name ?? null}
+        />
       ) : null}
       {tab === "library" ? (
         <HubLibrarySection userId={userId} sp={sp} locale={locale} now={now} />
