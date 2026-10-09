@@ -60,7 +60,7 @@
       "continueTag": "Học tiếp",
       "continueDoneTag": "Hoàn thành",
       "continueMeta": "Level {level} · Từ {from}–{to} — còn {count} từ mới trong level",
-      "continueMetaDone": "Bạn đã trồng hết từ của sách này — chọn sách khác nhé!",
+      "continueMetaDone": "Bạn đã hoàn thành lộ trình sách — chờ sách mới nhé!",
       "continueProgressAria": "Level {level}: {planted} trên {total} từ đã trồng",
       "continueProgressNum": "{planted}/{total} từ trong level",
       "continueCta": "Học {count} từ mới",
@@ -86,7 +86,8 @@
       "bookTagNone": "Chưa bắt đầu",
       "discoverCardAria": "Thêm {count} từ vào lộ trình",
       "themeToDark": "Chuyển chế độ tối",
-      "themeToLight": "Chuyển chế độ sáng"
+      "themeToLight": "Chuyển chế độ sáng",
+      "greetingFallback": "bạn"
     },
     "tabs": {
       "overview": "Tổng quan",

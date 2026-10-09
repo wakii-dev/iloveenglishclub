@@ -60,7 +60,7 @@
       "continueTag": "Keep learning",
       "continueDoneTag": "Completed",
       "continueMeta": "Level {level} · Words {from}–{to} — {count} new words left in this level",
-      "continueMetaDone": "You've planted every word in this book — pick another one!",
+      "continueMetaDone": "You've completed the whole roadmap — new books coming soon!",
       "continueProgressAria": "Level {level}: {planted} of {total} words planted",
       "continueProgressNum": "{planted}/{total} words in level",
       "continueCta": "Learn {count} new words",
@@ -86,7 +86,8 @@
       "bookTagNone": "Not started",
       "discoverCardAria": "Add {count} words to your plan",
       "themeToDark": "Switch to dark mode",
-      "themeToLight": "Switch to light mode"
+      "themeToLight": "Switch to light mode",
+      "greetingFallback": "there"
     },
     "tabs": {
       "overview": "Overview",

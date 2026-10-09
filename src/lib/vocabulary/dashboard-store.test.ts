@@ -265,11 +265,13 @@ describe("getContinueTarget", () => {
     expect(target.slug).toBe("level-6");
   });
 
-  it("MỌI sách planted hết → completed:true (không link level rỗng)", async () => {
+  it("MỌI sách planted hết → completed + meta sách cuối (không link rỗng)", async () => {
     const rows = [b1({ reps: 1 })];
     rowsQueueWithReading(rows, [5]);
     const target = await getContinueTarget("u1");
-    expect(target).toEqual({ completed: true });
+    expect(target && target.completed).toBe(true);
+    if (!target || !target.completed) return;
+    expect(target.slug).toBe("level-5"); // meta sách cuối giữ cho card render
   });
 
   it("chunk theo VỊ TRÍ order-sorted (semantics levels.ts) — WORDS_PER_LEVEL 10", async () => {
@@ -277,7 +279,7 @@ describe("getContinueTarget", () => {
     const rows = Array.from({ length: 10 }, (_, i) => b1({ order: i + 1, reps: 1 }));
     rowsQueueWithReading(rows, [5]);
     const target = await getContinueTarget("u1");
-    expect(target).toEqual({ completed: true });
+    expect(target && target.completed).toBe(true);
   });
 
   it("DB lỗi → null (component render empty, không crash)", async () => {

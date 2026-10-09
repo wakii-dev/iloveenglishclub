@@ -283,10 +283,18 @@ describe("HubOverviewSection — continue card", () => {
     );
   });
 
-  it("sách hoàn thành → KHÔNG link learn + tag Hoàn thành (acceptance #4)", async () => {
-    storeState.continueCard = { completed: true };
+  it("sách hoàn thành → KHÔNG link learn + tên sách vẫn hiện (acceptance #4)", async () => {
+    storeState.continueCard = {
+      completed: true,
+      bookId: 5,
+      slug: "level-5",
+      titleEn: "Prepare 5",
+      titleVi: null,
+      cefrLabel: "B1",
+    };
     const html = await renderSection();
     expect(html).not.toContain("/vocabulary/learn/");
+    expect(html).toContain("Prepare 5");
     expect(html).toContain(esc(msg("en", "hub.dash.continueDoneTag")));
     expect(html).toContain(esc(msg("en", "hub.dash.continueMetaDone")));
   });
@@ -329,7 +337,7 @@ describe("HubOverviewSection — garden + lộ trình sách", () => {
 });
 
 describe("HubOverviewSection — Khám phá giữ logic + empty", () => {
-  it("discover books → dcard: tiêu đề + unlearned + nút bulk seed", async () => {
+  it("discover books → dcard: tiêu đề + unlearned + nút bulk seed + icon stroke", async () => {
     storeState.discover = [
       { id: 2, slug: "level-2", titleEn: "Prepare Level 2", titleVi: null, unlearned: 12 },
     ];
@@ -340,6 +348,8 @@ describe("HubOverviewSection — Khám phá giữ logic + empty", () => {
       makeT("en")("hub.discover.unlearned", { count: 12 }),
     );
     expect(html).toContain((loadDict("en", "vocabulary").bookStudy as { cta: string }).cta);
+    // icon không đen đặc — stroke currentColor (review B P1 meta-test)
+    expect(html).toContain('stroke="currentColor"');
   });
 
   it("không có sách nào trong lộ trình → emptyAll + link /books", async () => {

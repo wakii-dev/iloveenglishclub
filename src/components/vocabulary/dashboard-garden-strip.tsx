@@ -33,7 +33,9 @@ export function DashboardGardenStrip({
           {t("hub.dash.gardenGrowing", { count: total })}
         </span>
       </div>
-      <div className="flex gap-1 border-b-2.5 border-wave-dim px-1">
+      {/* ground-line 2.5px (hand-off §2.1 khối 4) — border-b-2.5 KHÔNG phải
+          class Tailwind v4 hợp lệ (review B P1) */}
+      <div className="flex gap-1 border-b-[2.5px] border-wave-dim px-1">
         {distribution.map((count, stage) => (
           <span key={stage} className="flex flex-1 flex-col items-center gap-0.5">
             <StagePlant stage={stage} />

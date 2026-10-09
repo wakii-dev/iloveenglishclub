@@ -39,11 +39,12 @@ export function DashboardContinueCard({
 
       {card.completed ? (
         <>
+          {/* hoàn thành: tag đổi, TÊN SÁCH vẫn hiện (hand-off §2.1 khối 2) */}
           <span className="mb-2 inline-block rounded-full bg-leaf-soft px-2.5 py-1 text-[11.5px] font-extrabold uppercase tracking-[0.1em] text-leaf-deep">
             {t("hub.dash.continueDoneTag")}
           </span>
           <h2 className="font-display text-[22px] font-extrabold">
-            {t("hub.dash.continueDoneTag")}
+            {localize(locale, { en: card.titleEn, vi: card.titleVi })}
           </h2>
           <p className="my-2.5 text-[14px] text-muted-foreground">
             {t("hub.dash.continueMetaDone")}

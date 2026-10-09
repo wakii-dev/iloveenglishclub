@@ -38,15 +38,18 @@ export function DashboardGoalRing({
     setSaving(true);
     setError(false);
     try {
+      // timeout 10s — hang request kẹt presets disabled vô hạn (review B Q2)
       const res = await fetch("/api/vocabulary/goal", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ goal: value }),
+        signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) throw new Error(`goal PATCH ${res.status}`);
       setOpen(false);
       router.refresh(); // RSC fetch lại summary với goal mới
-    } catch {
+    } catch (error) {
+      console.error("[vocabulary:goalRing] PATCH failed:", error);
       setError(true);
     } finally {
       setSaving(false);

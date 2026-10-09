@@ -307,14 +307,6 @@ export async function getBookLevelProgresses(
 }
 
 /**
- * Continue card — tagged union: còn sách học được → book + level kế tiếp
- * (nextLevel() levels.ts, KHÔNG tự derive); MỌI sách planted hết →
- * {completed:true} (CTA disabled, không link level rỗng — acceptance #4).
- * DB lỗi → null (component render empty). Ưu tiên sách đang đọc
- * (user_lesson_progress — pattern listDiscoverBooks), fallback sách đầu còn
- * từ chưa planted theo sortOrder.
- */
-/**
  * Lưu goal (context pack mục 4/8) — route /api/vocabulary/goal gọi sau khi
  * validate integer 1..100 (route sở hữu taxonomy 401/400). { ok:false } khi
  * DB lỗi (route map 500 generic).
@@ -353,8 +345,25 @@ export type ContinueCard =
       /** Số từ mới còn lại trong level (CTA "Học k từ mới"). */
       newCount: number;
     }
-  | { completed: true };
+  /** MỌI sách planted hết — vẫn giữ meta sách cuối (hand-off: tag đổi, tên
+   * sách vẫn hiện; CTA disabled không link). */
+  | {
+      completed: true;
+      bookId: number;
+      slug: string;
+      titleEn: string;
+      titleVi: string | null;
+      cefrLabel: string;
+    };
 
+/**
+ * Continue card — tagged union: còn sách học được → book + level kế tiếp
+ * (nextLevel() levels.ts, KHÔNG tự derive); MỌI sách planted hết → completed
+ * với meta sách cuối (CTA disabled, không link level rỗng — acceptance #4).
+ * DB lỗi → null (component render empty). Ưu tiên sách đang đọc
+ * (user_lesson_progress — pattern listDiscoverBooks), fallback sách đầu còn
+ * từ chưa planted theo sortOrder.
+ */
 export async function getContinueTarget(
   userId: string,
 ): Promise<ContinueCard | null> {
@@ -383,7 +392,16 @@ export async function getContinueTarget(
       return null;
     };
     // đang đọc trước, fallback mọi sách (context pack #2 + plan quyết định)
-    return pick(readingIds) ?? pick(null) ?? { completed: true };
+    return (
+      pick(readingIds) ??
+      pick(null) ??
+      (grouped.length > 0
+        ? {
+            completed: true,
+            ...grouped[grouped.length - 1]!.book,
+          }
+        : null)
+    );
   } catch (error) {
     console.error("[vocabulary:continueTarget] query failed:", error);
     return null;
