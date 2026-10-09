@@ -1,0 +1,43 @@
+# VU-37 SF-4 — Dashboard home Memrise-style (VU-41) — plan
+
+Spec slice: `docs/superpowers/contexts/vocab-memrise/sf-4.md` · Epic spec: `docs/superpowers/specs/2026-10-04-vocab-memrise-design.md` (v2) §2.3/§2.4/§2.5 · Design hand-off (USER-APPROVED, source of truth): `docs/superpowers/designs/vocab-memrise/vocab-memrise-direction.md` + `proto-A.html` · Bracket: `docs/superpowers/plans/2026-10-04-vu37-bracket-plan.md` §SF-4.
+
+Worktree `sf-4-dashboard-home-memrise` · base `wakii-dev/story-vu37-vocab-memrise` @ 4b3562a (đã gồm SF-1 merge) · Linear VU-41 · e2e port **3319**.
+
+Boundary: KHÔNG đụng session engine/API (SF-2), UI phiên học (SF-3), lib XP/growth/levels SF-1 (chỉ import); KHÔNG đổi `resolveHubTab`/tab contract/`/me/vocabulary`; KHÔNG tự tạo route learn (SF-3 — link 404 interim chấp nhận); KHÔNG đổi schema (thiếu → flag); KHÔNG đổi Speed Review/Difficult Words; KHÔNG seed prod. Đụng ngoài touch map (nếu có) → flag trong audit.
+
+Quyết định chốt (theo context pack "chốt 1 cách" + hand-off):
+- **ContinueCard chọn sách** = sách đang đọc (user_lesson_progress ⋈ units, pattern `listDiscoverBooks`) ∩ còn ≥1 từ `reps=0`, đầu tiên theo `books.sortOrder`; không có row "đang đọc" → fallback sách ĐẦU TIÊN còn từ chưa planted theo sortOrder; mọi sách planted hết → state "Hoàn thành" (CTA disabled, không link). Level kế tiếp = `nextLevel()` levels.ts.
+- **API goal** `PATCH|POST /api/vocabulary/goal` body `{goal}` — integer **1..100** (presets 5/10/20 là bề mặt UI; API free 1..100) → `{ok, dailyGoalWords}`; 401 `not-authenticated`, 400 `invalidGoal` (taxonomy hiện có).
+- **Garden distribution** SQL-side `count(*) filter` theo boundary stage trên `user_word_progress` của user — literal 2/7/14/45/100/200 kèm vitest sweep đối chiếu `growthStage()` chống drift (KHÔNG sửa lib SF-1).
+- **BookLevelsProgress** 1 query JOIN `book_words`+`user_word_progress` lấy `(bookId, order, reps)` rồi `levelProgress()` levels.ts per book (đúng semantics chunk-vị-trí, không floor(order) trong SQL).
+- **Dark mode** = toggle scope vocabulary (hand-off §4): class `dark` trên container dashboard + localStorage `ilec.vocab-theme`; KHÔNG đụng next-themes/toàn app. Extension tokens (garden/leaf/gold/teal-soft/…) thêm 1 block vào `globals.css` `:root` + `.dark` theo hand-off §1.1/§1.2 — **nằm ngoài touch map → FLAG coordinator trong audit** (SF-3 tái dùng chung).
+- **i18n** keys `vocabulary.json` `hub.dash.*` (convention file hiện có) vi/en parity; stage labels tái dùng `learn.stage.0..7` (SF-1).
+
+## Tasks
+
+- [x] T1. Foundation: extension tokens garden/leaf/gold/teal-soft/wave-dim/legend-ink/dim/gold-soft… vào `src/app/globals.css` (`:root` + `.dark`, block comment nguồn hand-off) + 8 SVG stage icons 40×44 copy nguyên vẹn proto-A vào `src/components/vocabulary/dashboard-stage-icons.tsx` + i18n `hub.dash.*` vi/en (parity `src/messages.test.ts` xanh) — commit d277a54 (parity 34/34 keys 2 locale; FLAG tokens globals.css đã post VU-41)
+- [x] T2. `src/lib/vocabulary/dashboard-store.ts` + `dashboard-store.test.ts` (mock `@/db` pattern `review-store.test.ts`, TDD RED→GREEN): `getDashboardSummary` (plantedToday count `vocab_activity` kind='learn-complete' ngày VN qua `vnToday`; goal+xp từ `profiles`; streak+activeToday từ `daily_activity` 400 ngày + `computeStreak`; dueToday tái dùng `getHubStats`), `getGardenDistribution` (SQL filter boundary), `getContinueTarget` (rows JOIN + `nextLevel()`), `getBookLevelProgresses` (1 query + `levelProgress()`); DB lỗi → fallback 0/rỗng build-safe như hub-store — commit 4c1e7b5 (15/15) + fix review A 891040d (P0 stageCountSql boundary + stageBoundFilter sweep RED→GREEN, streak asc→desc, 17/17)
+- [x] T3. Route `src/app/api/vocabulary/goal/route.ts` (PATCH+POST) validate `goal` int 1..100 → update `profiles.daily_goal_words` trả `{ok, dailyGoalWords}`; 401/400 taxonomy; test `route.goal.test.ts` (vitest, pattern route tests SF-1) — TDD RED→GREEN — commit d9316f9 (route 13/13 + store 17/17)
+- [x] T4. Components server: `dashboard-continue-card.tsx` (tag HỌC TIẾP, meta Level N · Từ X–Y, progress 8px, CTA coral `<Link href="/vocabulary/learn/[slug]">`, hoàn thành → disabled + tag "Hoàn thành", watermark lá), `dashboard-garden-strip.tsx` (band `--garden` 8 cây + ground-line + số đếm Baloo + legend, aria `role="img"` label phân bố), `dashboard-book-levels-progress.tsx` (dot level màu `--lv1..7`, chip CEFR, tag trạng thái, bar 7px), `dashboard-stats-row.tsx` (ring goal + streak lửa gold + due refresh teal + CTA Ôn ngay `/me/vocabulary?scope=all` + XP pill) — số liệu từ dashboard-store — commit 80eb957 (SSR test 12/12; components SYNC nhận `t` qua props — renderToString không render async children)
+- [x] T5. `dashboard-goal-ring.tsx` client: donut 74px coral dasharray + nút "Sửa mục tiêu ▾" popover (viền dashed gold-soft-line, presets [5][10][20], preset đang chọn nền teal, `aria-expanded`, đóng blur/Escape) → PATCH goal → `router.refresh()`; `dashboard-theme-toggle.tsx` client (trăng/mặt trời 40px, class `dark` scope container + localStorage `ilec.vocab-theme`, hydration-safe) — commit 80eb957
+- [x] T6. Rewrite entry `hub-overview-section.tsx` thành dashboard layout theo hand-off §2.1 (header ngày + "Chào {name}" + XP pill; desktop lg 2 cột: trái continue+stats+khám phá, phải vườn+lộ trình) + giữ Khám phá logic (`listDiscoverBooks` + `BookStudyButton`) hình hài mới dcard; wire `page.tsx` chỉ phần render overview (tab logic GIỮ NGUYÊN; h1 hub.title ẩn trên overview — dashboard có h1 riêng tránh 2 h1); xoá phần overview cũ chết (StatsCards KPI + bảng từ + filter — library/review/quiz giữ nguyên); `hub-overview-section.test.ts` cập nhật theo — commit 80eb957
+- [x] T7. e2e dashboard: `playwright.vocabulary-dashboard.config.ts` port 3319 + `e2e/vocabulary-dashboard-fixture.ts` (qa-dash-* books/words/progress đa stage + vocab_activity hôm nay + goal) + global setup/teardown + `e2e/dashboard.spec.ts`: khối đúng số fixture, **continue-card href chỉ assert KHÔNG navigate**, goal 5→10 reload giữ 10, garden phân bố, per-book bars, hoàn thành state, guest regression, i18n vi/en, mobile 375, a11y aria ring/progress; script `test:e2e:vocabulary-dashboard` — commit 3b31fb0 + 52205a2 — **6/6 PASS** (fixture pin: garden [3,2,1,1,1,0,0,5], continue level-5 đang-đọc qua user_lesson_progress, ring 3/5, XP 1.248; bài học: postgres.js không serialize param chuỗi SQL+cast → Date param)
+- [x] T8. Update `e2e/hub-overview.spec.ts` (3314): viết lại assertion H1/KPI/bảng theo dashboard mới (tab hrefs + guest giữ phần đúng) — commit 3b31fb0 — hub-overview 3/3 PASS; hub-library 2 FAIL pre-existing env-drift (6 từ crawl template lệch assumption "trang 1 toàn qa-" — file 0 dòng đổi, FLAG SF-5)
+- [x] T9. Browser verify Rule 0: dev server 3319 → register UI → dashboard walkthrough (mở, nhìn, goal editor 5→10 + reload giữ, dark toggle scope, mobile 375, guest) + 8 screenshots `evidence/sf-4-dashboard-home-memrise/screens/` (dark surface fix: container bg-background text-foreground — tự nhìn ảnh khớp proto-A); full vitest 835 pass exit 0 + `tsc --noEmit` 0 lỗi + eslint 22 files sạch; evidence `docs/superpowers/evidence/sf-4-dashboard-home-memrise/test-run.txt` (dòng đầu `tdd:` + hash) — rule0 12/12 PASS
+- [ ] T10. `~/.claude/bin/story-verify` sạch + audit comment VU-41 (kèm FLAG tokens globals.css) + push `wakii-dev/sf-4-dashboard-home-memrise` — KHÔNG merge, KHÔNG set Done
+
+## Rolling review (CHECK 3 — không dồn 1 review cuối)
+
+1. Nhóm A (T1–T2): code-reviewer độc lập trên diff tokens+store ngay khi T2 xong
+2. Nhóm B (T3–T6): code-reviewer độc lập trên diff API+components
+3. Nhóm C (T7–T10): review cuối + verdict `VERDICT: APPROVED` + literal `CHECKLIST-4Q` post lên VU-41 (B3 gate)
+
+## Acceptance (từ context pack — verifier Phase 5 kiểm)
+
+1. Đăng nhập `/vi/vocabulary` (tab mặc định): THẤY dashboard — continue card tên sách + level đúng (không phải level đã planted hết), goal ring đúng planted-hôm-nay/goal, streak, due count, tổng XP — đối chiếu DB fixture khớp số
+2. Bấm chỉnh goal 5→10 → reload trang giữ 10; ring cập nhật mốc
+3. Garden strip hiển thị phân bố stage đúng với progress fixture; mỗi book có progress bar đúng % planted
+4. Sách planted hết → continue card chuyển "hoàn thành" (không bấm được vào level rỗng)
+5. Guest mở /vi/vocabulary → vẫn rơi vào library + login redirect cho tab cá nhân như cũ (không regression)
+6. Mobile 375: dashboard cuộn dùng được; a11y: ring/progress có text alternative
