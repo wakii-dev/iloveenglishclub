@@ -168,6 +168,19 @@ export async function seedDashboardProgress(email: string): Promise<void> {
       update profiles set xp = 1248, daily_goal_words = 5, streak_count = 2
       where id = ${uid}
     `;
+
+    // "đang đọc" level-5 — continue target ưu tiên sách đang đọc (nếu không,
+    // fallback sách ĐẦU theo sortOrder = level-1 có 6 từ crawl trống → nhầm)
+    await tx`
+      insert into user_lesson_progress (user_id, lesson_id, done_parts)
+      select ${uid}, l.id, 1
+      from lessons l join units u on u.id = l.unit_id
+      join books b on b.id = u.book_id
+      where b.slug = ${DASH_BOOK_SLUG}
+      order by l.id
+      limit 1
+      on conflict (user_id, lesson_id) do nothing
+    `;
   });
 }
 
