@@ -49,11 +49,13 @@ async function cleanup(db: postgres.Sql) {
   await db`delete from profiles where id in (${USER_VOCAB_ONLY}, ${USER_DUAL})`;
   await db`delete from books where id = ${BOOK_ID}`;
   await db`delete from words where id = 937001`;
-  // attempts trỏ lesson_parts RESTRICT — dọn chain ngược
+  // belt-and-braces — cascade (profiles/books) thường đã dọn; no-op khi sạch
   await db`delete from attempts where part_id = 9371`;
   await db`delete from lesson_parts where id = 9371`;
   await db`delete from lessons where id = 9371`;
   await db`delete from units where id = 9371`;
+  // profiles xoá rồi nhưng users row còn lại (review C P2.1 — residue)
+  await db`delete from users where id in (${USER_VOCAB_ONLY}, ${USER_DUAL})`;
 }
 
 describeDb("leaderboard view 0006 — template DB", () => {
