@@ -1,12 +1,13 @@
 tdd: RED→GREEN — vocab-xp.test.ts (RED: module thiếu → GREEN 14/14) · vocab-xp-store.test.ts (RED → GREEN 10/10, mock @/db transaction) · growth.test.ts (RED → GREEN 12/12 gồm drift-guard) · levels.test.ts (RED → GREEN 10/10) · daily-goal.test.ts (RED → GREEN 6/6) · integration test RED không áp dụng (skip-by-design khi thiếu env, chạy có env 4/4)
-Code commit: cef8c0b (cef8c0b fix review P1 — HEAD~1 so với evidence commit)
+Code commit: 1f7a802 (tick T11 — HEAD~1 so với evidence commit này; chuỗi code: 694628b bbed56a 5338b8a 8e55aeb d1254d1 e002b26 ee18668 ad65e5b 70412da cef8c0b 706b375 351390c 307d0f4 1f7a802)
 
 ════ Rule 0 / BROWSER VERIFY — CLI-equivalent (SF thuần lib/SQL, không UI) ════
 Proxy hợp lệ theo bracket: (1) test suite exit 0 · (2) migration dry-run chạy THẬT trên template Neon · (3) integration test trên DB thật. Không có UI surface trong SF-1 (KHÔNG page/component) → không có browser flow để walk; UI verify thuộc SF-3/SF-4.
 
 ════ (1) FULL TEST SUITE — exit 0 ════
 Lệnh: ILEC_TEMPLATE_DB_URL=<template-url> node node_modules/vitest/vitest.mjs run
-Output: Test Files 67 passed (67) · Tests 788 passed (788) · EXIT=0 · Duration 53s
+Output (RUN CUỐI trên code 1f7a802): Test Files 67 passed (67) · Tests 788 passed (788) · EXIT=0 · Duration 44s
+(Runs trước: 788/788 exit 0 tại cef8c0b — 53s; tái xác nhận bởi reviewer nhóm C độc lập)
   - gồm 4 integration (leaderboard view template DB) — không skip nhờ env
   - trước fix env: parse.test.ts FAIL collect (node-html-parser thiếu trong node_modules main repo — pre-existing VU-32 base, package.json có 9.0.4) → npm install --no-save node-html-parser@9.0.4 (không đổi package.json/lockfile — git status sạch) → 788/788
 
@@ -14,7 +15,7 @@ Output: Test Files 67 passed (67) · Tests 788 passed (788) · EXIT=0 · Duratio
 Template: ilec_vu37_sf1 (CREATE DATABASE trên Neon direct endpoint ep-delicate-morning-b56bsvn0 — swap -pooler tránh PgBouncer transaction-mode)
 Lệnh: DATABASE_URL=<template-url> node node_modules/drizzle-kit/bin.cjs migrate
 Output: [✓] migrations applied successfully — 7 entries (0000→0006, drizzle.__drizzle_migrations = 7)
-Verify template: 19 public tables (vocab_activity có mặt, CHECK kind + UNIQUE idempotency_key), view leaderboard query được (0 rows — DB mới), daily_activity.vocab_steps / profiles.daily_goal_words / user_word_progress.lapses tồn tại qua migration 0005.
+Verify template: 18 BASE TABLE + 1 view leaderboard (vocab_activity có mặt, CHECK kind + UNIQUE idempotency_key), view leaderboard query được (0 rows — DB mới), daily_activity.vocab_steps / profiles.daily_goal_words / user_word_progress.lapses tồn tại qua migration 0005.
 Re-run idempotent: test "migration 0006 idempotent re-run" (drop/recreate view lần 2) PASS.
 
 ════ (3) INTEGRATION TRÊN DB THẬT (acceptance #1) ════
@@ -35,3 +36,9 @@ tsc --noEmit: 0 lỗi trên files SF-1; 8 lỗi pre-existing src/lib/oxford/pars
 3. Đúng 1 từ 5 lần/ngày → chỉ lần đầu +1 — computeXpAward correctTodayExists + store flags ✓ (unit)
 4. Cap 60 → xpAwarded=0 xpCapped=true, SRS vẫn tiến — cap cases ✓ (unit; SRS advance thuộc SF-2 compose)
 5. growthStage 8 mức + nextLevel boundary — growth/levels tests ✓
+
+════ HẬU KIỂM REVIEW NHÓM C (APPROVED — Linear comment 2026-10-09) ════
+P2.1 cleanup users residue → FIX commit 307d0f4, re-run 4/4 + residue query users/profiles/vocab = 0
+P2.2 "19 tables" → sửa thành 18 BASE TABLE + 1 view (dòng trên)
+P2.3 drift-guard learn.goal.* → note SF-3/SF-4 (chưa có consumer lib-side)
+Review C tái xác nhận độc lập: 788/788 exit 0 · tsc 0 · eslint clean · migrations 7 · main DB sạch.
