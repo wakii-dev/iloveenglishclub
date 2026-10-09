@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -61,4 +63,23 @@ describe("GROWTH_STAGES — metadata i18n", () => {
       expect(s.nameKey).toBe(`learn.stage.${i}`);
     });
   });
+
+  it.each(["en", "vi"] as const)(
+    "nameKey tồn tại thật trong messages/%s/learn.json (drift-guard lib↔i18n)",
+    (locale) => {
+      const learn = JSON.parse(
+        readFileSync(
+          path.resolve(__dirname, "../../../messages", locale, "learn.json"),
+          "utf8",
+        ),
+      ) as { stage: Record<string, string> };
+      GROWTH_STAGES.forEach((s) => {
+        const [, section, leaf] = s.nameKey.split(".");
+        expect(
+          learn[section][leaf],
+          `${s.nameKey} thiếu ở ${locale}`,
+        ).toBeTruthy();
+      });
+    },
+  );
 });
