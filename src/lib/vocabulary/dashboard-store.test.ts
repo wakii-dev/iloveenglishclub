@@ -52,6 +52,7 @@ import {
   getContinueTarget,
   getDashboardSummary,
   getGardenDistribution,
+  stageBoundFilter,
   updateDailyGoal,
 } from "./dashboard-store";
 import { addDays, vnToday } from "@/lib/gamification/streak";
@@ -72,6 +73,49 @@ describe("gardenStageBucket — drift-guard chống growth.ts", () => {
         );
       }
     }
+  });
+});
+
+describe("stageBoundFilter — bounds SQL khớp growthStage (P0 review A)", () => {
+  /**
+   * Sweep bounds SẼ ĐỦNG dùng cho SQL filter: mỗi stage 1..7 là nửa khoảng
+   * [lower, upper) — mọi interval chỉ rơi vào ĐÚNG 1 stage, trùng
+   * growthStage(). Đỏ trên code cũ s1=[2,7) (interval 0-1 không vào bucket
+   * nào) và s7 undefined (bucket 7 luôn rỗng).
+   */
+  function stageMatch({
+    reps,
+    intervalDays,
+  }: {
+    reps: number;
+    intervalDays: number;
+  }): number {
+    if (reps <= 0) return 0;
+    for (let stage = 1; stage <= 7; stage++) {
+      const { lower, upper } = stageBoundFilter(stage);
+      const days = Math.max(0, intervalDays);
+      if (days >= (lower ?? 0) && (upper === null || days < upper)) {
+        return stage;
+      }
+    }
+    return -1; // interval không rơi bucket nào → sweep bắt ngay
+  }
+
+  it("mọi interval rơi ĐÚNG 1 bucket và khớp growthStage", () => {
+    for (const reps of [0, 1, 3]) {
+      for (let intervalDays = 0; intervalDays <= 250; intervalDays++) {
+        expect(stageMatch({ reps, intervalDays })).toBe(
+          growthStage({ reps, intervalDays }),
+        );
+      }
+    }
+  });
+
+  it("biên cụ thể: s1 <2 · s2 [2,7) · s6 [100,200) · s7 >=200", () => {
+    expect(stageBoundFilter(1)).toEqual({ lower: null, upper: 2 });
+    expect(stageBoundFilter(2)).toEqual({ lower: 2, upper: 7 });
+    expect(stageBoundFilter(6)).toEqual({ lower: 100, upper: 200 });
+    expect(stageBoundFilter(7)).toEqual({ lower: 200, upper: null });
   });
 });
 
@@ -159,6 +203,7 @@ type Row = {
   slug: string;
   titleEn: string;
   titleVi: string | null;
+  cefrLabel: string;
   order: number;
   reps: number | null;
 };
@@ -177,6 +222,7 @@ describe("getContinueTarget", () => {
     slug: "level-5",
     titleEn: "Prepare 5",
     titleVi: null,
+    cefrLabel: "B1",
     order: 1,
     reps: 0,
     ...over,
@@ -259,9 +305,9 @@ describe("updateDailyGoal", () => {
 describe("getBookLevelProgresses", () => {
   it("group per book + levelProgress đúng planted/tổng per level", async () => {
     const rows: Row[] = [
-      { bookId: 2, slug: "level-2", titleEn: "Prepare 2", titleVi: null, order: 1, reps: 1 },
-      { bookId: 2, slug: "level-2", titleEn: "Prepare 2", titleVi: null, order: 2, reps: 0 },
-      { bookId: 5, slug: "level-5", titleEn: "Prepare 5", titleVi: "Sách 5", order: 1, reps: 1 },
+      { bookId: 2, slug: "level-2", titleEn: "Prepare 2", titleVi: null, cefrLabel: "A1", order: 1, reps: 1 },
+      { bookId: 2, slug: "level-2", titleEn: "Prepare 2", titleVi: null, cefrLabel: "A1", order: 2, reps: 0 },
+      { bookId: 5, slug: "level-5", titleEn: "Prepare 5", titleVi: "Sách 5", cefrLabel: "B1", order: 1, reps: 1 },
     ];
     rowsQueue(rows);
     const books = await getBookLevelProgresses("u1");

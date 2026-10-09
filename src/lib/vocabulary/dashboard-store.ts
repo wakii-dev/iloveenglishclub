@@ -15,7 +15,7 @@
  *    book_words⋈books⋈user_word_progress rồi pure levels.ts (nextLevel/
  *    levelProgress) — KHÔNG derive riêng
  */
-import { and, asc, eq, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bookWords,
@@ -94,7 +94,7 @@ export async function getDashboardSummary(
       .select({ date: dailyActivity.date })
       .from(dailyActivity)
       .where(eq(dailyActivity.userId, userId))
-      .orderBy(asc(dailyActivity.date))
+      .orderBy(desc(dailyActivity.date))
       .limit(STREAK_LOOKBACK_DAYS);
     const dates = activityDates.map((r) => r.date);
     const stats = await getHubStats(userId);
@@ -137,18 +137,41 @@ export function gardenStageBucket({
   return 7;
 }
 
+/**
+ * Nửa khoảng [lower, upper) của stage 1..7 theo growthStage (spec §2.4 —
+ * ngưỡng TRÊN loại): s1 = <2 · s2 = [2,7) · … · s6 = [100,200) · s7 = ≥200.
+ * Nguồn bounds MỘT chỗ cho SQL — stageBoundFilter sweep (test) đối chiếu
+ * growthStage chống drift.
+ */
+export function stageBoundFilter(stage: number): {
+  lower: number | null;
+  upper: number | null;
+} {
+  if (stage === 1) return { lower: null, upper: GARDEN_BOUNDS[0] };
+  if (stage === GARDEN_BOUNDS.length + 1) {
+    return {
+      lower: GARDEN_BOUNDS[GARDEN_BOUNDS.length - 1],
+      upper: null,
+    };
+  }
+  return {
+    lower: GARDEN_BOUNDS[stage - 2],
+    upper: GARDEN_BOUNDS[stage - 1],
+  };
+}
+
 function stageCountSql(stage: number): SQL<number> {
   const reps = userWordProgress.reps;
   const interval = userWordProgress.intervalDays;
   if (stage === 0) {
     return sql<number>`count(*) filter (where ${reps} = 0)`.mapWith(Number);
   }
-  if (stage === GARDEN_BOUNDS.length) {
-    return sql<number>`count(*) filter (where ${reps} > 0 and ${interval} >= ${GARDEN_BOUNDS[GARDEN_BOUNDS.length - 1]})`.mapWith(
-      Number,
-    );
-  }
-  return sql<number>`count(*) filter (where ${reps} > 0 and ${interval} >= ${GARDEN_BOUNDS[stage - 1]} and ${interval} < ${GARDEN_BOUNDS[stage]})`.mapWith(
+  const { lower, upper } = stageBoundFilter(stage);
+  const upperClause =
+    upper === null
+      ? sql``
+      : sql` and ${interval} < ${upper}`;
+  return sql<number>`count(*) filter (where ${reps} > 0 and ${interval} >= ${lower ?? 0}${upperClause})`.mapWith(
     Number,
   );
 }
@@ -192,6 +215,8 @@ export type BookRow = {
   slug: string;
   titleEn: string;
   titleVi: string | null;
+  /** Chip CEFR trên progress bars (hand-off §2.1 khối 5). */
+  cefrLabel: string;
   order: number;
   /** null = chưa có row progress (chưa bắt đầu). */
   reps: number | null;
@@ -205,6 +230,7 @@ async function loadBookRows(userId: string): Promise<BookRow[]> {
       slug: books.slug,
       titleEn: books.titleEn,
       titleVi: books.titleVi,
+      cefrLabel: books.cefrLabel,
       order: bookWords.order,
       reps: userWordProgress.reps,
     })
@@ -239,12 +265,15 @@ function groupByBook(rows: BookRow[]): {
           slug: row.slug,
           titleEn: row.titleEn,
           titleVi: row.titleVi,
+          cefrLabel: row.cefrLabel,
         },
         wordRows: [],
       };
       grouped.push(entry);
     }
     entry.wordRows.push({
+      // wordId giả (index nhóm) — levels.ts chỉ dùng order/reps; nếu sau này
+      // lib thêm logic theo wordId phải thay bằng wordId thật từ query
       wordId: entry.wordRows.length,
       order: row.order,
       reps: row.reps ?? 0,
@@ -258,6 +287,7 @@ export type BookLevelProgress = {
   slug: string;
   titleEn: string;
   titleVi: string | null;
+  cefrLabel: string;
   progress: LevelProgress;
 };
 
@@ -317,6 +347,7 @@ export type ContinueCard =
       slug: string;
       titleEn: string;
       titleVi: string | null;
+      cefrLabel: string;
       /** Level kế tiếp — chunk đầu theo order còn ≥1 từ reps=0. */
       level: LevelChunk;
       /** Số từ mới còn lại trong level (CTA "Học k từ mới"). */

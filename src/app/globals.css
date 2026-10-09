@@ -116,6 +116,7 @@
 }
 
 @theme inline {
+  --shadow-dash-card: var(--dash-card-shadow); /* card radius 24 dashboard */
   --color-coral-deep: var(--coral-deep);
   --color-teal-soft: var(--teal-soft);
   --color-teal-deep: var(--teal-deep);
