@@ -60,11 +60,13 @@ vi.mock("@/db", () => ({
 
 import {
   applyStep,
+  DISTRACTOR_POOL_LIMIT,
   DUE_LIMIT,
   getLearnSession,
   getReviewSession,
   type SessionWord,
 } from "./learn-session-store";
+import { LEARN_SESSION_WORDS } from "./learn-session";
 
 const word = (over: Partial<SessionWord> & { wordId: number }): SessionWord => ({
   word: `w${over.wordId}`,
@@ -205,6 +207,50 @@ describe("getLearnSession — queue SQL-side bounded (context pack #6)", () => {
     dbState.queue = [[]];
     const result = await getLearnSession("u1", 9999);
     expect(result).toEqual({ ok: false, error: "invalidBook" });
+  });
+});
+
+describe("perf/query-shape §6.8 — bounded, KHÔNG load-all", () => {
+  it("learn: chuỗi limit/offset ĐÚNG THỨ TỰ [1 book, 500 pool, 1 min, OFFSET chunkStart, LIMIT 10 window]", async () => {
+    dbState.queue = [
+      [{ id: 42 }],
+      [{ meaningVi: "n" }],
+      [{ order: 16 }], // min unplanted order 16
+      [{ n: 15 }], // 15 từ trước → chunkStart floor(15/10)*10 = 10
+      [],
+    ];
+    await getLearnSession("u1", 42);
+    expect(numbers()).toEqual([1, 500, 1, 10, 10]);
+  });
+
+  it.each([
+    [0, 0], // min ở từ đầu sách
+    [1, 0], // 1 từ trước → chunk 0
+    [10, 10], // 10 từ trước → chunk 1
+    [23, 20], // 23 từ trước → chunk 2
+  ])("OFFSET arithmetic: count %i → chunkStart %i", async (count, offset) => {
+    dbState.queue = [
+      [{ id: 42 }],
+      [{ meaningVi: "n" }],
+      [{ order: count + 1 }],
+      [{ n: count }],
+      [],
+    ];
+    await getLearnSession("u1", 42);
+    const nums = numbers();
+    expect(nums[3]).toBe(offset);
+  });
+
+  it("hằng số bounded pin — review 50 due / pool 500 / phiên learn 5 từ", () => {
+    expect(DUE_LIMIT).toBe(50);
+    expect(DISTRACTOR_POOL_LIMIT).toBe(500);
+    expect(LEARN_SESSION_WORDS).toBe(5);
+  });
+
+  it("review book-scoped: chuỗi [1 book, subquery-filler, 50 due, 500 pool] — KHÔNG select toàn bảng", async () => {
+    dbState.queue = [[{ id: 42 }], [], [], [{ meaningVi: "n" }]];
+    await getReviewSession("u1", { bookId: 42 });
+    expect(numbers()).toEqual([1, 50, 500]);
   });
 });
 
