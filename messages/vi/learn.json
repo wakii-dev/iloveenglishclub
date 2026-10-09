@@ -1,0 +1,18 @@
+{
+  "stage": {
+    "0": "Hạt mầm",
+    "1": "Nảy mầm",
+    "2": "Cây con",
+    "3": "Nụ",
+    "4": "Cây non",
+    "5": "Cây xanh",
+    "6": "Trỗi dậy",
+    "7": "Nở hoa"
+  },
+  "goal": {
+    "title": "Mục tiêu hôm nay",
+    "unit": "từ",
+    "remaining": "còn {count} từ",
+    "reached": "Đã đủ mục tiêu hôm nay!"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "stage": {
+    "0": "Seed",
+    "1": "Sprouted",
+    "2": "Seedling",
+    "3": "Bud",
+    "4": "Young tree",
+    "5": "Lush tree",
+    "6": "Rising",
+    "7": "In bloom"
+  },
+  "goal": {
+    "title": "Daily goal",
+    "unit": "words",
+    "remaining": "{count} more to plant",
+    "reached": "Daily goal reached!"
+  }
+}
