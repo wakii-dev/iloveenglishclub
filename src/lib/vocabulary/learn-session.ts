@@ -234,6 +234,50 @@ export type BuildReviewStepsInput = {
 };
 
 /**
+ * Edit distance ≤1 (chèn/xóa/thay 1 ký tự) — so chuỗi đã normalize. Đi đến
+ * mismatch đầu rồi so phần đuôi theo 3 trường hợp; O(n) đủ cho từ vựng.
+ */
+export function isWithinOneEdit(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  const min = Math.min(a.length, b.length);
+  while (i < min && a[i] === b[i]) i++;
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1); // 1 thay
+  return a.length > b.length
+    ? a.slice(i + 1) === b.slice(i) // a thừa 1 ký tự tại i
+    : a.slice(i) === b.slice(i + 1); // b thừa 1 ký tự tại i
+}
+
+/** Ngưỡng typo tolerance — từ (target) ≥5 ký tự mới chấp nhận sai 1 (pin tests). */
+export const TYPO_TOLERANCE_MIN_LENGTH = 5;
+
+export type GradeStepInput = {
+  stepKind: TestStepKind;
+  response: string;
+  word: Pick<SessionWord, "word" | "meaningVi">;
+};
+
+/**
+ * Chấm MỘT bước test — PURE, không ghi gì (SRS là việc store khi từ hoàn
+ * thành lượt). mc/listen so meaning; type so word (typo ≤1 với từ ≥5 ký tự
+ * — context pack #4). Response rỗng/whitespace → sai.
+ */
+export function gradeStep(input: GradeStepInput): boolean {
+  const response = normalizeAnswer(input.response);
+  if (response === "") return false;
+  if (input.stepKind === "type") {
+    const target = normalizeAnswer(input.word.word);
+    if (response === target) return true;
+    return (
+      target.length >= TYPO_TOLERANCE_MIN_LENGTH &&
+      isWithinOneEdit(response, target)
+    );
+  }
+  return response === normalizeAnswer(input.word.meaningVi);
+}
+
+/**
  * Build phiên REVIEW (epic §2.2): per từ — nghe-chọn khi có audio, ngược lại
  * mc nhìn-từ-chọn-nghĩa — rồi gõ từ. KHÔNG introduce (từ đã học). Degenerate
  * pool <2 nghĩa → bỏ mc, từ đó chỉ còn type.

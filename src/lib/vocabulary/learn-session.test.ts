@@ -8,9 +8,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildLearnSteps,
   buildReviewSteps,
+  gradeStep,
   isSessionKind,
   isStepKind,
   LEARN_SESSION_WORDS,
+  normalizeAnswer,
   SESSION_KINDS,
   STEP_KINDS,
   type SessionStep,
@@ -258,5 +260,54 @@ describe("buildReviewSteps — per từ (listen|mc)→type (context pack #3)", (
     const pool = ["nước", "quả táo", "ngôi nhà"];
     const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(8) });
     expect(shape(steps)).toEqual(["mc#9", "type#9"]);
+  });
+});
+
+describe("normalizeAnswer + gradeStep — typo tolerance (context pack #4)", () => {
+  it("normalize: trim + lowercase + collapse space", () => {
+    expect(normalizeAnswer("  Apple  ")).toBe("apple");
+    expect(normalizeAnswer("quả   TÁO")).toBe("quả táo");
+    expect(normalizeAnswer("A\tB")).toBe("a b");
+  });
+
+  it("type so từ — normalize trước khi so", () => {
+    const apple = { word: "apple", meaningVi: "quả táo" };
+    expect(gradeStep({ stepKind: "type", response: "apple", word: apple })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "  APPLE ", word: apple })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "orange", word: apple })).toBe(false);
+  });
+
+  it("typo table — từ ≥5 ký tự: edit distance ≤1 tính ĐÚNG (số pin)", () => {
+    const apple = { word: "apple", meaningVi: "quả táo" }; // len 5
+    expect(gradeStep({ stepKind: "type", response: "apples", word: apple })).toBe(true); // +1 chèn
+    expect(gradeStep({ stepKind: "type", response: "aple", word: apple })).toBe(true); // -1 xóa
+    expect(gradeStep({ stepKind: "type", response: "apply", word: apple })).toBe(true); // 1 thay
+    expect(gradeStep({ stepKind: "type", response: "applepie", word: apple })).toBe(false); // cách 3
+    expect(gradeStep({ stepKind: "type", response: "pple", word: apple })).toBe(true); // -1 đầu chuỗi
+
+    const house = { word: "house", meaningVi: "ngôi nhà" }; // len 5 biên
+    expect(gradeStep({ stepKind: "type", response: "hous", word: house })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "mouse", word: house })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "hours", word: house })).toBe(false); // 2 thay
+  });
+
+  it("typo table — từ <5 ký tự: CHỈ exact (không typo tolerance)", () => {
+    const run = { word: "run", meaningVi: "chạy" };
+    expect(gradeStep({ stepKind: "type", response: "run", word: run })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "Run", word: run })).toBe(true);
+    expect(gradeStep({ stepKind: "type", response: "rn", word: run })).toBe(false); // -1 nhưng từ ngắn
+    expect(gradeStep({ stepKind: "type", response: "runs", word: run })).toBe(false);
+    const book = { word: "book", meaningVi: "quyển sách" }; // len 4
+    expect(gradeStep({ stepKind: "type", response: "bok", word: book })).toBe(false);
+  });
+
+  it("mc/listen so meaning — normalize + collapse space; rỗng → sai", () => {
+    const apple = { word: "apple", meaningVi: "quả táo" };
+    expect(gradeStep({ stepKind: "mc", response: "quả táo", word: apple })).toBe(true);
+    expect(gradeStep({ stepKind: "mc", response: " Quả  TÁO ", word: apple })).toBe(true);
+    expect(gradeStep({ stepKind: "mc", response: "quả xoài", word: apple })).toBe(false);
+    expect(gradeStep({ stepKind: "listen", response: "quả táo", word: apple })).toBe(true);
+    expect(gradeStep({ stepKind: "listen", response: "", word: apple })).toBe(false);
+    expect(gradeStep({ stepKind: "type", response: "   ", word: apple })).toBe(false);
   });
 });
