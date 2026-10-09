@@ -1,5 +1,6 @@
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -101,6 +102,9 @@ export const profiles = pgTable("profiles", {
   xp: integer("xp").notNull().default(0),
   streakCount: integer("streak_count").notNull().default(0),
   lastActiveDate: date("last_active_date"),
+  // vocab-memrise SF-1 (VU-38): mục tiêu từ mới/ngày — dashboard goal ring
+  // đọc, UI chỉnh inline presets 5/10/20 (SF-4 sở hữu surface)
+  dailyGoalWords: integer("daily_goal_words").notNull().default(5),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -277,6 +281,9 @@ export const dailyActivity = pgTable(
     // date theo TZ Asia/Ho_Chi_Minh (quyết định #13) — mode string cho i18n-àn
     date: date("date", { mode: "string" }).notNull(),
     partsDone: integer("parts_done").notNull().default(0),
+    // vocab-memrise SF-1 (VU-38): số bước test vocab đã chấm trong ngày —
+    // upsert cùng row với dictation: presence row là thứ giữ streak
+    vocabSteps: integer("vocab_steps").notNull().default(0),
   },
   (activity) => [
     primaryKey({ columns: [activity.userId, activity.date] }),
@@ -422,6 +429,9 @@ export const userWordProgress = pgTable(
     intervalDays: integer("interval_days").notNull().default(0),
     dueAt: timestamp("due_at", { withTimezone: true }).notNull().defaultNow(),
     reps: integer("reps").notNull().default(0),
+    // vocab-memrise SF-1 (VU-38): số lần quên (grade q<3) — seed sắp xếp
+    // "khó" phía sau, không đụng SM-2 engine
+    lapses: integer("lapses").notNull().default(0),
     lastReviewedAt: timestamp("last_reviewed_at", { withTimezone: true }),
   },
   (progress) => [
@@ -463,5 +473,56 @@ export const quizAttempts = pgTable(
   (attempt) => [
     index("quiz_attempts_user_id_idx").on(attempt.userId),
     index("quiz_attempts_book_id_idx").on(attempt.bookId),
+  ],
+);
+
+/**
+ * vocab_activity — source-of-truth XP vocab (vocab-memrise SF-1, VU-38; spec
+ * epic §3/E2). Ghi MỌI event chấm (kể cả sai, xp=0) — audit completeness +
+ * phục vụ check "lần-đầu-trong-ngày" trong transaction (spec §4).
+ * - kind: 'learn-complete' (từ mới reps 0→1, 4 XP lần đầu) | 'session-step'
+ *   (bước test learn/review, 1 XP lần đúng đầu trong ngày)
+ * - idempotency_key UNIQUE `${userId}:${sessionKey}:${wordId}:${stepIndex}:
+ *   ${attemptNo}` — server derive, duplicate submit trả kết quả cached KHÔNG
+ *   ghi SRS lần 2 (ON CONFLICT DO NOTHING)
+ * - profiles.xp là CACHE write-through; leaderboard weekly đọc 2 nguồn
+ *   UNION ALL (migration 0006) nên hết divergence weekly/all_time
+ * - index (user_id, created_at): count XP hôm nay trong transaction;
+ *   (user_id, word_id): check lần-đầu-correct-today per word
+ */
+export const vocabActivity = pgTable(
+  "vocab_activity",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    wordId: integer("word_id")
+      .notNull()
+      .references(() => words.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // 'learn-complete' | 'session-step'
+    correct: boolean("correct").notNull(),
+    xp: integer("xp").notNull(),
+    sessionKey: text("session_key").notNull(),
+    stepIndex: integer("step_index").notNull(),
+    attemptNo: integer("attempt_no").notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (activity) => [
+    check(
+      "vocab_activity_kind_check",
+      sql`${activity.kind} in ('learn-complete', 'session-step')`,
+    ),
+    index("vocab_activity_user_id_created_at_idx").on(
+      activity.userId,
+      activity.createdAt,
+    ),
+    index("vocab_activity_user_id_word_id_idx").on(
+      activity.userId,
+      activity.wordId,
+    ),
   ],
 );
