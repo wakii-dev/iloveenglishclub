@@ -37,7 +37,7 @@
       "title": "Session UI learn + review (design-first)",
       "tier": 2,
       "summary": "Demo end-to-end: learn page /vocabulary/learn/[book] đi đủ chuỗi bằng chuột+bàn phím → tổng kết XP; /me/vocabulary review gõ-từ (prefill ?word=, ?scope=), sai requeue trong phiên + lapses+1, reload không mất; nghỉ hưu ReviewFlashcards + route quality cũ (grep = 0, 3311 retired, quiz 3312 vẫn xanh); e2e 3317/3318.",
-      "design": "mock-prototype",
+      "design": "figma",
       "linear": "VU-40"
     },
     {
@@ -46,7 +46,7 @@
       "title": "Dashboard home Memrise-style (design-first)",
       "tier": 1,
       "summary": "Demo: đăng nhập /vi/vocabulary thấy dashboard — continue card level kế tiếp đúng (sách xong → hoàn thành), goal ring planted-hôm-nay/goal chỉnh được (5/10/20 lưu profiles), streak/due/XP đúng số, garden strip 8 stage, per-book progress bars, Khám phá giữ logic; guest/library/quiz không regression; PATCH goal API; e2e 3319 + update 3314.",
-      "design": "mock-prototype",
+      "design": "figma",
       "linear": "VU-41"
     },
     {
