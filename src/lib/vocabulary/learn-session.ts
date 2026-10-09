@@ -277,6 +277,24 @@ export function gradeStep(input: GradeStepInput): boolean {
   return response === normalizeAnswer(input.word.meaningVi);
 }
 
+/** Quality pin: mọi bước test của từ đúng → 4; bất kỳ sai → 0 (epic §2.1). */
+export const QUALITY_CORRECT = 4;
+export const QUALITY_FAIL = 0;
+
+/**
+ * Quality SUY TỪ kết quả các bước test của từ TRONG 1 lượt (attempt) —
+ * engine CHỈ tính, store query activities rồi truyền mảng boolean vào (tách
+ * lớp giữ thuần). Rỗng → 4 (vacuous — chuỗi luôn có type nên không xảy ra).
+ */
+export function qualityFromSteps(corrects: readonly boolean[]): number {
+  return corrects.every(Boolean) ? QUALITY_CORRECT : QUALITY_FAIL;
+}
+
+/** q<3 = quên (SM-2) → user_word_progress.lapses +1, ngược lại 0. */
+export function lapsesDelta(quality: number): number {
+  return quality < 3 ? 1 : 0;
+}
+
 /**
  * Build phiên REVIEW (epic §2.2): per từ — nghe-chọn khi có audio, ngược lại
  * mc nhìn-từ-chọn-nghĩa — rồi gõ từ. KHÔNG introduce (từ đã học). Degenerate

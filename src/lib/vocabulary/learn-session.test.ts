@@ -11,8 +11,10 @@ import {
   gradeStep,
   isSessionKind,
   isStepKind,
+  lapsesDelta,
   LEARN_SESSION_WORDS,
   normalizeAnswer,
+  qualityFromSteps,
   SESSION_KINDS,
   STEP_KINDS,
   type SessionStep,
@@ -309,5 +311,28 @@ describe("normalizeAnswer + gradeStep — typo tolerance (context pack #4)", () 
     expect(gradeStep({ stepKind: "listen", response: "quả táo", word: apple })).toBe(true);
     expect(gradeStep({ stepKind: "listen", response: "", word: apple })).toBe(false);
     expect(gradeStep({ stepKind: "type", response: "   ", word: apple })).toBe(false);
+  });
+});
+
+describe("qualityFromSteps — MỘT grade SM-2/từ/lượt (context pack #5)", () => {
+  it("grade map: mọi bước đúng → q=4; bất kỳ bước sai → q=0", () => {
+    expect(qualityFromSteps([true])).toBe(4);
+    expect(qualityFromSteps([true, true, true])).toBe(4); // mc+listen+type
+    expect(qualityFromSteps([false])).toBe(0);
+    expect(qualityFromSteps([true, false, true])).toBe(0); // sai mc, đúng type
+    expect(qualityFromSteps([false, false])).toBe(0);
+  });
+
+  it("rỗng → q=4 (vacuous — chuỗi luôn có type nên ≥1 bước, không bao giờ xảy ra)", () => {
+    expect(qualityFromSteps([])).toBe(4);
+  });
+
+  it("lapsesDelta: q<3 → +1 (q=0 sai); q>=3 → 0", () => {
+    expect(lapsesDelta(qualityFromSteps([true]))).toBe(0);
+    expect(lapsesDelta(qualityFromSteps([false]))).toBe(1);
+    expect(lapsesDelta(0)).toBe(1);
+    expect(lapsesDelta(2)).toBe(1);
+    expect(lapsesDelta(3)).toBe(0);
+    expect(lapsesDelta(4)).toBe(0);
   });
 });
