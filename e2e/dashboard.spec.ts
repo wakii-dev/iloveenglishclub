@@ -33,6 +33,28 @@ async function registerUser(page: Page, displayName: string): Promise<string> {
   return email;
 }
 
+/**
+ * Click-with-retry chống pre-hydration race (review C P1 — visible ≠
+ * hydrated; pattern rule0-dashboard-flow): click → kiểm EFFECT thật, chưa
+ * đạt → click lại. Click timeout NGẮN (2.5s — element có thể biến mất sau
+ * PATCH/popover đóng; default 30s × vòng = treo test timeout 120s).
+ */
+async function clickUntil(
+  page: Page,
+  click: () => Promise<void>,
+  effect: () => Promise<boolean>,
+  tries = 6,
+): Promise<void> {
+  for (let i = 0; i < tries; i++) {
+    if (await effect().catch(() => false)) return;
+    await click().catch(() => {});
+    await page.waitForTimeout(600);
+  }
+  if (!(await effect().catch(() => false))) {
+    throw new Error("clickUntil: effect không đạt sau retries");
+  }
+}
+
 test.describe("Vocabulary dashboard home (SF-4)", () => {
   test.setTimeout(120_000);
 
@@ -101,18 +123,27 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     await page.goto("/vi/vocabulary");
 
     await expect(page.getByText("3/5", { exact: true })).toBeVisible();
-    // mở popover (pre-hydration click race — retry qua expect+click)
-    const editBtn = page.getByRole("button", { name: /Sửa mục tiêu/ });
-    await expect(editBtn).toBeVisible();
-    await editBtn.click();
+    // mở popover + chọn 10 — click-with-retry chống pre-hydration (review C P1)
     const preset10 = page.getByRole("button", { name: "10", exact: true });
-    await expect(preset10).toBeVisible();
-    await preset10.click();
+    await clickUntil(
+      page,
+      () => page.getByRole("button", { name: /Sửa mục tiêu/ }).click({ timeout: 2500 }),
+      () => preset10.isVisible(),
+    );
+    // mid-RSC-refresh snapshot có thể thấy 2 block ring (old+new) → .first()
+    await clickUntil(
+      page,
+      () => preset10.click({ timeout: 2500 }),
+      () => page.getByText("3/10", { exact: true }).first().isVisible(),
+    );
 
-    // PATCH xong đóng popover + refresh RSC — ring 3/10
-    await expect(page.getByText("3/10", { exact: true })).toBeVisible();
+    // PATCH xong đóng popover + refresh RSC — ring 3/10 (.first() chống
+    // strict-mode khi RSC refresh đang swap old/new block)
+    await expect(page.getByText("3/10", { exact: true }).first()).toBeVisible();
     await expect(
-      page.locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ mới"]'),
+      page
+        .locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ mới"]')
+        .first(),
     ).toBeVisible();
 
     // reload — goal persist từ profiles
@@ -155,20 +186,24 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
 
     const container = page.locator("#vocab-dashboard");
     await expect(container).not.toHaveClass(/dark/);
-    await page
-      .getByRole("button", { name: "Chuyển chế độ tối" })
-      .click();
-    await expect(container).toHaveClass(/dark/);
+    const darkBtn = () =>
+      page
+        .getByRole("button", { name: "Chuyển chế độ tối" })
+        .click({ timeout: 2500 });
+    const lightBtn = () =>
+      page
+        .getByRole("button", { name: "Chuyển chế độ sáng" })
+        .click({ timeout: 2500 });
+    // click-with-retry chống pre-hydration (review C P1)
+    await clickUntil(page, darkBtn, () => container.evaluate((el) => el.classList.contains("dark")));
     // bấm lại → sáng
-    await page
-      .getByRole("button", { name: "Chuyển chế độ sáng" })
-      .click();
-    await expect(container).not.toHaveClass(/dark/);
+    await clickUntil(
+      page,
+      lightBtn,
+      () => container.evaluate((el) => !el.classList.contains("dark")),
+    );
     // dark lần nữa → reload giữ (localStorage ilec.vocab-theme)
-    await page
-      .getByRole("button", { name: "Chuyển chế độ tối" })
-      .click();
-    await expect(container).toHaveClass(/dark/);
+    await clickUntil(page, darkBtn, () => container.evaluate((el) => el.classList.contains("dark")));
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("#vocab-dashboard")).toHaveClass(/dark/);
   });
