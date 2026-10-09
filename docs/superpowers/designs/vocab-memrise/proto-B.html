@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VU-37 · Hướng B — Câu lạc bộ tĩnh lặng (ILEC-clean)</title>
+<!--
+  VU-37 vocab-memrise · DIRECTION B "Câu lạc bộ tĩnh lặng" — ILEC-clean minimal / editorial.
+  Khác skeleton A: dashboard = editorial data-list (hairline dividers, không card-dày), garden là BIỂU ĐỒ dữ liệu (1 thanh
+  xếp lớp + legend) thay vì minh họa; learn = cột giữa hẹp, viền hairline, không bóng, coral chỉ 1 CTA/màn hình.
+  Tokens: cùng gốc Classroom Warm nhưng tĩnh hơn — bg #fffdf9, ink #432818, hairline #eadbc6, teal #0b756d, coral #c2482e.
+  Assumptions + a11y giống proto-A (state mẫu độc lập, contrast ≥4.5, focus 3px, reduced-motion, touch ≥44px).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fffdf9; --bg2:#faf3e9; --card:#ffffff;
+  --ink:#432818; --mut:#93745a; --line:#eadbc6; --hair:#f1e6d4;
+  --teal:#0b756d; --teal-soft:#e9f2f0;
+  --coral:#c2482e; --coral-ink:#a83a24;
+  --green:#2e6e3c; --green-soft:#eff4ec;
+  --gold:#a05a0a; --gold-bright:#f59e0b;
+  --red:#c92f2f; --red-soft:#fdf0ee;
+  --ring:#f9b48f;
+  --lv1:#f59e0b; --lv2:#e85d3d; --lv3:#0e9488; --lv4:#0284c7; --lv5:#7c3aed; --lv6:#be185d; --lv7:#334155;
+  color-scheme:light;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--ring);outline-offset:2px;border-radius:4px}
+svg{display:block}
+.ic{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ---- chrome ---- */
+.pbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(255,253,249,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.pbrand{font-size:12.5px;color:var(--mut);padding:14px 0}
+.pbrand b{color:var(--coral);font-weight:800;white-space:nowrap}
+.ptabs{display:flex;gap:0;margin-inline:auto;height:100%}
+.ptab{min-height:48px;padding:0 18px;font-weight:700;font-size:14px;color:var(--mut);border-bottom:2.5px solid transparent}
+.ptab.on{color:var(--ink);border-bottom-color:var(--coral)}
+.phint{display:none;font-size:12px;color:var(--mut)}
+@media(min-width:760px){.phint{display:block}}
+main{max-width:880px;margin:0 auto;padding:26px 20px 40px}
+.surface{display:none}.surface.on{display:block;animation:fadein .4s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+/* ============ LEARN ============ */
+#s-learn{max-width:560px;margin:0 auto}
+.crumb{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
+.crumb .path{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--mut)}
+.crumb .path b{color:var(--ink)}
+.stepline{display:flex;align-items:center;gap:12px;padding:10px 0 18px;border-bottom:1px solid var(--hair);margin-bottom:0}
+.dots{display:flex;gap:7px;flex:1}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--hair)}
+.dot.done{background:var(--teal)}
+.dot.act{background:#fff;border:2.5px solid var(--coral);width:11px;height:11px;margin:-1px}
+.scount{font-size:12.5px;color:var(--mut);font-weight:700}
+.stepnav{display:flex;gap:2px;flex-wrap:wrap;padding:12px 0 20px}
+.snav{min-height:36px;padding:2px 12px;font-size:12.5px;font-weight:700;color:var(--mut);border-radius:8px}
+.snav:hover{background:var(--bg2)}
+.snav.on{background:var(--bg2);color:var(--ink)}
+.stepnav .lab{width:100%;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c3a887;margin-bottom:2px}
+
+.screen{display:none}.screen.on{display:block;animation:fadein .35s ease both}
+.pane{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:26px 24px}
+.eyebrow{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--mut);margin-bottom:14px}
+.wordrow{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.word-big{font-family:'Baloo 2';font-weight:700;font-size:42px;line-height:1.05}
+.ipa{color:var(--mut);font-size:15px}
+.pos{font-size:12px;color:var(--mut);font-style:italic}
+.sayword{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:4px 14px;margin:6px 0 14px;border:1px solid var(--line);border-radius:999px;font-weight:800;font-size:14px;color:var(--teal);transition:background .15s}
+.sayword:hover{background:var(--teal-soft)}
+.meaning{font-size:17px;font-weight:700;margin:10px 0 16px}
+.quoteline{border-top:1px solid var(--hair);padding-top:14px;font-size:14.5px}
+.quoteline em{display:block;color:var(--mut);font-size:13px;margin-top:3px}
+.stagechip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--green);background:var(--green-soft);border-radius:999px;padding:4px 12px}
+/* options as editorial list */
+.olist{display:grid}
+.orow{display:flex;align-items:center;gap:14px;min-height:54px;padding:8px 12px;border-top:1px solid var(--hair);text-align:left;font-size:16px;font-weight:700;transition:background .12s}
+.orow:first-child{border-top:0}
+.orow:hover:not(:disabled){background:var(--bg2)}
+.orow .letter{font-family:'Baloo 2';font-size:13px;color:var(--mut);width:22px;flex:none}
+.orow.correct{color:var(--green);background:var(--green-soft)}
+.orow.correct .letter{color:var(--green)}
+.orow.wrong{color:var(--red);background:var(--red-soft)}
+.orow:disabled{cursor:default}
+.feedback{display:none;align-items:center;gap:9px;margin-top:14px;padding:11px 14px;border-radius:10px;font-weight:800;font-size:14px}
+.feedback.show{display:flex}
+.feedback.ok{background:var(--green-soft);color:var(--green)}
+.feedback.no{background:var(--red-soft);color:var(--red)}
+.feedback .xp{margin-left:auto;font-size:12.5px;font-weight:800}
+.demonote{margin-top:12px;font-size:12.5px;color:#c3a887;font-style:italic}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:20px;border-radius:12px;background:var(--coral);color:#fff;font-weight:800;font-size:16px;transition:background .15s}
+.cta:hover{background:var(--coral-ink)}
+.ghostlink{display:block;width:100%;min-height:46px;margin-top:6px;text-align:center;font-weight:700;color:var(--mut);padding:10px}
+.ghostlink:hover{color:var(--ink)}
+/* listen */
+.playrow{display:flex;align-items:center;gap:18px;margin:4px 0 18px}
+.playcircle{width:64px;height:64px;border-radius:50%;border:2px solid var(--teal);color:var(--teal);display:grid;place-items:center;transition:background .15s}
+.playcircle:hover{background:var(--teal-soft)}
+.eq{display:flex;gap:3px;align-items:center;height:30px}
+.eq i{width:4px;border-radius:2px;background:var(--line)}
+.eq i.t{background:var(--teal)}
+/* type */
+.bigprompt{font-family:'Baloo 2';font-size:28px;font-weight:700;margin:2px 0 20px}
+.typeline{display:flex;align-items:center;gap:12px;border-bottom:2px solid var(--line);padding-bottom:8px;transition:border-color .15s}
+.typeline:focus-within{border-bottom-color:var(--teal)}
+.typeline input{flex:1;border:0;background:none;font:inherit;font-weight:700;font-size:19px;color:var(--ink);min-height:38px}
+.typeline input::placeholder{color:#cdb69b;font-weight:600}
+.typeline input:focus{outline:none}
+.kbd{font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 8px;color:var(--mut);background:var(--bg2)}
+/* summary */
+.sumhead{text-align:center;padding:8px 0 20px;border-bottom:1px solid var(--hair)}
+.sumxpl{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--teal)}
+.sumxp{font-family:'Baloo 2';font-weight:800;font-size:58px;line-height:1.1}
+.sumsub{color:var(--mut);font-size:14px}
+.deflist{margin-top:4px}
+.defrow{display:flex;justify-content:space-between;gap:16px;padding:13px 4px;border-top:1px solid var(--hair);font-size:15px}
+.defrow:first-child{border-top:0}
+.defrow b{font-weight:800}
+.defrow span{color:var(--mut)}
+.defrow .good{color:var(--green)}
+
+/* ============ DASHBOARD ============ */
+#s-dash{display:none}#s-dash.on{display:block}
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;border-bottom:2.5px solid var(--ink);padding-bottom:14px;margin-bottom:4px}
+.masthead .eyebrow{margin-bottom:4px}
+.masthead h1{font-family:'Baloo 2';font-size:30px;font-weight:800;line-height:1.1}
+.xpnum{text-align:right}
+.xpnum b{font-family:'Baloo 2';font-size:26px;font-weight:800}
+.xpnum span{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:800}
+.today{display:grid;grid-template-columns:1fr; border-bottom:1px solid var(--line)}
+@media(min-width:640px){.today{grid-template-columns:1.2fr 1fr 1fr}}
+.today>div{padding:18px 4px;border-bottom:1px solid var(--hair);display:flex;gap:16px;align-items:center}
+@media(min-width:640px){.today>div{border-bottom:0;border-right:1px solid var(--hair);padding:18px 20px}.today>div:last-child{border-right:0}}
+.tlabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--mut);display:block;margin-bottom:3px}
+.tval{font-family:'Baloo 2';font-size:21px;font-weight:800;line-height:1.1}
+.tsub{font-size:12.5px;color:var(--mut)}
+.ringmini{position:relative;width:64px;height:64px;flex:none}
+.ringmini svg{width:64px;height:64px}
+.ringmini .track{fill:none;stroke:var(--hair);stroke-width:7}
+.ringmini .val{fill:none;stroke:var(--teal);stroke-width:7;stroke-linecap:round}
+.ringmini span{position:absolute;inset:0;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:15px}
+.presets{display:flex;gap:5px;margin-top:8px}
+.presets button{min-width:38px;min-height:32px;border:1px solid var(--line);border-radius:8px;font-weight:800;font-size:12.5px;color:var(--mut);background:#fff}
+.presets button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.flame{color:var(--gold-bright)}
+.tlink{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:14.5px;color:var(--coral);min-height:40px}
+.tlink:hover{color:var(--coral-ink)}
+/* continue row */
+.controw{display:flex;align-items:center;gap:16px;padding:20px 4px;border-bottom:1px solid var(--line)}
+.bookglyph{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:19px;color:#fff;flex:none}
+.continfo{flex:1;min-width:0}
+.continfo b{font-size:16px;font-weight:800;display:block}
+.continfo .meta{font-size:12.5px;color:var(--mut)}
+.hairbar{height:5px;border-radius:99px;background:var(--hair);overflow:hidden;margin-top:8px}
+.hairbar i{display:block;height:100%;background:var(--lv5);border-radius:99px}
+.contcta{flex:none;font-weight:800;color:var(--coral);font-size:15px;min-height:44px;display:flex;align-items:center;gap:4px}
+.contcta:hover{color:var(--coral-ink)}
+/* garden data */
+.gsec{padding:22px 4px 18px;border-bottom:1px solid var(--line)}
+.ghead2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.ghead2 h2{font-family:'Baloo 2';font-size:19px}
+.ghead2 span{font-size:12.5px;color:var(--mut)}
+.stackbar{display:flex;height:14px;border-radius:7px;overflow:hidden}
+.stackbar i{height:100%}
+.glegend{display:grid;grid-template-columns:1fr 1fr;gap:7px 20px;margin-top:14px}
+@media(min-width:560px){.glegend{grid-template-columns:repeat(4,1fr)}}
+.glegend .li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mut)}
+.glegend .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.glegend b{color:var(--ink);font-weight:800;margin-left:auto}
+/* books rows */
+.bsec{padding:22px 4px 10px;border-bottom:1px solid var(--line)}
+.bsec h2{font-family:'Baloo 2';font-size:19px;margin-bottom:4px}
+.browB{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 12px;padding:13px 2px;border-top:1px solid var(--hair)}
+.browB:first-of-type{border-top:0}
+.bnum-glyph{grid-column:1;grid-row:1;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:13.5px;color:#fff}
+.bname{grid-column:2;grid-row:1;font-size:14.5px;font-weight:700}
+.bname .cefr{font-size:11px;color:var(--mut);font-weight:700;margin-left:6px}
+.bbarB{grid-column:2;grid-row:2;height:5px;border-radius:99px;background:var(--hair);overflow:hidden}
+.bbarB i{display:block;height:100%;border-radius:99px}
+.bpct{grid-column:3;grid-row:1;font-family:'Baloo 2';font-weight:700;font-size:14px;color:var(--mut)}
+.bstate{grid-column:3;grid-row:2;font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px}
+.bstate.done{background:var(--green-soft);color:var(--green)}
+.bstate.learning{background:var(--teal-soft);color:var(--teal)}
+/* discover */
+.dsec{padding:22px 4px 8px}
+.dsec h2{font-family:'Baloo 2';font-size:19px;margin-bottom:4px}
+.dlink{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--hair);font-weight:700;font-size:15px}
+.dlink:first-of-type{border-top:0}
+.dlink .ic{color:var(--mut)}
+.dlink .sub{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:600;display:flex;align-items:center;gap:6px}
+.pfoot{max-width:760px;margin:10px auto 50px;padding:0 20px;font-size:12.5px;color:var(--mut)}
+.pfoot b{color:var(--ink)}
+@media(min-width:900px){
+  #s-dash .lower{display:grid;grid-template-columns:1.15fr .85fr;gap:0 40px;align-items:start}
+  #s-dash .lower .gsec{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+
+<header class="pbar">
+  <div class="pbrand"><b>VU-37</b> · Hướng B — Câu lạc bộ tĩnh lặng <span style="opacity:.7">ILEC-clean editorial</span></div>
+  <nav class="ptabs" role="tablist" aria-label="Chuyển surface">
+    <button class="ptab on" data-s="learn" role="tab" aria-selected="true">Phiên học</button>
+    <button class="ptab" data-s="dash" role="tab" aria-selected="false">Dashboard</button>
+  </nav>
+  <span class="phint">Mobile-first 375px · co hẹp cửa sổ để xem</span>
+</header>
+
+<main>
+
+<!-- ================= LEARN SESSION ================= -->
+<section id="s-learn" class="surface on" aria-label="Phiên học — state mẫu: 5 từ, 2 đã trồng, từ thứ 3 ở bước chọn nghĩa">
+  <div class="crumb">
+    <span class="path">Prepare 5 · B1 / <b>Level 6 · Từ 51–60</b></span>
+    <button aria-label="Thoát phiên" style="min-height:40px;min-width:40px;color:var(--mut)"><svg class="ic" viewBox="0 0 24 24" style="margin-left:auto"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="stepline">
+    <div class="dots" role="img" aria-label="Tiến độ phiên: 2 trên 5 từ đã trồng, đang ở từ thứ 3">
+      <span class="dot done"></span><span class="dot done"></span><span class="dot act"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <span class="scount">Từ 3/5 · đã trồng 2</span>
+  </div>
+
+  <nav class="stepnav" aria-label="Xem trước các màn của phiên (điều khiển prototype)">
+    <span class="lab">Dạo nhanh các màn</span>
+    <button class="snav" data-st="intro">Giới thiệu</button>
+    <button class="snav on" data-st="mc">Chọn nghĩa</button>
+    <button class="snav" data-st="listen">Nghe-chọn</button>
+    <button class="snav" data-st="type">Gõ từ</button>
+    <button class="snav" data-st="sum">Tổng kết</button>
+  </nav>
+
+  <!-- MC -->
+  <div class="screen on" data-st="mc" role="tabpanel" aria-label="Bước chọn nghĩa">
+    <article class="pane">
+      <p class="eyebrow">Chọn nghĩa đúng</p>
+      <div class="wordrow">
+        <h2 class="word-big">depart</h2>
+        <span class="ipa">/dɪˈpɑːt/</span>
+        <button class="sayword" aria-label="Phát âm depart"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>Phát âm</button>
+      </div>
+      <div class="olist" aria-label="Các lựa chọn nghĩa">
+        <button class="orow"><span class="letter">A</span>hành lý</button>
+        <button class="orow" data-ok="1"><span class="letter">B</span>khởi hành</button>
+        <button class="orow"><span class="letter">C</span>đi làm hằng ngày</button>
+        <button class="orow"><span class="letter">D</span>tiền hoàn lại</button>
+      </div>
+      <div class="feedback ok" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác!<span class="xp">+1 XP</span></div>
+      <div class="feedback no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — từ sẽ quay lại cuối hàng phiên</div>
+      <p class="demonote">Demo: bấm một lựa chọn để xem phản hồi chấm của server</p>
+    </article>
+  </div>
+
+  <!-- Giới thiệu -->
+  <div class="screen" data-st="intro" role="tabpanel" aria-label="Bước giới thiệu từ">
+    <article class="pane">
+      <p class="eyebrow">Giới thiệu từ mới</p>
+      <div class="wordrow">
+        <h2 class="word-big">commute</h2>
+        <span class="ipa">/kəˈmjuːt/</span><span class="pos">động từ</span>
+      </div>
+      <p><span class="stagechip"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="15" r="3.4" fill="#8a6b52"/></svg>Giai đoạn: Hạt mầm</span></p>
+      <button class="sayword" aria-label="Nghe từ commute"><svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg>Nghe từ này</button>
+      <p class="meaning">đi làm hằng ngày — di chuyển đều đặn giữa nhà và nơi làm việc, học tập</p>
+      <div class="quoteline">"I commute to school by bike to avoid the traffic."<br><em>Theo nó đi học bằng xe đạp để tránh kẹt xe.</em></div>
+      <button class="cta">Tiếp tục</button>
+    </article>
+  </div>
+
+  <!-- Nghe-chọn -->
+  <div class="screen" data-st="listen" role="tabpanel" aria-label="Bước nghe và chọn">
+    <article class="pane">
+      <p class="eyebrow">Nghe và chọn từ bạn nghe được</p>
+      <div class="playrow">
+        <button class="playcircle" aria-label="Phát lại audio"><svg class="ic" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" stroke="none"/></svg></button>
+        <div class="eq" aria-hidden="true"><i style="height:10px"></i><i class="t" style="height:22px"></i><i class="t" style="height:30px"></i><i style="height:14px"></i><i class="t" style="height:26px"></i><i style="height:9px"></i><i class="t" style="height:18px"></i><i style="height:12px"></i></div>
+      </div>
+      <div class="olist" aria-label="Các lựa chọn từ">
+        <button class="orow"><span class="letter">A</span>deposit</button>
+        <button class="orow" data-ok="1"><span class="letter">B</span>depart</button>
+        <button class="orow"><span class="letter">C</span>deport</button>
+        <button class="orow"><span class="letter">D</span>report</button>
+      </div>
+      <div class="feedback ok" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác!<span class="xp">+1 XP</span></div>
+      <div class="feedback no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — nghe lại và thử lần sau</div>
+      <p class="demonote">Bước này CHỈ xuất hiện khi từ có audio — server lọc sẵn trong step list</p>
+    </article>
+  </div>
+
+  <!-- Gõ từ -->
+  <div class="screen" data-st="type" role="tabpanel" aria-label="Bước gõ từ">
+    <article class="pane">
+      <p class="eyebrow">Gõ từ tiếng Anh có nghĩa là</p>
+      <p class="bigprompt">"tiền hoàn lại"</p>
+      <div class="typeline">
+        <input placeholder="Gõ từ tiếng Anh…" aria-label="Nhập từ tiếng Anh" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <span class="kbd">Enter ↵</span>
+      </div>
+      <div class="feedback ok exact" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác — "refund"!<span class="xp">+1 XP</span></div>
+      <div class="feedback ok near" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Gần đúng — typo ≤1 ký tự vẫn được chấp nhận<span class="xp">+1 XP</span></div>
+      <div class="feedback no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — từ sẽ quay lại cuối hàng phiên</div>
+      <p class="demonote">Demo: gõ "refund" / "refun" / từ khác rồi Enter · chấm server-side, typo ≤1 với từ ≥5 chữ tính đúng</p>
+    </article>
+  </div>
+
+  <!-- Tổng kết -->
+  <div class="screen" data-st="sum" role="tabpanel" aria-label="Tổng kết phiên">
+    <article class="pane">
+      <div class="sumhead">
+        <p class="sumxpl">Phiên hoàn tất</p>
+        <p class="sumxp">+26 XP</p>
+        <p class="sumsub">5 từ hoàn thành (+20) · bước đúng (+6)</p>
+      </div>
+      <div class="deflist">
+        <div class="defrow"><span>Từ đã trồng</span><b>5 từ</b></div>
+        <div class="defrow"><span>Giai đoạn đạt được</span><b class="good">Nảy mầm</b></div>
+        <div class="defrow"><span>Level 6</span><b class="good">10/10 — hoàn thành</b></div>
+        <div class="defrow"><span>XP từ vựng hôm nay</span><span>26/60 (cap chống farm — SRS vẫn tiến đầy đủ)</span></div>
+      </div>
+      <button class="cta">Học Level 7 kế tiếp</button>
+      <button class="ghostlink">Về tổng quan từ vựng</button>
+    </article>
+  </div>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="s-dash" class="surface" aria-label="Dashboard từ vựng — state mẫu trước phiên">
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">Từ vựng · Thứ Hai, 5 tháng 10</p>
+      <h1>Hôm nay của Minh</h1>
+    </div>
+    <div class="xpnum"><b>1.248</b><span>tổng XP</span></div>
+  </div>
+
+  <div class="today">
+    <div>
+      <div class="ringmini" role="img" aria-label="Mục tiêu hôm nay: 3 trên 5 từ mới">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="26"/><circle class="val" cx="32" cy="32" r="26" stroke-dasharray="98 163.4" transform="rotate(-90 32 32)"/></svg>
+        <span>3/5</span>
+      </div>
+      <div>
+        <span class="tlabel">Mục tiêu hôm nay</span>
+        <span class="tval">3/5 từ mới</span>
+        <div class="presets" role="group" aria-label="Chỉnh mục tiêu hàng ngày">
+          <button class="on" aria-pressed="true">5</button><button aria-pressed="false">10</button><button aria-pressed="false">20</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <svg class="flame" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 2c.6 3.4-3.6 5-3.6 8.8a5.1 5.1 0 0 0 10.2 0c0-2.1-1-3.6-2.2-5.2-.3 1.5-1.1 2.2-2.2 2.4.6-1.9-.2-4.1-2.2-6z" fill="currentColor"/></svg>
+      <div>
+        <span class="tlabel">Streak</span>
+        <span class="tval">7 ngày</span>
+        <span class="tsub">vocab hoặc dictation đều giữ lửa</span>
+      </div>
+    </div>
+    <div>
+      <div>
+        <span class="tlabel">Ôn tập</span>
+        <span class="tval">12 từ đến hạn</span>
+        <a class="tlink" href="#">Ôn ngay <svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="controw">
+    <span class="bookglyph" style="background:var(--lv5)">5</span>
+    <div class="continfo">
+      <b>Học tiếp — Level 5 · B1</b>
+      <span class="meta">Level 6 · Từ 51–60 — còn 5 từ mới trong level</span>
+      <div class="hairbar" role="img" aria-label="Level 6: 5 trên 10 từ đã trồng"><i style="width:50%"></i></div>
+    </div>
+    <a class="contcta" href="#">Học tiếp <svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M9 5l7 7-7 7"/></svg></a>
+  </div>
+
+  <div class="lower">
+    <section class="gsec" aria-label="Vườn từ vựng — phân bố theo 8 giai đoạn">
+      <div class="ghead2"><h2>Vườn từ vựng</h2><span>313 từ · phân bố theo giai đoạn tăng trưởng</span></div>
+      <div class="stackbar" role="img" aria-label="Hạt mầm 96, Nảy mầm 74, Cây con 58, Nụ 34, Cây non 22, Cây xanh 15, Trỗi dậy 8, Nở hoa 6">
+        <i style="width:30.7%;background:#dcead0"></i><i style="width:23.6%;background:#bcdcaa"></i><i style="width:18.5%;background:#97ca88"></i><i style="width:10.9%;background:#6fb268"></i><i style="width:7%;background:#4f9e52"></i><i style="width:4.8%;background:#3a8a46"></i><i style="width:2.6%;background:#2c763c"></i><i style="width:1.9%;background:#1f6333"></i>
+      </div>
+      <div class="glegend">
+        <span class="li"><span class="sw" style="background:#dcead0"></span>0 Hạt mầm<b>96</b></span>
+        <span class="li"><span class="sw" style="background:#bcdcaa"></span>1 Nảy mầm<b>74</b></span>
+        <span class="li"><span class="sw" style="background:#97ca88"></span>2 Cây con<b>58</b></span>
+        <span class="li"><span class="sw" style="background:#6fb268"></span>3 Nụ<b>34</b></span>
+        <span class="li"><span class="sw" style="background:#4f9e52"></span>4 Cây non<b>22</b></span>
+        <span class="li"><span class="sw" style="background:#3a8a46"></span>5 Cây xanh<b>15</b></span>
+        <span class="li"><span class="sw" style="background:#2c763c"></span>6 Trỗi dậy<b>8</b></span>
+        <span class="li"><span class="sw" style="background:#1f6333"></span>7 Nở hoa<b>6</b></span>
+      </div>
+    </section>
+
+    <section class="bsec" aria-label="Lộ trình 7 sách">
+      <h2>Lộ trình 7 sách</h2>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv1)">1</span>
+        <span class="bname">Level 1 · Starter<span class="cefr">Pre-A1</span></span>
+        <span class="bpct">100%</span>
+        <div class="bbarB"><i style="width:100%;background:var(--lv1)"></i></div>
+        <span class="bstate done">Hoàn thành · 120/120</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv2)">2</span>
+        <span class="bname">Level 2<span class="cefr">A1</span></span>
+        <span class="bpct">72%</span>
+        <div class="bbarB"><i style="width:72%;background:var(--lv2)"></i></div>
+        <span class="bsub" style="grid-column:3;grid-row:2;font-size:12px;color:var(--mut)">86/120 từ</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv3)">3</span>
+        <span class="bname">Level 3<span class="cefr">A2</span></span>
+        <span class="bpct">32%</span>
+        <div class="bbarB"><i style="width:32%;background:var(--lv3)"></i></div>
+        <span class="bsub" style="grid-column:3;grid-row:2;font-size:12px;color:var(--mut)">41/130 từ</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv4)">4</span>
+        <span class="bname">Level 4<span class="cefr">A2+</span></span>
+        <span class="bpct">11%</span>
+        <div class="bbarB"><i style="width:11%;background:var(--lv4)"></i></div>
+        <span class="bsub" style="grid-column:3;grid-row:2;font-size:12px;color:var(--mut)">12/110 từ</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv5)">5</span>
+        <span class="bname">Level 5<span class="cefr">B1</span></span>
+        <span class="bpct">45%</span>
+        <div class="bbarB"><i style="width:45%;background:var(--lv5)"></i></div>
+        <span class="bstate learning">Đang học · 54/120</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv6)">6</span>
+        <span class="bname">Level 6<span class="cefr">B1+</span></span>
+        <span class="bpct">0%</span>
+        <div class="bbarB"><i style="width:0%;background:var(--lv6)"></i></div>
+        <span class="bsub" style="grid-column:3;grid-row:2;font-size:12px;color:var(--mut)">Chưa bắt đầu</span>
+      </div>
+      <div class="browB">
+        <span class="bnum-glyph" style="background:var(--lv7)">7</span>
+        <span class="bname">Level 7<span class="cefr">B2</span></span>
+        <span class="bpct">0%</span>
+        <div class="bbarB"><i style="width:0%;background:var(--lv7)"></i></div>
+        <span class="bsub" style="grid-column:3;grid-row:2;font-size:12px;color:var(--mut)">Chưa bắt đầu</span>
+      </div>
+    </section>
+
+    <section class="dsec" aria-label="Khám phá">
+      <h2>Khám phá</h2>
+      <a class="dlink" href="#"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18"/></svg>Học theo sách<span class="sub">7 lộ trình Cambridge Prepare<svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 5l7 7-7 7"/></svg></span></a>
+      <a class="dlink" href="#"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/></svg>Quiz từ vựng<span class="sub">Củng cố theo unit<svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 5l7 7-7 7"/></svg></span></a>
+      <a class="dlink" href="#"><svg class="ic" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v4.5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3.2 4M17 6h3a3 3 0 0 1-3.2 4"/></svg>Bảng xếp hạng<span class="sub">Tuần này hạng 12<svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 5l7 7-7 7"/></svg></span></a>
+    </section>
+  </div>
+</section>
+
+</main>
+
+<footer class="pfoot">
+  <b>Hướng B — "Câu lạc bộ tĩnh lặng" (ILEC-clean editorial).</b> Tokens: nền #fffdf9 · ink #432818 · hairline #eadbc6/#f1e6d4 · teal #0b756d (trạng thái/dữ liệu) · coral #c2482e chỉ 1 điểm CTA/màn · radius 8–14 · không bóng, phân tách bằng hairline.
+  Motif: "bảng điểm lớp học" — dữ liệu trình bày thẳng, garden là biểu đồ dữ liệu thay vì minh họa. A11y: focus 3px, contrast ≥4.5:1, touch ≥44px, aria-live feedback, reduced-motion.
+</footer>
+
+<script>
+document.querySelectorAll('.ptab').forEach(function(t){t.addEventListener('click',function(){
+  document.querySelectorAll('.ptab').forEach(function(x){var on=x===t;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});
+  document.querySelectorAll('.surface').forEach(function(s){s.classList.toggle('on',s.id==='s-'+t.dataset.s)});
+})});
+document.querySelectorAll('.snav[data-st]').forEach(function(c){c.addEventListener('click',function(){
+  document.querySelectorAll('.snav[data-st]').forEach(function(x){x.classList.toggle('on',x===c)});
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on',s.dataset.st===c.dataset.st)});
+})});
+document.querySelectorAll('.olist').forEach(function(g){g.addEventListener('click',function(e){
+  var o=e.target.closest('.orow');if(!o||o.disabled)return;
+  var pane=g.closest('.pane');var ok=o.dataset.ok==='1';
+  pane.querySelectorAll('.feedback').forEach(function(f){f.classList.remove('show')});
+  if(ok){o.classList.add('correct');g.querySelectorAll('.orow').forEach(function(x){x.disabled=true});var f=pane.querySelector('.feedback.ok');if(f)f.classList.add('show');}
+  else{o.classList.add('wrong');o.disabled=true;var f2=pane.querySelector('.feedback.no');if(f2)f2.classList.add('show');}
+})});
+function lev(a,b){var m=[],i,j;for(i=0;i<=a.length;i++){m[i]=[i];for(j=1;j<=b.length;j++)m[i][j]=i?Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1)):j}return m[a.length][b.length]}
+var ti=document.querySelector('.typeline input');
+function checkType(){var v=ti.value.trim().toLowerCase();if(!v)return;var pane=ti.closest('.pane');
+  pane.querySelectorAll('.feedback').forEach(function(f){f.classList.remove('show')});
+  var d=lev(v,'refund');
+  if(d===0)pane.querySelector('.feedback.exact').classList.add('show');
+  else if(d===1)pane.querySelector('.feedback.near').classList.add('show');
+  else pane.querySelector('.feedback.no').classList.add('show');}
+ti.addEventListener('keydown',function(e){if(e.key==='Enter')checkType()});
+document.querySelectorAll('.presets button').forEach(function(b){b.addEventListener('click',function(){
+  b.closest('.presets').querySelectorAll('button').forEach(function(x){var on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+})});
+</script>
+</body>
+</html>
