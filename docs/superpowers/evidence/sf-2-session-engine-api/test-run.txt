@@ -1,0 +1,27 @@
+tdd: RED→GREEN — code commit 90ef6976faf5965e10c7337b6f6d0313eb26fec6 (VU-39 SF-2 session engine + API)
+TDD RED đã pass từng task: buildLearnSteps/buildReviewSteps/gradeStep/qualityFromSteps/applyStep/route lần lượt "Cannot find module" / Tests failed trước khi implement (learn-session.test.ts 3→27 tests, learn-session-store.test.ts 0→28, route.test.ts 0→33). Sau RED mỗi task mới viết implementation — full suite GREEN.
+
+== Full suite (vitest, sau commit 90ef697) ==
+node node_modules/vitest/vitest.mjs run → exit 0
+Test Files 69 passed | 1 skipped (70)
+Tests      872 passed | 4 skipped (876)
+(4 skipped = integration pre-existing skip-điều kiện; 1 file skipped cùng lý do)
+
+== tsc --noEmit ==
+node node_modules/typescript/bin/tsc --noEmit → exit 0 (0 lỗi — review B P1 đã fix 6 lỗi type)
+
+== eslint (toàn bộ file SF-2) ==
+node node_modules/eslint/bin/eslint.js src/lib/vocabulary/ src/app/api/vocabulary/session/ scripts/qa-sf2-seed.ts scripts/qa-sf2-walkthrough.mjs → exit 0 (0 error, 0 warning)
+
+== Rule 0 / BROWSER-VERIFY proxy (SF API-only — checklist cho phép curl) ==
+scripts/qa-sf2-walkthrough.mjs trên dev server thật (next dev :3327, login NextAuth credentials, DB template Neon ilec_vu37_sf2 migrate 0000→0006):
+→ 50 PASS / 0 FAIL — chi tiết docs/superpowers/evidence/sf-2-session-engine-api/walkthrough.txt
+6 mục acceptance: (1) GET learn chuỗi introduce→mc→listen→type đan xen batch 2 + no-leak + level 1; (2) 5 từ all-correct reps tiến đúng 1, XP 25 = 5×(4 learn-complete + 1 lần-đầu-trong-ngày §4), goalDone; (3) sai 1 bước q=0 lapses+1 0XP, retry attemptNo 2 q=4 reps 0→1 +4XP; (4) duplicate idempotency cached, due/XP DB không đổi; (5) reload GET lại queue đúng + KHÔNG tràn level 2 (4 từ còn lại của level 1); (6) book 6 từ prod-shape MC 3 lựa chọn + từ không audio bỏ listen, không crash. Review flow: 2 từ due SQL-side, sai→lapses+1 due +1d rời queue, đúng→SM-2 interval 6d; prefill ?word=; taxonomy 401/400/404.
+
+== Review (CHECK 3 — rolling, không dồn cuối) ==
+Nhóm A (T1-T5 engine pure): CHANGES-REQUESTED → P1 fixed (StepGrade.lapses — commit 6cc0aba) + P2 pin contract listen-không-options.
+Nhóm B (T6-T9 store+route): CHANGES-REQUESTED → P1 fixed (6 lỗi tsc narrow types — commit 508e4cc) + P2 coordination note SF-3 bookId review-POST.
+Nhóm C (T10-T12): verdict cuối post lên VU-39 (literal CHECKLIST-4Q).
+
+== DB / env ==
+Template Neon ilec_vu37_sf2 (CREATE DATABASE qua direct endpoint) + drizzle-kit migrate 0000→0006 exit 0; schema verify vocab_activity/lapses/vocab_steps/daily_goal_words ✓. QA fixture scripts/qa-sf2-seed.ts idempotent re-run OK. Worktree: node_modules symlink main repo (package.json identical), .env.local copy + repoint DATABASE_URL + QA_SF2_*.
