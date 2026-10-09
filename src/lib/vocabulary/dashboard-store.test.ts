@@ -40,6 +40,7 @@ vi.mock("@/db", () => ({
   db: {
     select: () => chainOf(),
     selectDistinct: () => chainOf(),
+    update: () => chainOf(),
   },
 }));
 
@@ -51,6 +52,7 @@ import {
   getContinueTarget,
   getDashboardSummary,
   getGardenDistribution,
+  updateDailyGoal,
 } from "./dashboard-store";
 import { addDays, vnToday } from "@/lib/gamification/streak";
 
@@ -235,6 +237,22 @@ describe("getContinueTarget", () => {
   it("DB lỗi → null (component render empty, không crash)", async () => {
     dbState.failWith = new Error("db down");
     expect(await getContinueTarget("u1")).toBeNull();
+  });
+});
+
+describe("updateDailyGoal", () => {
+  it("update profiles trả dailyGoalWords mới → { ok: true }", async () => {
+    dbState.queue = [[{ dailyGoalWords: 10 }]];
+    expect(await updateDailyGoal("u1", 10)).toEqual({
+      ok: true,
+      dailyGoalWords: 10,
+    });
+  });
+
+  it("DB lỗi → { ok: false } (route map 500 generic)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    dbState.failWith = new Error("db down");
+    expect(await updateDailyGoal("u1", 10)).toEqual({ ok: false });
   });
 });
 

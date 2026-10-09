@@ -284,6 +284,32 @@ export async function getBookLevelProgresses(
  * (user_lesson_progress — pattern listDiscoverBooks), fallback sách đầu còn
  * từ chưa planted theo sortOrder.
  */
+/**
+ * Lưu goal (context pack mục 4/8) — route /api/vocabulary/goal gọi sau khi
+ * validate integer 1..100 (route sở hữu taxonomy 401/400). { ok:false } khi
+ * DB lỗi (route map 500 generic).
+ */
+export async function updateDailyGoal(
+  userId: string,
+  goal: number,
+): Promise<{ ok: boolean; dailyGoalWords?: number }> {
+  try {
+    const [row] = await db
+      .update(profiles)
+      .set({ dailyGoalWords: goal })
+      .where(eq(profiles.id, userId))
+      .returning({ dailyGoalWords: profiles.dailyGoalWords });
+    if (!row) {
+      console.error("[vocabulary:updateDailyGoal] profile missing:", userId);
+      return { ok: false };
+    }
+    return { ok: true, dailyGoalWords: row.dailyGoalWords };
+  } catch (error) {
+    console.error("[vocabulary:updateDailyGoal] update failed:", error);
+    return { ok: false };
+  }
+}
+
 export type ContinueCard =
   | {
       completed: false;
