@@ -16,16 +16,33 @@
  */
 import { and, asc, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { bookWords, books, userWordProgress, words } from "@/db/schema";
+import {
+  bookWords,
+  books,
+  profiles,
+  userWordProgress,
+  vocabActivity,
+  words,
+} from "@/db/schema";
+import { pgErrorCode } from "@/lib/actions/admin/pg-errors";
+import { vnToday } from "@/lib/gamification/streak";
+import { goalStatus } from "./daily-goal";
 import {
   buildLearnSteps,
   buildReviewSteps,
+  gradeStep,
+  lapsesDelta,
   LEARN_SESSION_WORDS,
+  qualityFromSteps,
+  type GradeRequest,
+  type GradeResult,
   type SessionKind,
   type SessionStep,
   type SessionWord,
 } from "./learn-session";
 import { nextLevel, WORDS_PER_LEVEL } from "./levels";
+import { nextReview } from "./srs";
+import { awardVocabXpTx } from "./vocab-xp-store";
 
 export const DUE_LIMIT = 50;
 /** Pool nhiễu MC — meaning_vi đầu sách theo order; bounded thay vì load-all. */
@@ -249,3 +266,375 @@ export async function getReviewSession(
     steps,
   };
 }
+
+// ─── applyStep — chấm 1 bước + ghi (context pack #7) ─────────────────────
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type Exec = typeof db | Tx;
+
+export type ApplyStepOutcome =
+  | { ok: true; result: GradeResult }
+  | { ok: false; error: "wordNotFound" | "sessionNotFound" };
+
+/**
+ * step_index sentinel cho row `learn-complete` — event CẤP TỪ (hoàn thành
+ * lượt), không phải bước test; key idempotency PHÂN BIỆT với step row cùng
+ * lượt (client stepIndex ≥ 0 — route validate chặn giá trị âm).
+ */
+export const LEARN_COMPLETE_STEP_INDEX = -1;
+
+/** Scope phiên: learn = word ∈ book client khai; review = progress row của user. */
+async function scopeWordRow(
+  userId: string,
+  req: GradeRequest,
+): Promise<Pick<SessionWord, "word" | "meaningVi"> | null> {
+  if (req.kind === "learn") {
+    const [row] = await db
+      .select({ word: words.word, meaningVi: words.meaningVi })
+      .from(bookWords)
+      .innerJoin(words, eq(words.id, bookWords.wordId))
+      .where(
+        and(
+          eq(bookWords.bookId, req.bookId),
+          eq(bookWords.wordId, req.wordId),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+  const [row] = await db
+    .select({ word: words.word, meaningVi: words.meaningVi })
+    .from(userWordProgress)
+    .innerJoin(words, eq(words.id, userWordProgress.wordId))
+    .where(
+      and(
+        eq(userWordProgress.userId, userId),
+        eq(userWordProgress.wordId, req.wordId),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+/** Count event learn-complete hôm nay (VN) — planted-today cho goalDone. */
+async function countLearnCompleteToday(
+  exec: Exec,
+  userId: string,
+): Promise<number> {
+  const [row] = await exec
+    .select({
+      n: sql<number>`count(*) filter (where ${vocabActivity.kind} = 'learn-complete' and (${vocabActivity.createdAt} at time zone 'Asia/Ho_Chi_Minh')::date = ${vnToday(new Date())}::date)::int`,
+    })
+    .from(vocabActivity)
+    .where(eq(vocabActivity.userId, userId));
+  return row?.n ?? 0;
+}
+
+/**
+ * Duplicate idempotency — KẾT QUẢ CACHED, ZERO write ("KHÔNG ghi SRS lần 2",
+ * acceptance 4): response dựng lại từ audit rows (vocab_activity là cache) —
+ * `xpAwarded` = xp đã ghi trong row, grade = progress HIỆN TẠI (không đổi từ
+ * lần trước). `xpCapped: false` cosmetic — row chỉ lưu xp (giá trị ĐÚNG),
+ * flag cap không persist.
+ */
+async function reconstructCached(
+  exec: Exec,
+  userId: string,
+  req: GradeRequest,
+  cached: { correct: boolean; xp: number },
+): Promise<GradeResult> {
+  const [profile] = await exec
+    .select({
+      xp: profiles.xp,
+      streakCount: profiles.streakCount,
+      dailyGoalWords: profiles.dailyGoalWords,
+    })
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+
+  let grade: GradeResult["grade"] = null;
+  if (req.stepKind === "type") {
+    const attemptRows = await attemptCorrects(exec, userId, req);
+    const [progress] = await exec
+      .select({
+        ease: userWordProgress.ease,
+        intervalDays: userWordProgress.intervalDays,
+        reps: userWordProgress.reps,
+        lapses: userWordProgress.lapses,
+        dueAt: userWordProgress.dueAt,
+      })
+      .from(userWordProgress)
+      .where(
+        and(
+          eq(userWordProgress.userId, userId),
+          eq(userWordProgress.wordId, req.wordId),
+        ),
+      )
+      .limit(1);
+    if (progress) {
+      grade = {
+        quality: qualityFromSteps(attemptRows.map((r) => r.correct)),
+        ease: progress.ease,
+        intervalDays: progress.intervalDays,
+        reps: progress.reps,
+        dueAt: progress.dueAt.toISOString(),
+        lapses: progress.lapses,
+      };
+    }
+  }
+
+  const goalDone = goalStatus({
+    plantedToday: await countLearnCompleteToday(exec, userId),
+    goal: profile?.dailyGoalWords ?? 0,
+  }).done;
+
+  return {
+    correct: cached.correct,
+    grade,
+    xpAwarded: cached.xp,
+    xpCapped: false,
+    totalXp: profile?.xp ?? 0,
+    streak: profile?.streakCount ?? 0,
+    goalDone,
+  };
+}
+
+/** Kết quả các bước test của attempt (lượt) — kind='session-step' thôi. */
+function attemptCorrects(exec: Exec, userId: string, req: GradeRequest) {
+  return exec
+    .select({ correct: vocabActivity.correct })
+    .from(vocabActivity)
+    .where(
+      and(
+        eq(vocabActivity.userId, userId),
+        eq(vocabActivity.wordId, req.wordId),
+        eq(vocabActivity.sessionKey, req.sessionKey),
+        eq(vocabActivity.attemptNo, req.attemptNo),
+        eq(vocabActivity.kind, "session-step"),
+      ),
+    );
+}
+
+/**
+ * Chấm + ghi MỘT bước POST (spec §5, pattern submit-attempt.ts):
+ *  1. scope (learn: word ∈ book; review: progress row) — hụt → 404 theo
+ *     sessionKey activity (taxonomy sessionNotFound/wordNotFound)
+ *  2. duplicate idempotency (composite key) → cached reconstruct ZERO write
+ *  3. MỘT transaction: awardVocabXpTx (session-step XP anti-farm) → nếu bước
+ *     type (từ hoàn thành lượt): quality từ attempt activities + nextReview
+ *     upsert progress + lapses(q<3) + learn-complete award KHI reps 0→≥1
+ *     (sentinel stepIndex -1 — key riêng với step row) → goalDone
+ * 4 XP learn-complete = lần reps ĐẦU vượt 0 (từ sai q=0 giữ reps 0 → KHÔNG
+ * award — trồng cây phải NỔY MẦM); retry attemptNo mới là instance mới.
+ */
+export async function applyStep(
+  userId: string,
+  req: GradeRequest,
+): Promise<ApplyStepOutcome> {
+  const wordRow = await scopeWordRow(userId, req);
+  if (!wordRow) {
+    // Taxonomy §5: scope hụt + sessionKey chưa có activity nào → phiên không
+    // có thật (stale/forged); đã có activity → word thuộc phiên khác scope
+    const [sessionRow] = await db
+      .select({ id: vocabActivity.id })
+      .from(vocabActivity)
+      .where(
+        and(
+          eq(vocabActivity.userId, userId),
+          eq(vocabActivity.sessionKey, req.sessionKey),
+        ),
+      )
+      .limit(1);
+    return {
+      ok: false,
+      error: sessionRow ? "wordNotFound" : "sessionNotFound",
+    };
+  }
+
+  // Composite key = công thức SF-1 idempotencyKey — duplicate trả cached
+  const [dup] = await db
+    .select({
+      correct: vocabActivity.correct,
+      xp: vocabActivity.xp,
+    })
+    .from(vocabActivity)
+    .where(
+      and(
+        eq(vocabActivity.userId, userId),
+        eq(vocabActivity.sessionKey, req.sessionKey),
+        eq(vocabActivity.wordId, req.wordId),
+        eq(vocabActivity.stepIndex, req.stepIndex),
+        eq(vocabActivity.attemptNo, req.attemptNo),
+      ),
+    )
+    .limit(1);
+  if (dup) {
+    return { ok: true, result: await reconstructCached(db, userId, req, dup) };
+  }
+
+  const correct = gradeStep({
+    stepKind: req.stepKind,
+    response: req.response,
+    word: wordRow,
+  });
+
+  try {
+    const result = await db.transaction(async (tx): Promise<GradeResult> => {
+      const stepXp = await awardVocabXpTx(tx, {
+        userId,
+        wordId: req.wordId,
+        kind: "session-step",
+        correct,
+        sessionKey: req.sessionKey,
+        stepIndex: req.stepIndex,
+        attemptNo: req.attemptNo,
+      });
+      if (stepXp.error === "noProfile") {
+        // Degenerate: user authed không có profile — FK cascade makes this
+        // unreachable trong thực tế; map đúng taxonomy 404 (comment route)
+        throw new WordNotFoundError();
+      }
+      if (stepXp.duplicate) {
+        // Race: pre-check hụt, tx khác kịp ghi — reconstruct trong tx (read-only)
+        const [row] = await tx
+          .select({ correct: vocabActivity.correct, xp: vocabActivity.xp })
+          .from(vocabActivity)
+          .where(
+            and(
+              eq(vocabActivity.userId, userId),
+              eq(vocabActivity.sessionKey, req.sessionKey),
+              eq(vocabActivity.wordId, req.wordId),
+              eq(vocabActivity.stepIndex, req.stepIndex),
+              eq(vocabActivity.attemptNo, req.attemptNo),
+            ),
+          )
+          .limit(1);
+        return row
+          ? await reconstructCached(tx, userId, req, row)
+          : {
+              correct,
+              grade: null,
+              xpAwarded: 0,
+              xpCapped: false,
+              totalXp: stepXp.totalXp,
+              streak: stepXp.streak,
+              goalDone: false,
+            };
+      }
+
+      let grade: GradeResult["grade"] = null;
+      let learnComplete: Awaited<ReturnType<typeof awardVocabXpTx>> | null =
+        null;
+      if (req.stepKind === "type") {
+        // MỘT grade SM-2/từ/lượt — quality SUY từ attempt activities (vừa ghi
+        // gồm bước này): mọi bước đúng q=4, bất kỳ sai q=0
+        const attemptRows = await attemptCorrects(tx, userId, req);
+        const quality = qualityFromSteps(attemptRows.map((r) => r.correct));
+        const [current] = await tx
+          .select({
+            ease: userWordProgress.ease,
+            intervalDays: userWordProgress.intervalDays,
+            reps: userWordProgress.reps,
+            lapses: userWordProgress.lapses,
+          })
+          .from(userWordProgress)
+          .where(
+            and(
+              eq(userWordProgress.userId, userId),
+              eq(userWordProgress.wordId, req.wordId),
+            ),
+          )
+          .limit(1);
+        const next = nextReview({
+          ease: current?.ease,
+          intervalDays: current?.intervalDays,
+          reps: current?.reps,
+          quality,
+        });
+        const newLapses = (current?.lapses ?? 0) + lapsesDelta(quality);
+        const reviewedAt = new Date();
+        await tx
+          .insert(userWordProgress)
+          .values({
+            userId,
+            wordId: req.wordId,
+            ease: next.ease,
+            intervalDays: next.intervalDays,
+            dueAt: next.dueAt,
+            reps: next.reps,
+            lapses: newLapses,
+            lastReviewedAt: reviewedAt,
+          })
+          .onConflictDoUpdate({
+            target: [userWordProgress.userId, userWordProgress.wordId],
+            set: {
+              ease: next.ease,
+              intervalDays: next.intervalDays,
+              dueAt: next.dueAt,
+              reps: next.reps,
+              lapses: newLapses,
+              lastReviewedAt: reviewedAt,
+            },
+          });
+        // 4 XP chỉ khi reps ĐẦU TIÊN vượt 0 (learn mới planted) — q=0 giữ
+        // reps 0 → không award; review (reps≥1) → không award
+        if ((current?.reps ?? 0) === 0 && next.reps >= 1) {
+          learnComplete = await awardVocabXpTx(tx, {
+            userId,
+            wordId: req.wordId,
+            kind: "learn-complete",
+            correct: true,
+            sessionKey: req.sessionKey,
+            stepIndex: LEARN_COMPLETE_STEP_INDEX,
+            attemptNo: req.attemptNo,
+          });
+        }
+        grade = {
+          quality,
+          ease: next.ease,
+          intervalDays: next.intervalDays,
+          reps: next.reps,
+          dueAt: next.dueAt.toISOString(),
+          lapses: newLapses,
+        };
+      }
+
+      const goalDone = goalStatus({
+        plantedToday: await countLearnCompleteToday(tx, userId),
+        goal: await profileGoal(tx, userId),
+      }).done;
+
+      return {
+        correct,
+        grade,
+        xpAwarded: stepXp.xpAwarded + (learnComplete?.xpAwarded ?? 0),
+        xpCapped: stepXp.xpCapped || (learnComplete?.xpCapped ?? false),
+        totalXp: learnComplete?.totalXp ?? stepXp.totalXp,
+        streak: learnComplete?.streak ?? stepXp.streak,
+        goalDone,
+      };
+    });
+    return { ok: true, result };
+  } catch (error) {
+    if (error instanceof WordNotFoundError) {
+      return { ok: false, error: "wordNotFound" };
+    }
+    if (pgErrorCode(error) === "23503") {
+      return { ok: false, error: "wordNotFound" };
+    }
+    throw error;
+  }
+}
+
+async function profileGoal(exec: Exec, userId: string): Promise<number> {
+  const [row] = await exec
+    .select({ dailyGoalWords: profiles.dailyGoalWords })
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+  return row?.dailyGoalWords ?? 0;
+}
+
+/** Sentinel nội bộ — noProfile/wordNotFound đều về 404 wordNotFound (taxonomy). */
+class WordNotFoundError extends Error {}
