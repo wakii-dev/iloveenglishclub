@@ -257,6 +257,16 @@ describe("buildReviewSteps — per từ (listen|mc)→type (context pack #3)", (
     expect(buildReviewSteps({ words: [], distractorPool: [], rng: seededRng(1) })).toEqual([]);
   });
 
+  it("degenerate + audio: listen giữ nguyên KHÔNG options (contract — client SF-3 fallback gõ nghĩa)", () => {
+    // pool <2 nghĩa → mc/listen-options bị bỏ nhưng listen vẫn chạy (audio có)
+    // — options: undefined là CONTRACT, không phải bug (review A P2-1 pin)
+    const words = [mkWord(1, "run", "chạy")];
+    const pool = ["chạy"];
+    const steps = buildReviewSteps({ words, distractorPool: pool, rng: seededRng(9) });
+    expect(shape(steps)).toEqual(["listen#1", "type#1"]);
+    expect(steps[0]?.options).toBeUndefined();
+  });
+
   it("prefill 1 từ = queue 1 từ — cùng contract (store truyền 1 word)", () => {
     const words = [mkWord(9, "water", "nước", null)];
     const pool = ["nước", "quả táo", "ngôi nhà"];

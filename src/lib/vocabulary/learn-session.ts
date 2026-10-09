@@ -84,7 +84,7 @@ export type GradeRequest = {
   response: string;
 };
 
-/** Trạng thái SRS sau grade (bước type — từ hoàn thành lượt). */
+/** Trạng thái SRS sau grade (bước type — từ hoàn thành lượt; spec §5/§7). */
 export type StepGrade = {
   quality: number;
   ease: number;
@@ -92,6 +92,8 @@ export type StepGrade = {
   reps: number;
   /** ISO string — payload JSON. */
   dueAt: string;
+  /** Số lần quên cộng dồn SAU grade (q<3 → +1 — context pack #7). */
+  lapses: number;
 };
 
 /** Kết quả applyStep — `grade` chỉ có khi từ hoàn thành lượt (bước type). */
