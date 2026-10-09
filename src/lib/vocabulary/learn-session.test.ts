@@ -321,6 +321,7 @@ describe("normalizeAnswer + gradeStep — typo tolerance (context pack #4)", () 
     expect(gradeStep({ stepKind: "listen", response: "quả táo", word: apple })).toBe(true);
     expect(gradeStep({ stepKind: "listen", response: "", word: apple })).toBe(false);
     expect(gradeStep({ stepKind: "type", response: "   ", word: apple })).toBe(false);
+    expect(gradeStep({ stepKind: "introduce", response: "apple", word: apple })).toBe(false); // không chấm
   });
 });
 

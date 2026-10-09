@@ -255,7 +255,8 @@ export function isWithinOneEdit(a: string, b: string): boolean {
 export const TYPO_TOLERANCE_MIN_LENGTH = 5;
 
 export type GradeStepInput = {
-  stepKind: TestStepKind;
+  /** Nhận ĐẦY ĐỦ StepKind (store không tin route chặn introduce) — introduce không phải bước chấm → sai. */
+  stepKind: StepKind;
   response: string;
   word: Pick<SessionWord, "word" | "meaningVi">;
 };
@@ -263,11 +264,12 @@ export type GradeStepInput = {
 /**
  * Chấm MỘT bước test — PURE, không ghi gì (SRS là việc store khi từ hoàn
  * thành lượt). mc/listen so meaning; type so word (typo ≤1 với từ ≥5 ký tự
- * — context pack #4). Response rỗng/whitespace → sai.
+ * — context pack #4). Response rỗng/whitespace → sai; introduce → sai
+ * (không chấm — route 400 trước, đây là phòng thủ store-side).
  */
 export function gradeStep(input: GradeStepInput): boolean {
   const response = normalizeAnswer(input.response);
-  if (response === "") return false;
+  if (response === "" || input.stepKind === "introduce") return false;
   if (input.stepKind === "type") {
     const target = normalizeAnswer(input.word.word);
     if (response === target) return true;

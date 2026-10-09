@@ -64,9 +64,8 @@ import {
   DUE_LIMIT,
   getLearnSession,
   getReviewSession,
-  type SessionWord,
 } from "./learn-session-store";
-import { LEARN_SESSION_WORDS } from "./learn-session";
+import { LEARN_SESSION_WORDS, type SessionWord } from "./learn-session";
 
 const word = (over: Partial<SessionWord> & { wordId: number }): SessionWord => ({
   word: `w${over.wordId}`,
@@ -399,15 +398,15 @@ function awardQueue(
 }
 
 /** insert values / update set payload — phân biệt table/column args. */
+const isRecord = (c: unknown): c is Record<string, unknown> =>
+  typeof c === "object" && c !== null && !Array.isArray(c);
 const insertPayloads = () =>
   dbState.calls.filter(
-    (c): c is Record<string, unknown> =>
-      typeof c === "object" && c !== null && typeof c.kind === "string",
+    (c): c is Record<string, unknown> => isRecord(c) && typeof c.kind === "string",
   );
 const setPayloads = () =>
   dbState.calls.filter(
-    (c): c is Record<string, unknown> =>
-      typeof c === "object" && c !== null && typeof c.lapses === "number",
+    (c): c is Record<string, unknown> => isRecord(c) && typeof c.lapses === "number",
   );
 
 describe("applyStep — learn hoàn thành lượt (type step)", () => {

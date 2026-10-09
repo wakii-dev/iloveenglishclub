@@ -46,44 +46,52 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const kind = params.get("kind");
   if (!isSessionKind(kind)) return err({ error: "invalidKind" }, 400);
 
+  let bookId: number | undefined;
   const rawBook = params.get("book");
-  if (rawBook !== null && positiveInt(rawBook) === null) {
-    return err({ error: "invalidBook" }, 400);
+  if (rawBook !== null) {
+    const parsed = positiveInt(rawBook);
+    if (parsed === null) return err({ error: "invalidBook" }, 400);
+    bookId = parsed;
   }
-  const bookId = rawBook === null ? undefined : positiveInt(rawBook);
-  if (kind === "learn" && bookId === undefined) {
-    return err({ error: "invalidBook" }, 400); // learn PHẢI scoped sách
-  }
+  let wordId: number | undefined;
   const rawWord = params.get("word");
-  if (rawWord !== null && positiveInt(rawWord) === null) {
-    return err({ error: "invalidStep" }, 400); // prefill ?word= phải là số
+  if (rawWord !== null) {
+    const parsed = positiveInt(rawWord);
+    if (parsed === null) return err({ error: "invalidStep" }, 400); // prefill phải là số
+    wordId = parsed;
   }
 
   try {
-    const outcome =
-      kind === "learn"
-        ? await getLearnSession(userId, bookId as number)
-        : await getReviewSession(userId, {
-            bookId,
-            wordId: rawWord === null ? undefined : positiveInt(rawWord),
-          });
-    if (!outcome.ok) {
-      return err(
-        { error: outcome.error },
-        outcome.error === "invalidBook" ? 400 : 404,
-      );
+    if (kind === "learn") {
+      if (bookId === undefined) {
+        return err({ error: "invalidBook" }, 400); // learn PHẢI scoped sách
+      }
+      return sessionResponse(await getLearnSession(userId, bookId));
     }
-    return NextResponse.json({
-      ok: true,
-      sessionKey: outcome.sessionKey,
-      kind: outcome.kind,
-      bookId: outcome.bookId,
-      steps: outcome.steps,
-    });
+    return sessionResponse(await getReviewSession(userId, { bookId, wordId }));
   } catch (error) {
     console.error("[vocabulary:session] get failed:", error);
     return err({ error: "generic" }, 500);
   }
+}
+
+/** Map SessionOutcome → response (success-rỗng = 200 steps:[] — không 204). */
+function sessionResponse(
+  outcome: Awaited<ReturnType<typeof getLearnSession>>,
+): NextResponse {
+  if (!outcome.ok) {
+    return err(
+      { error: outcome.error },
+      outcome.error === "invalidBook" ? 400 : 404,
+    );
+  }
+  return NextResponse.json({
+    ok: true,
+    sessionKey: outcome.sessionKey,
+    kind: outcome.kind,
+    bookId: outcome.bookId,
+    steps: outcome.steps,
+  });
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -107,6 +115,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return err({ error: "invalidSession" }, 400);
   }
   if (!isSessionKind(body.kind)) return err({ error: "invalidKind" }, 400);
+  // bookId BẮT BUỘC positive cho CẢ review (shape body spec §5) — store bỏ
+  // qua với review (scope = progress row). COORDINATION SF-3: client review
+  // scope-all phải tự giữ bookId phiên (GET review-all trả bookId null —
+  // KHÔNG echo null vào POST; gửi id sách hiện hành hoặc 1 giá trị dương).
   const bookId = positiveInt(body.bookId);
   if (bookId === null) return err({ error: "invalidBook" }, 400);
   const wordId = positiveInt(body.wordId);
