@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { addDays, vnToday } from "@/lib/gamification/streak";
-import { idempotencyKey } from "./vocab-xp";
 
 /**
  * Session DB leg (SF-2, VU-39) — mock @/db chainable + transaction (pattern
@@ -65,20 +64,7 @@ import {
   getLearnSession,
   getReviewSession,
 } from "./learn-session-store";
-import { LEARN_SESSION_WORDS, type SessionWord } from "./learn-session";
-
-const word = (over: Partial<SessionWord> & { wordId: number }): SessionWord => ({
-  word: `w${over.wordId}`,
-  ipa: null,
-  meaningVi: `nghĩa ${over.wordId}`,
-  example: null,
-  audioUrl: null,
-  ...over,
-});
-
-/** plain-record guard — loại PgTable/PgColumn/SQL (args của insert/from/select). */
-const isPayload = (c: unknown): c is Record<string, unknown> =>
-  typeof c === "object" && c !== null && !(".Symbol" in c) && !Array.isArray(c);
+import { LEARN_SESSION_WORDS } from "./learn-session";
 
 /** Số 0-999 guard: limit/offset/stepIndex là number thuần trong calls. */
 const numbers = () => dbState.calls.filter((c): c is number => typeof c === "number");
@@ -603,7 +589,6 @@ describe("applyStep — idempotency duplicate (acceptance 4)", () => {
   });
 
   it("race duplicate (pre-check hụt, insert conflict trong tx): reconstruct cached, không ghi SRS lần 2", async () => {
-    const p = profileRow();
     dbState.queue = [
       [wordRow()],
       [], // pre-check hụt
