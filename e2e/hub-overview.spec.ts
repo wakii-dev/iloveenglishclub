@@ -1,18 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
-import { HUB_WORDS, seedHubProgress } from "./vocabulary-hub-fixture";
+import { seedHubProgress } from "./vocabulary-hub-fixture";
 
 /**
- * E2E vocabulary hub (story vocabulary-hub SF-1 t-1.3; SF-3 tab Review/Quiz
- * thành tab thật — hết placeholder): navbar item → hub 4 tab → KPI 3/1/1 (từ đang học /
- * đến hạn / thành thạo) → bảng từ đủ 3 trạng thái chip (Due/Mastered/
- * Learning) → filter status qua dropdown + filter book → empty-filter →
- * i18n vi/en → guest redirect login ?next. Tên spec `hub-overview` (né
- * testMatch `/vocabulary*` của config SF-2 — convention review-flow).
- * Fixture qa-hub-* seed/tidy qua globalSetup/teardown; bảng thiếu → setup
- * fail có hướng dẫn (không giả lập DB).
+ * E2E vocabulary hub tab Tổng quan (SF-4 dashboard rewrite, VU-41 — trước đây
+ * là KPI/bảng từ của story vocabulary-hub): tab overview giờ là DASHBOARD
+ * Memrise-style — assert các khối dashboard hiện (continue card + goal ring +
+ * streak/due + vườn + lộ trình), tab hrefs giữ nguyên, i18n vi/en, guest
+ * redirect login ?next như cũ. Số liệu chính (đối chiếu fixture khớp số) ở
+ * suite dashboard 3319 (fixture qa-dash-* kiểm soát được) — suite này chỉ pin
+ * khối + nhãn (book_words template DB không kiểm soát được số).
  */
-
-const [ALPHA, BRAVO, CHARLIE] = HUB_WORDS;
 
 function qaEmail(tag: string): string {
   return `qa-hub-${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@test.ilec`;
@@ -33,34 +30,28 @@ async function registerUser(page: Page, displayName: string): Promise<string> {
   return email;
 }
 
-test.describe("Vocabulary hub overview (SF-1)", () => {
+test.describe("Vocabulary hub — tab Tổng quan dashboard (SF-4)", () => {
   test.setTimeout(120_000);
 
-  test("EN: navbar → hub → KPI 3/1/1 → chips → filter status/book", async ({
+  test("EN: dashboard khối + tab hrefs giữ nguyên (?tab= contract)", async ({
     page,
   }) => {
     const email = await registerUser(page, "QA Hub EN");
     await seedHubProgress(email);
 
-    // t-1.1: navbar item Vocabulary dẫn đúng route hub
+    // t-1.1 cũ: navbar item Vocabulary dẫn đúng route hub
     await page
       .getByRole("navigation")
       .getByRole("link", { name: "Vocabulary" })
       .click();
     await page.waitForURL(/\/en\/vocabulary$/);
 
+    // dashboard: h1 riêng "Chào {name}" (page h1 hub.title chỉ ở tab khác)
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "Vocabulary hub",
+      "Hi QA Hub EN",
     );
-    // shell 4 tab: Tổng quan active; cả Review/Quiz là link thật (SF-3 —
-    // placeholder "Coming soon" đã bỏ)
+    // shell 4 tab: Tổng quan active; Review/Quiz link thật — contract ?tab=
     await expect(page.getByText("Overview", { exact: true })).toBeVisible();
-    await expect(
-      page
-        .getByRole("listitem")
-        .filter({ hasText: "Library" })
-        .getByRole("link", { name: "Library" }),
-    ).toBeVisible();
     for (const tab of ["Review", "Quiz"]) {
       const link = page
         .getByRole("listitem")
@@ -73,65 +64,24 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
       );
     }
 
-    // KPI: 3 đang học · 1 đến hạn · 1 thành thạo
-    const kpis = page.locator("dl > div");
-    await expect(kpis.filter({ hasText: "Words learning" })).toContainText("3");
-    await expect(kpis.filter({ hasText: "Due today" })).toContainText("1");
-    await expect(kpis.filter({ hasText: "Mastered" })).toContainText("1");
-
-    // bảng: 3 hàng, đúng chip trạng thái
-    const rows = page.getByRole("row").filter({ hasText: "qa-hub-" });
-    await expect(rows).toHaveCount(3);
+    // các khối dashboard hiện: continue card (href learn/[book] — KHÔNG
+    // navigate, SF-3), goal ring aria, vườn, lộ trình
+    const continueCta = page.getByRole("link", { name: /Learn \d+ new words/ });
+    await expect(continueCta).toBeVisible();
+    await expect(continueCta).toHaveAttribute(
+      "href",
+      /\/en\/vocabulary\/learn\/level-\d/,
+    );
     await expect(
-      rows.filter({ hasText: ALPHA.word }),
-    ).toContainText("Due");
-    await expect(
-      rows.filter({ hasText: BRAVO.word }),
-    ).toContainText("Mastered");
-    await expect(
-      rows.filter({ hasText: CHARLIE.word }),
-    ).toContainText("Learning");
-
-    // filter status qua dropdown → chỉ bravo (mastered)
-    await page
-      .getByRole("combobox", { name: "Filter by status" })
-      .click();
-    await page.getByRole("option", { name: "Mastered" }).click();
-    await expect(page).toHaveURL(/status=mastered/);
-    await expect(rows).toHaveCount(1);
-    await expect(rows.filter({ hasText: BRAVO.word })).toBeVisible();
-
-    // filter book qua dropdown → level-3 giữ alpha + bravo (chờ URL reset
-    // status xong mới bấm filter kế — router.push soft-nav commit bất đồng bộ)
-    await page
-      .getByRole("combobox", { name: "Filter by status" })
-      .click();
-    await page.getByRole("option", { name: "All statuses" }).click();
-    await expect(page).toHaveURL(/\/en\/vocabulary$/);
-    await page
-      .getByRole("combobox", { name: "Filter by book" })
-      .click();
-    await page.getByRole("option", { name: "Level 3", exact: true }).click();
-    await expect(page).toHaveURL(/book=3/);
-    await expect(page).not.toHaveURL(/status=/);
-    await expect(rows).toHaveCount(2);
-    await expect(rows.filter({ hasText: CHARLIE.word })).toHaveCount(0);
+      page.locator('[role="img"][aria-label*="Today\'s goal"]'),
+    ).toBeVisible();
+    await expect(page.getByText("Word garden")).toBeVisible();
+    await expect(page.getByText(/Roadmap of \d+ books/)).toBeVisible();
   });
 
-  test("EN: book+status không khớp hàng nào → empty-filter", async ({
+  test("VI: nhãn i18n dashboard tiếng Việt — navbar/tab/khối", async ({
     page,
   }) => {
-    const email = await registerUser(page, "QA Hub EN Filter");
-    await seedHubProgress(email);
-    await page.goto("/en/vocabulary?book=1&status=mastered");
-    const rows = page.getByRole("row").filter({ hasText: "qa-hub-" });
-    await expect(rows).toHaveCount(0);
-    await expect(
-      page.getByText("No words match these filters."),
-    ).toBeVisible();
-  });
-
-  test("VI: nhãn i18n tiếng Việt — navbar/tab/chip/bảng", async ({ page }) => {
     const email = await registerUser(page, "QA Hub VI");
     await seedHubProgress(email);
 
@@ -144,15 +94,9 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
     await expect(navLink).toHaveAttribute("href", /\/vi\/vocabulary$/);
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      "Tổng quan từ vựng",
+      "Chào QA Hub VI",
     );
     await expect(page.getByText("Tổng quan", { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole("listitem")
-        .filter({ hasText: "Thư viện" })
-        .getByRole("link", { name: "Thư viện" }),
-    ).toBeVisible();
-    // tab Ôn tập/Kiểm tra là link thật (SF-3), href VI prefix locale
     for (const [label, tabPath] of [
       ["Ôn tập", "review"],
       ["Kiểm tra", "quiz"],
@@ -167,23 +111,21 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
         `/vi/vocabulary?tab=${tabPath}`,
       );
     }
-    const kpis = page.locator("dl > div");
-    await expect(kpis.filter({ hasText: "Từ đang học" })).toContainText("3");
-    await expect(kpis.filter({ hasText: "Đến hạn hôm nay" })).toContainText("1");
-    await expect(kpis.filter({ hasText: "Đã thành thạo" })).toContainText("1");
-
-    const rows = page.getByRole("row").filter({ hasText: "qa-hub-" });
-    await expect(rows).toHaveCount(3);
-    await expect(rows.filter({ hasText: ALPHA.word })).toContainText("Đến hạn");
-    await expect(rows.filter({ hasText: BRAVO.word })).toContainText(
-      "Thành thạo",
-    );
-    await expect(rows.filter({ hasText: CHARLIE.word })).toContainText(
-      "Đang học",
+    // khối dashboard vi
+    await expect(
+      page.locator('[role="img"][aria-label*="Mục tiêu hôm nay"]'),
+    ).toBeVisible();
+    await expect(page.getByText("Vườn từ vựng")).toBeVisible();
+    await expect(page.getByText(/Lộ trình \d+ sách/)).toBeVisible();
+    const continueCta = page.getByRole("link", { name: /Học \d+ từ mới/ });
+    await expect(continueCta).toBeVisible();
+    await expect(continueCta).toHaveAttribute(
+      "href",
+      /\/vi\/vocabulary\/learn\/level-\d/,
     );
   });
 
-  test("guest: mặc định tab Thư viện; đòi Tổng quan → login ?next (SF-2)", async ({
+  test("guest: mặc định tab Thư viện; đòi Tổng quan → login ?next (không regression)", async ({
     page,
   }) => {
     await page.context().clearCookies();
@@ -192,9 +134,7 @@ test.describe("Vocabulary hub overview (SF-1)", () => {
     await expect(
       page.getByRole("heading", { level: 2, name: "Word library" }),
     ).toBeVisible();
-    const rows = page.getByRole("row").filter({ hasText: "qa-hub-" });
-    await expect(rows).toHaveCount(3);
-    await expect(page.getByText("SRS status")).toHaveCount(0);
+    await expect(page.getByText("Today's goal")).toHaveCount(0);
     // Tổng quan là data cá nhân → link Overview dẫn login kèm ?next
     await page.getByRole("link", { name: "Overview" }).click();
     await expect(page).toHaveURL(
