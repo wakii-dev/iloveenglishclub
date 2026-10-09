@@ -104,3 +104,123 @@ export type GradeResult = {
   streak: number;
   goalDone: boolean;
 };
+
+type Rng = () => number;
+
+/** Chuẩn hoá so khớp — trim + lowercase + collapse space (style normKey quiz.ts). */
+export function normalizeAnswer(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function shuffle<T>(items: readonly T[], rng: Rng): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = out[i] as T;
+    out[i] = out[j] as T;
+    out[j] = tmp;
+  }
+  return out;
+}
+
+/** Số lựa chọn MC tối đa (epic §2.1 — pin degenerate tests). */
+export const MC_MAX_OPTIONS = 4;
+
+/**
+ * Options MC/listen từ pool distractor: nghĩa đúng + các nghĩa PHÂN BIỆT
+ * (normKey) khác trong pool, tối đa MC_MAX_OPTIONS. Trả null khi <2 nghĩa
+ * phân biệt (bỏ step MC — sách 1 nghĩa không làm trắc nghiệm).
+ */
+export function buildMcOptions(
+  correctMeaning: string,
+  distractorPool: readonly string[],
+  rng: Rng,
+): string[] | null {
+  const correctKey = normalizeAnswer(correctMeaning);
+  const seen = new Set([correctKey]);
+  const distractors: string[] = [];
+  for (const candidate of distractorPool) {
+    const key = normalizeAnswer(candidate);
+    if (key === "" || seen.has(key)) continue;
+    seen.add(key);
+    distractors.push(candidate);
+  }
+  const total = 1 + distractors.length;
+  if (total < 2) return null; // <2 nghĩa phân biệt → bỏ MC
+  const optionCount = Math.min(MC_MAX_OPTIONS, total);
+  return shuffle(
+    [correctMeaning, ...distractors.slice(0, optionCount - 1)],
+    rng,
+  );
+}
+
+export type BuildLearnStepsInput = {
+  /** Từ reps=0 của level kế tiếp (≤ LEARN_SESSION_WORDS, order tăng — store chọn). */
+  words: readonly SessionWord[];
+  /** Pool nhiễu MC — meaning_vi các từ cùng book (bounded store-side). */
+  distractorPool: readonly string[];
+  rng?: Rng;
+};
+
+/**
+ * Build phiên LEARN (epic §2.1): chuỗi per từ introduce → mc? → listen? →
+ * type; ĐAN XEN batch ~2 từ mới — intro của 2 từ mới chen giữa các
+ * test-chain (server quyết thứ tự cuối). Bước MC BỎ khi pool <2 nghĩa phân
+ * biệt; listen CHỈ khi audioUrl != null; từ không audio đi thẳng mc→type.
+ */
+export function buildLearnSteps(input: BuildLearnStepsInput): SessionStep[] {
+  const rng = input.rng ?? Math.random;
+  const steps: SessionStep[] = [];
+  let stepIndex = 0;
+
+  const pushIntroduce = (w: SessionWord): void => {
+    steps.push({
+      stepIndex: stepIndex++,
+      kind: "introduce",
+      wordId: w.wordId,
+      word: w.word,
+      ipa: w.ipa,
+      audioUrl: w.audioUrl,
+      meaningVi: w.meaningVi,
+      example: w.example ?? undefined,
+    });
+  };
+
+  const pushTestChain = (w: SessionWord): void => {
+    const options = buildMcOptions(w.meaningVi, input.distractorPool, rng);
+    if (options) {
+      steps.push({
+        stepIndex: stepIndex++,
+        kind: "mc",
+        wordId: w.wordId,
+        word: w.word,
+        ipa: w.ipa,
+        audioUrl: w.audioUrl,
+        options,
+      });
+    }
+    if (w.audioUrl != null) {
+      steps.push({
+        stepIndex: stepIndex++,
+        kind: "listen",
+        wordId: w.wordId,
+        audioUrl: w.audioUrl,
+        options: options ? [...options] : undefined,
+      });
+    }
+    steps.push({
+      stepIndex: stepIndex++,
+      kind: "type",
+      wordId: w.wordId,
+      meaningVi: w.meaningVi,
+    });
+  };
+
+  // Đan xen: giới thiệu theo batch 2 từ mới, rồi test-chain từng từ của batch
+  for (let i = 0; i < input.words.length; i += 2) {
+    const batch = input.words.slice(i, i + 2);
+    for (const word of batch) pushIntroduce(word);
+    for (const word of batch) pushTestChain(word);
+  }
+  return steps;
+}
