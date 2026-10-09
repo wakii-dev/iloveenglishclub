@@ -89,7 +89,14 @@ export async function HubOverviewSection({
   ).format(summary.totalXp);
 
   return (
-    <div id={DASHBOARD_CONTAINER_ID}>
+    // scope dark (hand-off §4): container = surface riêng — dark mode đổi cả
+    // nền (bg-background) + text (text-foreground) trong phạm vi, nền page
+    // ngoài (tab strip/library) giữ nguyên; -mx-5/p-5 bù để mép nội dung
+    // khớp tab strip, light mode nền kem-trên-kem vô hình
+    <div
+      id={DASHBOARD_CONTAINER_ID}
+      className="-mx-5 rounded-[24px] bg-background p-5 text-foreground"
+    >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-[13px] text-muted-foreground">{dateLine}</p>
