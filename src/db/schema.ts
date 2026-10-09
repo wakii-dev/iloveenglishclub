@@ -291,10 +291,14 @@ export const dailyActivity = pgTable(
 );
 
 /**
- * leaderboard — SQL view (spec §4): xp tuần ISO Mon–Sun TZ Asia/Ho_Chi_Minh
- * (từ attempts.xp) + all-time (từ profiles.xp). CHỈ expose display_name +
- * avatar_url + xp (+ scope phân biệt 2 bảng xếp hạng) — không id/email.
- * date_trunc('week', ...) bắt đầu thứ 2 = đúng ISO Mon–Sun.
+ * leaderboard — SQL view (spec §4, vocab-memrise SF-1 VU-38 mở rộng): xp tuần
+ * ISO Mon–Sun TZ Asia/Ho_Chi_Minh + all-time (từ profiles.xp). CHỈ expose
+ * display_name + avatar_url + xp (+ scope phân biệt 2 bảng xếp hạng) — không
+ * id/email. date_trunc('week', ...) bắt đầu thứ 2 = đúng ISO Mon–Sun.
+ * Weekly = subquery UNION ALL 2 nhánh nguồn XP (attempts dictation +
+ * vocab_activity) rồi GROUP per user — user chỉ học vocab (0 attempt) vẫn
+ * hiện, user học cả hai không bị duplicate row (contract getLeaderboard:
+ * order by xp desc, không group lại). Hết divergence weekly/all_time (E2).
  */
 export const leaderboard = pgView("leaderboard", {
   scope: text("scope").notNull(),
@@ -302,13 +306,22 @@ export const leaderboard = pgView("leaderboard", {
   avatarUrl: text("avatar_url"),
   xp: integer("xp").notNull(),
 }).as(sql`
-  SELECT 'weekly'::text AS scope, p.display_name, p.avatar_url,
-         SUM(a.xp)::int AS xp
-  FROM profiles p
-  JOIN attempts a ON a.user_id = p.id
-    AND (a.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')
-      >= date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
-  GROUP BY p.id, p.display_name, p.avatar_url
+  SELECT 'weekly'::text AS scope, t.display_name, t.avatar_url,
+         SUM(t.xp)::int AS xp
+  FROM (
+    SELECT p.id, p.display_name, p.avatar_url, a.xp
+    FROM profiles p
+    JOIN attempts a ON a.user_id = p.id
+      AND (a.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')
+        >= date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
+    UNION ALL
+    SELECT p.id, p.display_name, p.avatar_url, va.xp
+    FROM profiles p
+    JOIN vocab_activity va ON va.user_id = p.id
+      AND (va.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')
+        >= date_trunc('week', now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
+  ) t
+  GROUP BY t.id, t.display_name, t.avatar_url
   UNION ALL
   SELECT 'all_time'::text AS scope, p.display_name, p.avatar_url, p.xp
   FROM profiles p
