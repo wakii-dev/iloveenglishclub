@@ -74,11 +74,8 @@ describe("GROWTH_STAGES — metadata i18n", () => {
         ),
       ) as { stage: Record<string, string> };
       GROWTH_STAGES.forEach((s) => {
-        const [, section, leaf] = s.nameKey.split(".");
-        expect(
-          learn[section][leaf],
-          `${s.nameKey} thiếu ở ${locale}`,
-        ).toBeTruthy();
+        const leaf = s.nameKey.split(".")[2]; // learn.stage.<n>
+        expect(learn.stage[leaf], `${s.nameKey} thiếu ở ${locale}`).toBeTruthy();
       });
     },
   );

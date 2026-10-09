@@ -60,7 +60,7 @@ import {
   type AwardVocabXpParams,
 } from "./vocab-xp-store";
 import { idempotencyKey } from "./vocab-xp";
-import { vnToday } from "@/lib/gamification/streak";
+import { addDays, vnToday } from "@/lib/gamification/streak";
 
 const params = (over: Partial<AwardVocabXpParams> = {}): AwardVocabXpParams => ({
   userId: "u1",
@@ -82,7 +82,13 @@ function happyQueue(profile = { xp: 100, streakCount: 3 }) {
     [{ id: 1 }], // insert vocab_activity RETURNING — không conflict
     [], // daily_activity hôm nay CHƯA có
     [], // upsert daily_activity (kết quả không dùng)
-    [{ date: "2026-10-07" }, { date: "2026-10-08" }, { date: "2026-10-09" }], // 3 ngày liên tiếp → streak 3
+    // 3 ngày liên tiếp (hôm nay + 2 hôm trước) → streak 3 — DERIVE từ đồng hồ
+    // thật, KHÔNG hardcode date (time-bomb: suite đỏ khi lịch trôi qua fixture)
+    [
+      { date: addDays(vnToday(new Date()), -2) },
+      { date: addDays(vnToday(new Date()), -1) },
+      { date: vnToday(new Date()) },
+    ],
     [{ xp: 101 }], // update profiles RETURNING xp
   ];
 }
@@ -117,7 +123,7 @@ describe("awardVocabXpTx — MỘT transaction", () => {
       xpAwarded: 1,
       xpCapped: false,
       totalXp: 101,
-      streak: 3, // 08→09 liên tiếp
+      streak: 3, // hôm nay + 2 ngày liên tiếp trước đó
     });
 
     // insert vocab_activity: idempotency server-derive + đúng payload
