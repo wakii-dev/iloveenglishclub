@@ -234,7 +234,7 @@ test.describe("Full-chain SF-4", () => {
     expect(await miss.json()).toEqual({ error: "not_in_vocabulary" });
   });
 
-  test("full-chain: flashcards hub review phát audio Blob (lật thẻ → play → playing)", async ({
+  test("full-chain: review session mới phát audio Blob (listen → play → gõ từ chấm server)", async ({
     page,
   }, testInfo) => {
     testInfo.setTimeout(240_000);
@@ -250,7 +250,12 @@ test.describe("Full-chain SF-4", () => {
       select u.id, w.id, 2.5, 0, now() - interval '1 hour', 0
       from users u join words w on w.word in ('qasf4oak', 'qasf4elm')
       where u.email = ${adminEmail}`;
+    const meaningRows = await c<{ word: string; meaning_vi: string }[]>`
+      select word, meaning_vi from words where word in ('qasf4oak', 'qasf4elm')`;
     await c.end();
+    const wordByMeaning = new Map(
+      meaningRows.map((r) => [r.meaning_vi, r.word]),
+    );
 
     await loginAsAdmin(page);
     await page.goto("/vi/me/vocabulary");
@@ -258,23 +263,85 @@ test.describe("Full-chain SF-4", () => {
       timeout: 60_000,
     });
 
-    // lật thẻ → mặt sau có nút phát (audioUrl non-null) → play thật
-    await page.getByRole("button", { name: /Bấm vào thẻ để lật/ }).click();
-    const playBtn = page.getByRole("button", { name: /Phát âm “/ }).first();
-    await expect(playBtn).toBeVisible();
-    await playBtn.click();
-    await expect(
-      page.getByRole("button", { name: "Dừng audio" }).first(),
-    ).toBeVisible({ timeout: 10_000 });
+    // Review runner MỚI (SF-3 vocab-memrise): từ có audio → bước listen trước.
+    // Mục đích chính của test giữ nguyên: audio Blob phát THẬT qua nút phát
+    // lại ("Dừng audio" = state playing). Listen ẩn word — chọn option đầu,
+    // sai thì từ requeue cuối phiên, bước type vẫn chấm đúng (server-side).
+    // waitAdvanced: chờ feedback TÁT (auto-advance 1s) trước bước kế — chống
+    // bấm lại option disabled của bước cũ (Playwright click ăn trọn timeout).
+    const waitAdvanced = async () => {
+      for (let w = 0; w < 150; w++) {
+        if (await page.getByText("Phiên hoàn tất").isVisible().catch(() => false)) return;
+        const fb =
+          (await page.getByTestId("feedback-correct").isVisible().catch(() => false)) ||
+          (await page.getByTestId("feedback-wrong").isVisible().catch(() => false));
+        if (!fb) return;
+        await page.waitForTimeout(200);
+      }
+      throw new Error("feedback không tự mất sau 30s");
+    };
+    for (let i = 0; i < 12; i++) {
+      if (await page.getByText("Phiên hoàn tất").isVisible()) break;
+      if (await page.getByTestId("type-input").isVisible()) {
+        // gõ từ: prompt = nghĩa VI trong ngoặc kép
+        const prompt = (await page.getByTestId("type-prompt").innerText())
+          .replaceAll(/[“”]/g, "")
+          .trim();
+        const word = wordByMeaning.get(prompt);
+        expect(word, `prompt khớp fixture: ${prompt}`).toBeTruthy();
+        await page.getByTestId("type-input").fill(word!);
+        await page.getByTestId("type-input").press("Enter");
+        await expect(page.getByTestId("feedback-correct")).toBeVisible({
+          timeout: 30_000,
+        });
+        await waitAdvanced();
+      } else if (await page.getByTestId("listen-replay").isVisible()) {
+        await page.getByTestId("listen-replay").click();
+        await expect(
+          page.getByRole("button", { name: "Dừng audio" }).first(),
+        ).toBeVisible({ timeout: 10_000 });
+        await page.getByTestId("session-option").first().click();
+        await expect(
+          page
+            .getByTestId("feedback-correct")
+            .or(page.getByTestId("feedback-wrong"))
+            .first(),
+        ).toBeVisible({ timeout: 30_000 });
+        const cont = page.getByTestId("continue-after-wrong");
+        if (await cont.isVisible()) await cont.click();
+        await waitAdvanced();
+      } else if (await page.getByTestId("option-group").isVisible()) {
+        // mc (từ KHÔNG audio — ví dụ elm khi enrich test không chạy trong
+        // --grep): heading lộ từ → chọn ĐÚNG nghĩa qua map DB
+        const word = (
+          await page.getByTestId("step-card").getByRole("heading").innerText()
+        ).trim();
+        const meaning = [...wordByMeaning.entries()].find(
+          ([, w]) => w === word,
+        )?.[0];
+        expect(meaning, `mc từ fixture: ${word}`).toBeTruthy();
+        await page
+          .getByTestId("session-option")
+          .filter({ hasText: meaning! })
+          .click({ timeout: 10_000 });
+        await expect(
+          page
+            .getByTestId("feedback-correct")
+            .or(page.getByTestId("feedback-wrong"))
+            .first(),
+        ).toBeVisible({ timeout: 30_000 });
+        const cont = page.getByTestId("continue-after-wrong");
+        if (await cont.isVisible()) await cont.click();
+        await waitAdvanced();
+      } else {
+        break;
+      }
+    }
+    await expect(page.getByText("Phiên hoàn tất")).toBeVisible();
 
-    // chấm quality để review flow hoạt động end-to-end (thẻ khỏi hàng due)
-    // — exact:true vì "Nhớ" là prefix của "Nhớ-kho" (gradeHard); chờ UI advance
-    // "Thẻ 2/2" (POST /review committed) TRƯỚC reload — reload ngay sau click
-    // abort fetch giữa chừng (progress không ghi, due không giảm)
-    await page.getByRole("button", { name: "Nhớ", exact: true }).click();
-    await expect(page.getByText("Thẻ 2/2")).toBeVisible({ timeout: 30_000 });
+    // cả 2 từ type-đúng → due tương lai → hàng ôn rỗng (persist QUA API mới)
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByText("Hôm nay cần ôn: 1 từ")).toBeVisible({
+    await expect(page.getByText("Hôm nay không có từ cần ôn")).toBeVisible({
       timeout: 30_000,
     });
   });

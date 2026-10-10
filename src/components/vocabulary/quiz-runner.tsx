@@ -7,10 +7,10 @@ import type { QuizQuestion, QuizScope, QuizType } from "@/lib/vocabulary/quiz";
 
 /**
  * Quiz runner (SF-4 t-4.2; scope hub SF-3 t-3.2) — client thuần, state local
- * (không store mới, cùng pattern ReviewFlashcards). Trắc nghiệm chọn ngay
- * advances; điền từ submit form; ghép nghĩa chọn đủ 5 cặp mới tiếp. Hết câu
- * tự POST nộp bài; 401 → mời đăng nhập lại, lỗi khác → nút gửi lại. "Làm
- * lại" reload trang (force-dynamic) để nhận đề xáo mới từ server.
+ * (không store mới). Trắc nghiệm chọn ngay advances; điền từ submit form;
+ * ghép nghĩa chọn đủ 5 cặp mới tiếp. Hết câu tự POST nộp bài; 401 → mời đăng
+ * nhập lại, lỗi khác → nút gửi lại. "Làm lại" reload trang (force-dynamic)
+ * để nhận đề xáo mới từ server.
  * Phạm vi: {bookId, bookSlug} (flow per-book cũ) hoặc scope all/multi (tab
  * Quiz hub — POST mang scope thay book_id, loginNext là URL hub có query).
  */

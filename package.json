@@ -25,7 +25,6 @@
     "test:e2e:sf3": "playwright test --config playwright.sf3.config.ts",
     "test:e2e:sf4": "playwright test --config playwright.sf4.config.ts",
     "test:e2e:vocabulary": "playwright test --config playwright.vocabulary.config.ts",
-    "test:e2e:vocabulary-review": "playwright test --config playwright.vocabulary-review.config.ts",
     "test:e2e:dictation": "playwright test",
     "test:e2e:vocabulary-quiz": "playwright test --config playwright.vocabulary-quiz.config.ts",
     "test:e2e:vocabulary-lookup": "playwright test --config playwright.vocabulary-lookup.config.ts",
@@ -34,7 +33,9 @@
     "test:e2e:oxford": "playwright test --config playwright.oxford-crawl.config.ts",
     "test:e2e:oxford-fullchain": "playwright test --config playwright.oxford-fullchain.config.ts",
     "test:e2e:vocabulary-learn": "playwright test --config playwright.vocabulary-learn.config.ts",
-    "test:e2e:vocabulary-dashboard": "playwright test --config playwright.vocabulary-dashboard.config.ts"
+    "test:e2e:vocabulary-dashboard": "playwright test --config playwright.vocabulary-dashboard.config.ts",
+    "test:e2e:vocabulary-learn-session": "playwright test --config playwright.vocabulary-learn-session.config.ts",
+    "test:e2e:vocabulary-review-upgrade": "playwright test --config playwright.vocabulary-review-upgrade.config.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
