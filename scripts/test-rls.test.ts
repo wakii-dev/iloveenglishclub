@@ -181,8 +181,17 @@ describe("ROLE user (authenticated non-admin) — bị chặn ghi, không lộ d
     const exports = Object.keys(contentQueries).filter(
       (k) => typeof (contentQueries as Record<string, unknown>)[k] === "function",
     );
+    // getBookVocabulary (VU-37 — đọc vocab theo book, không nhận userId)
     expect(exports.sort()).toEqual(
-      ["getBook", "getBooks", "getLesson", "getLessons", "getUnit", "getUnits"].sort(),
+      [
+        "getBook",
+        "getBooks",
+        "getBookVocabulary",
+        "getLesson",
+        "getLessons",
+        "getUnit",
+        "getUnits",
+      ].sort(),
     );
     // data userB có thật ở DB nhưng không có path public nào trả nó
     const [row] = await sql<{ n: number }[]>`
@@ -456,17 +465,25 @@ describe("VOCABULARY — quiz_attempts jsonb + FK cascade rules", () => {
       VALUES (${ID_A}, 1, 'rls-vocab-test', 0.75,
               ${JSON.stringify({ answers: [{ word: "a", ok: true }] })}::jsonb)
     `;
-    const [row] = await sql<{ detail_json: { answers: unknown[] }; created_at: Date }[]>`
+    const [row] = await sql<{ detail_json: { answers: unknown[] } | string; created_at: Date }[]>`
       SELECT detail_json, created_at FROM quiz_attempts
       WHERE user_id = ${ID_A} AND mode = 'rls-vocab-test'
     `;
-    expect(row.detail_json.answers).toHaveLength(1);
+    // postgres.js trên Neon trả jsonb COLUMN về string (literal mới parse) —
+    // normalize để intent "roundtrip giữ nguyên data" đúng trên mọi env
+    const detail =
+      typeof row.detail_json === "string"
+        ? (JSON.parse(row.detail_json) as { answers: unknown[] })
+        : row.detail_json;
+    expect(detail.answers).toHaveLength(1);
     expect(row.created_at).not.toBeNull();
   });
 
   it("mọi FK vocabulary CASCADE đúng chiều (schema contract, không phá fixture)", async () => {
-    const rules = await sql<{ conname: string; delete_rule: string }[]>`
-      SELECT conname, delete_rule FROM information_schema.referential_constraints
+    // referential_constraints expose constraint_name (conname là của
+    // pg_constraint) — sai tên cột ⇒ 42703 trên MỌI Postgres
+    const rules = await sql<{ constraint_name: string; delete_rule: string }[]>`
+      SELECT constraint_name, delete_rule FROM information_schema.referential_constraints
       WHERE constraint_name IN (
         'book_words_book_id_books_id_fk',
         'book_words_word_id_words_id_fk',
@@ -493,6 +510,7 @@ describe("VOCABULARY — isolation-by-surface (app-level authz)", () => {
         "createVocabularyWord",
         "deleteVocabularyWord",
         "importVocabulary",
+        "insertWordReturningId",
         "listVocabulary",
         "updateVocabularyWord",
       ].sort(),

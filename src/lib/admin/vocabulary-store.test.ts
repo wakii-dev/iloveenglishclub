@@ -9,7 +9,55 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const dbState = vi.hoisted(() => ({
   queue: [] as unknown[],
   failWith: null as unknown,
+  // VU-43 SF-1: ghi arg primitive (số/chuỗi/mảng) mỗi method call — pin
+  // tham số filter (LIKE escaped, cefr IN-list, bookId, limit/offset)
+  calls: [] as [string, ...unknown[]][],
+  // Gọi hàm drizzle-orm (eq/isNull/orderBy…) — pin điều kiện WHERE/ORDER v2
+  drizzleCalls: [] as [string, ...unknown[]][],
 }));
+
+/** Arg object (column/SQL) → chữ mô tả; primitive giữ nguyên — so khớp được. */
+function argSig(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(argSig);
+  const ctor = (value as object).constructor?.name ?? "object";
+  if (ctor === "StringChunk") {
+    const chunk = (value as { value?: unknown[] }).value ?? [];
+    return chunk.map((c) => (typeof c === "string" ? c : argSig(c))).join("");
+  }
+  const name = (value as { name?: unknown }).name;
+  const label = typeof name === "string" ? `:${name}` : "";
+  const queryChunks = (value as { queryChunks?: unknown[] }).queryChunks;
+  if (Array.isArray(queryChunks)) {
+    return `${ctor}${label}(${queryChunks.map((c) => (typeof c === "string" ? c : argSig(c))).join("|")})`;
+  }
+  return `${ctor}${label}`;
+}
+
+// Spy drizzle-orm (passthrough behavior — chỉ ghi call): pin WHERE/ORDER của
+// listVocabulary v2 mà không đụng SQL thật.
+vi.mock("drizzle-orm", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("drizzle-orm")>();
+  const wrap = (name: string) => {
+    const fn = (actual as unknown as Record<string, (...a: unknown[]) => unknown>)[name];
+    return (...a: unknown[]) => {
+      dbState.drizzleCalls.push([name, ...a.map(argSig)]);
+      return fn(...a);
+    };
+  };
+  return {
+    ...actual,
+    and: wrap("and"),
+    asc: wrap("asc"),
+    desc: wrap("desc"),
+    eq: wrap("eq"),
+    ilike: wrap("ilike"),
+    inArray: wrap("inArray"),
+    isNotNull: wrap("isNotNull"),
+    isNull: wrap("isNull"),
+    or: wrap("or"),
+  };
+});
 
 function chainOf(): unknown {
   const result = dbState.queue.shift();
@@ -22,7 +70,10 @@ function chainOf(): unknown {
       if (typeof prop === "symbol") return undefined;
       if (prop === "then") return p.then.bind(p);
       if (prop === "catch") return p.catch.bind(p);
-      return () => proxy;
+      return (...args: unknown[]) => {
+        dbState.calls.push([String(prop), ...args.map(argSig)]);
+        return proxy;
+      };
     },
     apply() {
       return proxy;
@@ -73,6 +124,8 @@ const row = (line: number, word: string): ParsedWordRow => ({
 afterEach(() => {
   dbState.queue = [];
   dbState.failWith = null;
+  dbState.calls = [];
+  dbState.drizzleCalls = [];
   revalidateContent.mockClear();
 });
 
@@ -281,5 +334,132 @@ describe("listVocabulary", () => {
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
     expect(dbState.queue).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// VU-43 SF-1 — listVocabulary v2 (additive filters) + field mới
+// ---------------------------------------------------------------------------
+
+/** Row DB mock 1 word có mọi field mới — dùng chung các test filter. */
+function wordDbRow(id: number, word: string) {
+  return {
+    id,
+    word,
+    ipa: null,
+    meaningVi: "nghĩa qa",
+    example: null,
+    audioUrl: null,
+    cefr: null,
+    source: null,
+    pos: null,
+    imageUrl: null,
+    synonyms: null,
+    createdAt: new Date("2026-10-10T00:00:00Z"),
+  };
+}
+
+describe("listVocabulary v2 (VU-43 SF-1)", () => {
+  it("items map field mới pos/image_url/synonyms (nullable) — consumer cũ bỏ qua an toàn", async () => {
+    const row = { ...wordDbRow(1, "qa-cms-a"), pos: "noun", imageUrl: "https://x/i.png", synonyms: "x, y" };
+    dbState.queue = [[row], [{ n: 1 }], [{ wordId: 1, bookId: 2 }]];
+    const result = await listVocabulary({ limit: 50, offset: 0 });
+    expect(result.items[0]).toMatchObject({
+      pos: "noun",
+      image_url: "https://x/i.png",
+      synonyms: "x, y",
+    });
+  });
+
+  it("q escape LIKE wildcard: % _ \\ được escape trước khi ghép %..% (spec §4 bugfix)", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ q: "100%_off\\", limit: 50, offset: 0 });
+    const likeValues = dbState.drizzleCalls
+      .filter(([fn]) => fn === "ilike")
+      .map(([, , pattern]) => pattern);
+    // q = `100%_off\` → `100\%\_off\\` — literal, không còn wildcard tự do;
+    // or() dựng lại cho rows + count → 4 ilike (word + meaning_vi × 2 query)
+    expect(likeValues).toEqual([
+      "%100\\%\\_off\\\\%",
+      "%100\\%\\_off\\\\%",
+      "%100\\%\\_off\\\\%",
+      "%100\\%\\_off\\\\%",
+    ]);
+  });
+
+  it("source/audio filter → isNull/isNotNull đúng cột (teacher = source IS NULL)", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ source: "teacher", audio: "has", limit: 50, offset: 0 });
+    const fns = dbState.drizzleCalls.map(([fn, ...rest]) => `${fn}(${rest.join(",")})`);
+    expect(fns).toContain("isNull(PgText:source)");
+    expect(fns).toContain("isNotNull(PgText:audio_url)");
+    // 2 query (rows + count) → mỗi filter 2 lần
+    expect(dbState.drizzleCalls.filter(([fn]) => fn === "isNull")).toHaveLength(2);
+  });
+
+  it("source='oxford-ld' → eq equality", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ source: "oxford-ld", limit: 50, offset: 0 });
+    expect(dbState.drizzleCalls.filter(([fn]) => fn === "eq")).toHaveLength(2);
+  });
+
+  it("cefr csv → inArray IN-list uppercase (upper(trim) 2 phía — 'b1 ' vẫn match)", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ cefr: ["B1", "A2"], limit: 50, offset: 0 });
+    const inArrays = dbState.drizzleCalls.filter(([fn]) => fn === "inArray");
+    expect(inArrays).toHaveLength(2); // rows + count
+    expect(inArrays[0]?.[1]).toContain("upper");
+    expect(inArrays[0]?.[2]).toEqual(["B1", "A2"]);
+  });
+
+  it("orphan=1 WIN khi conflict bookId — bookId bị ignore, điều kiện IS NULL book_id", async () => {
+    dbState.queue = [[wordDbRow(1, "qa-cms-orphan")], [{ n: 1 }], []];
+    const result = await listVocabulary({ bookId: 5, orphan: true, limit: 50, offset: 0 });
+    const eqBookId = dbState.drizzleCalls.filter(
+      ([fn, ...rest]) => fn === "eq" && rest.includes(5),
+    );
+    expect(eqBookId).toHaveLength(0); // bookId không vào WHERE
+    const isNulls = dbState.drizzleCalls.filter(
+      ([fn, col]) => fn === "isNull" && String(col).includes("book_id"),
+    );
+    expect(isNulls).toHaveLength(2); // rows + count
+    expect(result.items).toHaveLength(1);
+  });
+
+  it("bookId (không orphan) → giữ INNER JOIN cũ: eq(bookWords.bookId, id) cho rows+count", async () => {
+    dbState.queue = [[wordDbRow(1, "qa-cms-b")], [{ n: 1 }], [{ wordId: 1, bookId: 5 }]];
+    const result = await listVocabulary({ bookId: 5, limit: 50, offset: 0 });
+    const eqBookId = dbState.drizzleCalls.filter(
+      ([fn, ...rest]) => fn === "eq" && rest.includes(5),
+    );
+    expect(eqBookId.length).toBeGreaterThanOrEqual(2); // rows where + count where
+    expect(result.total).toBe(1);
+  });
+
+  it("sort: created mặc định (desc createdAt + asc word) | word asc | cefr asc (null CUỐI mặc định PG)", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ limit: 50, offset: 0 });
+    const orderOf = () =>
+      dbState.drizzleCalls.filter(([fn]) => fn === "desc" || fn === "asc");
+    expect(orderOf()).toEqual([["desc", "PgTimestamp:created_at"], ["asc", "PgText:word"]]);
+
+    dbState.drizzleCalls = [];
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ sort: "word", limit: 50, offset: 0 });
+    expect(orderOf()).toEqual([["asc", "PgText:word"]]);
+
+    dbState.drizzleCalls = [];
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ sort: "cefr", limit: 50, offset: 0 });
+    expect(orderOf()).toEqual([["asc", "PgText:cefr"], ["asc", "PgText:word"]]);
+  });
+
+  it("limit/offset ghi nhận qua mock (server-side pagination)", async () => {
+    dbState.queue = [[], [{ n: 0 }]];
+    await listVocabulary({ limit: 50, offset: 100 });
+    const limitCall = dbState.calls.find(([m]) => m === "limit");
+    const offsetCall = dbState.calls.find(([m]) => m === "offset");
+    expect(limitCall?.[1]).toBe(50);
+    expect(offsetCall?.[1]).toBe(100);
   });
 });

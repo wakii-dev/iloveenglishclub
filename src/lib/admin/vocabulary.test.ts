@@ -7,10 +7,19 @@ import { describe, expect, it } from "vitest";
  */
 import {
   buildWordAudioPath,
+  isCefrLevel,
+  normalizeCefr,
+  normalizeSynonyms,
+  parseCefrFilter,
   planImport,
   parseVocabularyCsv,
   parseVocabularyJson,
   resolveStoredAudioUrl,
+  validateCefrInput,
+  validateImageUrlInput,
+  validatePosInput,
+  validateSourceInput,
+  validateSynonymsInput,
   validateWordInput,
   type ParsedWordRow,
 } from "./vocabulary";
@@ -256,5 +265,103 @@ describe("buildWordAudioPath + resolveStoredAudioUrl (t-1.3 upload leg)", () => 
     expect(resolveStoredAudioUrl("audio/vocabulary/42.mp3")).toBe(
       "/audio/vocabulary/42.mp3",
     );
+  });
+});
+
+describe("validateCefrInput (VU-43 SF-1 — spec §4 pin boundary)", () => {
+  it("'b1 ' → 'B1' (trim+upper); allowlist chính xác hoa", () => {
+    expect(validateCefrInput("b1 ")).toBe("B1");
+    expect(validateCefrInput("  a2")).toBe("A2");
+    expect(validateCefrInput("C2")).toBe("C2");
+  });
+
+  it("rỗng/không phải string → null (optional); lệch allowlist → invalidCefr", () => {
+    expect(validateCefrInput("")).toBeNull();
+    expect(validateCefrInput(undefined)).toBeNull();
+    expect(validateCefrInput(5)).toBeNull();
+    expect(validateCefrInput("B7")).toEqual({ error: "invalidCefr" });
+    expect(validateCefrInput("Pre-A1")).toEqual({ error: "invalidCefr" });
+  });
+
+  it("normalizeCefr + isCefrLevel + parseCefrFilter: csv normalize, token lạ bỏ", () => {
+    expect(normalizeCefr(" b2 ")).toBe("B2");
+    expect(isCefrLevel("B1")).toBe(true);
+    expect(isCefrLevel("b1")).toBe(false);
+    expect(parseCefrFilter("b1, A2,,x5,B1")).toEqual(["B1", "A2"]); // thứ tự xuất hiện, dedupe
+    expect(parseCefrFilter(null)).toEqual([]);
+    expect(parseCefrFilter("zzz")).toEqual([]);
+  });
+});
+
+describe("validatePosInput + validateSynonymsInput + validateImageUrlInput (VU-43 SF-1)", () => {
+  it("pos: lowercase-trim, ≤32; rỗng → null; vượt → invalidPos", () => {
+    expect(validatePosInput("  Noun ")).toBe("noun");
+    expect(validatePosInput("")).toBeNull();
+    expect(validatePosInput("x".repeat(33))).toEqual({ error: "invalidPos" });
+    expect(validatePosInput("x".repeat(32))).toBe("x".repeat(32));
+  });
+
+  it("synonyms chuẩn hoá GHI: ' x , y ' → 'x, y'; bỏ item rỗng; >500 → invalidSynonyms", () => {
+    expect(normalizeSynonyms(" x , y ")).toBe("x, y");
+    expect(normalizeSynonyms(",x,,y,")).toBe("x, y");
+    expect(validateSynonymsInput(" x , y ")).toBe("x, y");
+    expect(validateSynonymsInput(" , ")).toBeNull();
+    expect(validateSynonymsInput("a,".repeat(260))).toEqual({ error: "invalidSynonyms" });
+    expect(validateSynonymsInput(42)).toBeNull();
+  });
+
+  it("imageUrl: http(s) shape; rỗng → null; sai shape/overflow → invalidImageUrl", () => {
+    expect(validateImageUrlInput(" https://blob.vercel-storage.com/i.png ")).toBe(
+      "https://blob.vercel-storage.com/i.png",
+    );
+    expect(validateImageUrlInput("ftp://x/i.png")).toEqual({ error: "invalidImageUrl" });
+    expect(validateImageUrlInput("/images/words/1.png")).toEqual({ error: "invalidImageUrl" });
+    expect(validateImageUrlInput("")).toBeNull();
+    expect(validateImageUrlInput(`https://x.com/${"a".repeat(1000)}`)).toEqual({
+      error: "invalidImageUrl",
+    });
+  });
+
+  it("validateSourceInput: chỉ 2 giá trị chuẩn; 'teacher' ≡ null; lạ → invalidSource", () => {
+    expect(validateSourceInput("oxford-ld")).toBe("oxford-ld");
+    expect(validateSourceInput("teacher")).toBeNull();
+    expect(validateSourceInput("")).toBeNull();
+    expect(validateSourceInput(null)).toBeNull();
+    expect(validateSourceInput("gpt")).toEqual({ error: "invalidSource" });
+  });
+});
+
+describe("validateWordInput field mới (VU-43 SF-1 — additive)", () => {
+  it("body gửi field mới → validate + normalize vào output", () => {
+    const out = okOf({
+      word: "apple",
+      meaning_vi: "quả táo",
+      cefr: " b1 ",
+      pos: " Noun ",
+      synonyms: " x , y ",
+      image_url: "https://cdn.example.com/i.png",
+    });
+    expect(out.cefr).toBe("B1");
+    expect(out.pos).toBe("noun");
+    expect(out.synonyms).toBe("x, y");
+    expect(out.image_url).toBe("https://cdn.example.com/i.png");
+  });
+
+  it("imageUrl chấp nhận camelCase (imageUrl) — route map snake_case/camel", () => {
+    const out = okOf({ word: "a", meaning_vi: "b", imageUrl: "https://x.com/i.png" });
+    expect(out.image_url).toBe("https://x.com/i.png");
+  });
+
+  it("field mới sai → mã lỗi từng field; body cũ (không gửi) → output giữ shape cũ", () => {
+    expect(errOf({ word: "a", meaning_vi: "b", cefr: "Z9" })).toBe("invalidCefr");
+    expect(errOf({ word: "a", meaning_vi: "b", pos: "x".repeat(40) })).toBe("invalidPos");
+    expect(errOf({ word: "a", meaning_vi: "b", synonyms: "a,".repeat(300) })).toBe(
+      "invalidSynonyms",
+    );
+    expect(errOf({ word: "a", meaning_vi: "b", image_url: "nope" })).toBe("invalidImageUrl");
+    const out = okOf({ word: "a", meaning_vi: "b" });
+    expect(out).toEqual({ word: "a", meaning_vi: "b", ipa: null, example: null, audio_url: null });
+    expect("cefr" in out).toBe(false);
+    expect("pos" in out).toBe(false);
   });
 });

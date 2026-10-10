@@ -12,6 +12,12 @@ import {
   IPA_MAX,
   WORD_MAX,
   optionalField,
+  parseCefrFilter,
+  validateCefrInput,
+  validateImageUrlInput,
+  validatePosInput,
+  validateSourceInput,
+  validateSynonymsInput,
   validateWordInput,
 } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
@@ -51,11 +57,24 @@ export async function GET(req: NextRequest) {
 
   const params = req.nextUrl.searchParams;
   const bookIdRaw = Number(params.get("bookId"));
+  const sourceRaw = params.get("source");
+  const audioRaw = params.get("audio");
+  const sortRaw = params.get("sort");
   const result = await listVocabulary({
     bookId: Number.isInteger(bookIdRaw) && bookIdRaw > 0 ? bookIdRaw : undefined,
     q: params.get("q")?.trim() || undefined,
     limit: clampInt(params.get("limit"), 50, 200),
     offset: clampInt(params.get("offset"), 0, Number.MAX_SAFE_INTEGER),
+    // VU-43 SF-1 filters (additive): giá trị lạ → bỏ lọc (không lỗi — UI chips)
+    cefr: parseCefrFilter(params.get("cefr")),
+    source:
+      sourceRaw === "oxford-ld" || sourceRaw === "teacher" ? sourceRaw : undefined,
+    audio: audioRaw === "has" || audioRaw === "missing" ? audioRaw : undefined,
+    orphan: params.get("orphan") === "1",
+    sort:
+      sortRaw === "word" || sortRaw === "cefr" || sortRaw === "created"
+        ? sortRaw
+        : undefined,
   });
   return NextResponse.json({ ok: true, ...result });
 }
@@ -151,6 +170,42 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "meaningRequired" }, { status: 400 });
     }
     patch.meaningVi = meaning;
+  }
+  // VU-43 SF-1: field mới — validate từng field, lỗi trả mã spec §4
+  if (body.cefr !== undefined) {
+    const cefr = validateCefrInput(body.cefr);
+    if (cefr !== null && typeof cefr === "object") {
+      return NextResponse.json({ ok: false, error: "invalidCefr" }, { status: 400 });
+    }
+    patch.cefr = cefr;
+  }
+  if (body.source !== undefined) {
+    const source = validateSourceInput(body.source);
+    if (source !== null && typeof source === "object") {
+      return NextResponse.json({ ok: false, error: "invalidSource" }, { status: 400 });
+    }
+    patch.source = source;
+  }
+  if (body.pos !== undefined) {
+    const pos = validatePosInput(body.pos);
+    if (pos !== null && typeof pos === "object") {
+      return NextResponse.json({ ok: false, error: "invalidPos" }, { status: 400 });
+    }
+    patch.pos = pos;
+  }
+  if (body.image_url !== undefined) {
+    const imageUrl = validateImageUrlInput(body.image_url);
+    if (imageUrl !== null && typeof imageUrl === "object") {
+      return NextResponse.json({ ok: false, error: "invalidImageUrl" }, { status: 400 });
+    }
+    patch.imageUrl = imageUrl;
+  }
+  if (body.synonyms !== undefined) {
+    const synonyms = validateSynonymsInput(body.synonyms);
+    if (synonyms !== null && typeof synonyms === "object") {
+      return NextResponse.json({ ok: false, error: "invalidSynonyms" }, { status: 400 });
+    }
+    patch.synonyms = synonyms;
   }
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ ok: false, error: "emptyPatch" }, { status: 400 });

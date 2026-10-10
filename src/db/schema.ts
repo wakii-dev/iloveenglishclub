@@ -349,6 +349,12 @@ export const words = pgTable("words", {
   // khi enrich fill ≥1 field (null = teacher tạo thuần).
   cefr: text("cefr"),
   source: text("source"),
+  // Vocab CMS (VU-43 SF-1 — additive, nullable): pos lowercase nguồn
+  // crawl_entries.pos khi promote; imageUrl upload admin (storage dual-driver);
+  // synonyms comma-separated chuẩn hoá join ', ' (validate vocabulary.ts).
+  pos: text("pos"),
+  imageUrl: text("image_url"),
+  synonyms: text("synonyms"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -395,6 +401,11 @@ export const crawlEntries = pgTable("crawl_entries", {
 }, (entry) => [
   index("crawl_entries_status_idx").on(entry.status),
   index("crawl_entries_word_idx").on(entry.word),
+  // Vocab CMS (VU-43 SF-1): curation filter bar — 63.9k rows cần index-supported
+  // pagination server-side (EXPLAIN probe SF-1 task 1).
+  index("crawl_entries_cefr_idx").on(entry.cefr),
+  index("crawl_entries_pos_idx").on(entry.pos),
+  index("crawl_entries_ox3000_idx").on(entry.ox3000),
 ]);
 
 /**

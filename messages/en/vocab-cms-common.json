@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "vocabulary": "Vocabulary"
+  },
+  "tabs": {
+    "catalog": "Catalog",
+    "curation": "Curation",
+    "stats": "Stats"
+  },
+  "bulk": {
+    "selected": "{count} selected",
+    "clear": "Clear selection"
+  },
+  "errors": {
+    "tooMany": "More than 500 words per request — split into chunks",
+    "scopeRequired": "Pick a scope (book or word list) before running",
+    "invalidCefr": "Invalid CEFR level (A1–C2)",
+    "invalidPos": "Invalid part of speech (max 32 characters)",
+    "invalidSynonyms": "Synonym list too long (max 500 characters)",
+    "invalidImageUrl": "Image URL must be an http(s) URL",
+    "invalidSource": "Source must be oxford-ld or teacher",
+    "imageTooLarge": "Image must be at most 2MB",
+    "imageMime": "Image must be PNG, JPEG or WebP",
+    "bookNotFound": "Book not found",
+    "meaningRequired": "Missing Vietnamese meaning",
+    "invalidEntryWord": "Entry has no valid headword",
+    "wordNotFound": "Word not found",
+    "notFound": "Not found",
+    "duplicateWord": "Word already exists",
+    "generic": "Something went wrong — try again"
+  }
+}
