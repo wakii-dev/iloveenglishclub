@@ -31,6 +31,9 @@ function client(): postgres.Sql {
 
 export const DASH_BOOK_SLUG = "level-5";
 export const DASH_BOOK2_SLUG = "level-6";
+// books level-1..7 có id 1..7 (schema §2) — route learn đòi bookId SỐ
+// (SF-5 fix: continue CTA giờ href bookId, không còn slug)
+export const DASH_BOOK_ID = 5;
 
 export const DASH_WORDS_L5 = Array.from({ length: 25 }, (_, i) => ({
   word: `qa-dash-l5-${String(i + 1).padStart(2, "0")}`,

@@ -99,7 +99,7 @@ export function DashboardContinueCard({
                 {t("hub.dash.continueProgressNum", { planted: plantedInLevel, total })}
               </span>
               <Link
-                href={`/vocabulary/learn/${card.slug}`}
+                href={`/vocabulary/learn/${card.bookId}`}
                 className="mt-4.5 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-2xl bg-primary font-display text-[17.5px] font-bold text-primary-foreground shadow-[0_4px_0_var(--coral-deep)] transition-transform active:translate-y-[3px] active:shadow-[0_1px_0_var(--coral-deep)]"
               >
                 {t("hub.dash.continueCta", { count: card.newCount })}

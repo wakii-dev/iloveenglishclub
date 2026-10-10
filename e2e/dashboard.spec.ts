@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
-  DASH_BOOK_SLUG,
+  DASH_BOOK_ID,
   seedDashboardProgress,
 } from "./vocabulary-dashboard-fixture";
 
@@ -71,13 +71,14 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     // XP pill — format vi-VN (dấu chấm ngăn nghìn)
     await expect(page.getByText("1.248 XP")).toBeVisible();
 
-    // continue card: level kế tiếp = Level 2 (từ 11–20, 10 từ mới) — CHỈ
-    // assert href, KHÔNG navigate vào learn runner (SF-3)
+    // continue card: level kế tiếp = Level 2 (từ 11–20, 10 từ mới) — href
+    // bookId SỐ (contract route learn [book]; SF-5 fix: slug → 404 thật
+    // vì page regex `^\d+$`) + navigate thật trong browser-verify SF-5
     const continueCta = page.getByRole("link", { name: /Học 10 từ mới/ });
     await expect(continueCta).toBeVisible();
     await expect(continueCta).toHaveAttribute(
       "href",
-      `/vi/vocabulary/learn/${DASH_BOOK_SLUG}`,
+      `/vi/vocabulary/learn/${DASH_BOOK_ID}`,
     );
     await expect(
       page.getByText("Level 2 · Từ 11–20 — còn 10 từ mới trong level"),
@@ -166,7 +167,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     const continueCta = page.getByRole("link", { name: /Learn 10 new words/ });
     await expect(continueCta).toHaveAttribute(
       "href",
-      `/en/vocabulary/learn/${DASH_BOOK_SLUG}`,
+      `/en/vocabulary/learn/${DASH_BOOK_ID}`,
     );
     await expect(
       page.getByText("Level 2 · Words 11–20 — 10 new words left in this level"),

@@ -9,8 +9,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * render với translator dựng từ messages THẬT en/vi (key thiếu một phía làm
  * test fail rõ — giữ pattern cũ). Store mocked: dashboard-store (summary/
  * garden/continue/levels) + hub-store.listDiscoverBooks (Khám phá giữ logic).
- * Contract pin: continue CTA href /vocabulary/learn/[slug] (plain link — SF-3
- * route), sách hoàn thành → KHÔNG link, số liệu đúng qua aria/text.
+ * Contract pin: continue CTA href /vocabulary/learn/[bookId SỐ] (plain link —
+ * route learn đòi "^\d+$" — SF-5 fix slug→404), sách hoàn thành → KHÔNG link.
  */
 
 const localeState = vi.hoisted(() => ({ locale: "en" as "en" | "vi" }));
@@ -269,7 +269,7 @@ describe("HubOverviewSection — continue card", () => {
     expect(html).toContain(
       esc(makeT("en")("hub.dash.continueMeta", { level: 6, from: 51, to: 60, count: 5 })),
     );
-    expect(html).toContain('href="/vocabulary/learn/level-5"');
+    expect(html).toContain('href="/vocabulary/learn/5"');
     expect(html).toContain(esc(makeT("en")("hub.dash.continueCta", { count: 5 })));
     // progress aria level 6: 5/10 planted
     expect(html).toContain(
