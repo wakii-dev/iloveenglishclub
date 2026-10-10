@@ -20,7 +20,7 @@
       "tier": 0,
       "summary": "Phase 1/2 (checkpoint sau tier 1: catalog + curation + backfill live). Demo qua API: migration additive Neon (words.pos/image_url/synonyms + 3 index crawl_entries); GET list filter tìm cả nghĩa VI (escape wildcard), cefr/source/audio/orphan/sort; bulk assign advisory-lock không race + tag CEFR overwrite + delete dry-run đếm progress trước; export CSV cap 10k mở đúng dấu; stats route histogram tổng = tổng; audio backfill có scope copy blob Oxford; promote teacher-in-loop duplicate skip theo predicate lower+trim; image upload route 2MB mime allowlist; shared bulk-selection + vocabulary-sub-nav + i18n skeleton 4 namespace files + e2e cleanup helper.",
       "design": "none",
-      "linear": ""
+      "linear": "VU-44"
     },
     {
       "id": "sf-2",
@@ -29,7 +29,7 @@
       "tier": 1,
       "summary": "Demo: teacher mở /vi/admin/vocabulary thấy TOÀN BỘ words (trước giờ 404) — filter tìm theo nghĩa tiếng Việt có dấu, chips CEFR, nguồn teacher/oxford, audio có/thiếu, book, orphan; sort + phân trang 50; sửa từ thêm pos/synonyms/image (upload + thumb preview) và cefr/source (trước đây PATCH không sửa được); chọn nhiều → gán sách (từ hiện ở public book page) / tag CEFR overwrite / xoá 2-phase hiện số progress bị cascade; export CSV giữ filter; nav 'Từ vựng' active đúng, không đè Crawl trên /crawl.",
       "design": "none",
-      "linear": ""
+      "linear": "VU-45"
     },
     {
       "id": "sf-3",
@@ -38,7 +38,7 @@
       "tier": 1,
       "summary": "Demo: /admin/vocabulary/curation duyệt 63.9k entry Oxford parsed — filter cefr/pos/ox3000/tìm headword, badge 'đã có từ' + link merge; chọn nhiều → grid soạn nghĩa VI (thiếu ô nào chặn nút promote) → chọn book → promote hàng loạt (duplicate skip không chết batch, report created/duplicates/failed); audio backfill theo scope book: dry-run bảng plan matched/pending/missing → apply gán audio từ blob Oxford cho từ thiếu, chạy lại = 0 matched.",
       "design": "none",
-      "linear": ""
+      "linear": "VU-46"
     },
     {
       "id": "sf-4",
@@ -47,17 +47,49 @@
       "tier": 2,
       "summary": "Phase 2/2 — final. Demo: /admin/vocabulary/stats trả lời ngay: tổng từ, coverage audio/image/enrich %, histogram CEFR (buckets tổng = tổng words kể cả dữ liệu bẩn), bảng per-book, orphan; convergence sweep FULL admin config trên merged base kể cả assertions chéo SF (từ promoted hiện trong catalog UI, nav active trên curation); rehearsal template bulk 500/export 5k/backfill 200/promote 20 không timeout; security-audit checkpoint sạch P0/P1; mọi suites admin + vocab + public xanh.",
       "design": "none",
-      "linear": ""
+      "linear": "VU-47"
     }
   ],
   "edges": [
-    { "from": "epic", "to": "sf-1", "rel": "contains" },
-    { "from": "epic", "to": "sf-2", "rel": "contains" },
-    { "from": "epic", "to": "sf-3", "rel": "contains" },
-    { "from": "epic", "to": "sf-4", "rel": "contains" },
-    { "from": "sf-2", "to": "sf-1", "rel": "depends-on" },
-    { "from": "sf-3", "to": "sf-1", "rel": "depends-on" },
-    { "from": "sf-4", "to": "sf-2", "rel": "depends-on" },
-    { "from": "sf-4", "to": "sf-3", "rel": "depends-on" }
+    {
+      "from": "epic",
+      "to": "sf-1",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-2",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-3",
+      "rel": "contains"
+    },
+    {
+      "from": "epic",
+      "to": "sf-4",
+      "rel": "contains"
+    },
+    {
+      "from": "sf-2",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-3",
+      "to": "sf-1",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-2",
+      "rel": "depends-on"
+    },
+    {
+      "from": "sf-4",
+      "to": "sf-3",
+      "rel": "depends-on"
+    }
   ]
 }

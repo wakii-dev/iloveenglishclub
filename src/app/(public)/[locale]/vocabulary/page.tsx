@@ -63,14 +63,22 @@ export default async function VocabularyHubPage({
 
   return (
     <div className="mx-auto max-w-[1120px] px-6 py-12">
-      <h1 className="font-display text-[33px] leading-tight font-bold tracking-tight">
-        {t("hub.title")}
-      </h1>
+      {/* tab overview (dashboard SF-4) có h1 riêng "Chào {name}" — tránh 2 h1 */}
+      {!(tab === "overview" && userId !== null) && (
+        <h1 className="font-display text-[33px] leading-tight font-bold tracking-tight">
+          {t("hub.title")}
+        </h1>
+      )}
 
       <HubTabs active={tab} loggedIn={userId !== null} />
 
       {tab === "overview" && userId !== null ? (
-        <HubOverviewSection userId={userId} sp={sp} locale={locale} now={now} />
+        <HubOverviewSection
+          userId={userId}
+          locale={locale}
+          now={now}
+          name={session?.user?.name ?? null}
+        />
       ) : null}
       {tab === "library" ? (
         <HubLibrarySection userId={userId} sp={sp} locale={locale} now={now} />

@@ -157,3 +157,11 @@ export async function cleanupHubFixture(): Promise<void> {
   const names = HUB_WORDS.map((w) => w.word);
   await c`delete from words where word = any(${names})`;
 }
+
+/** Tổng số hàng bảng words HIỆN TẠI — test pagination dùng expected ĐỘNG
+ * (SF-5 convergence: DB template còn 6 từ demo non-qa — không hardcode). */
+export async function countAllWords(): Promise<number> {
+  const c = client();
+  const rows: { n: number }[] = await c`select count(*)::int as n from words`;
+  return rows[0]?.n ?? 0;
+}

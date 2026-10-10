@@ -1,0 +1,29 @@
+Rehearsal scale ~5k rows (SF-5, VU-42 — context pack mục 4) — 2026-10-10T12:36:16Z
+
+Fixture: 200 từ qa-reh-w-* + 200 book_words + 200 user_word_progress (40 due
+quá khứ) + 4 000 vocab_activity + 90 daily_activity ≈ 4.7k rows, batch insert
+(mỗi bảng 1 câu). File test tạm src/lib/vocabulary/rehearsal-5k.integration.test.ts
+ĐÃ XOÁ sau khi chạy (touch map — xoá sau khi chạy, teardown sạch).
+
+Client-side timing (máy dev VN → Neon us-east-2; RTT ~250ms/query chi phối —
+cold = kết nối mới + compute wake, warm = pooled):
+  getLearnSession      cold 4 446ms · warm 2 417ms  (exit 0, steps > 0, ≤ 25)
+  getReviewSession     cold 1 609ms · warm 1 462ms  (queue due ≤ DUE_LIMIT 50)
+  dashboard aggregate  cold 2 467ms · warm 2 436ms  (summary.xp 4 100 đúng)
+
+Server-side EXPLAIN ANALYZE trên CÙNG data (rehearsal-explain.txt) — bằng chứng
+query scale bounded, KHÔNG seq-scan bảng lớn:
+  review queue (due LIMIT 50)      Execution 0.218ms — Index Scan PK (user_id, word_id)
+  planted-today count filter       Execution 0.916ms — user-scoped trên 4k rows
+  streak lookback (daily_activity) Execution 0.082ms
+  book pool LIMIT 500              Execution 0.254ms
+  (seq scan chỉ xuất hiện trên bảng <500 rows — planner đúng, không phải
+   load-all pattern; assertions load-all SF-2 (learn-session-store.test.ts
+   §6.8) xanh trong vitest unit.)
+
+6-từ degenerate (prod shape): fixture qa-vocab-* (lane 3310) + 3317 learn-session
+walkthrough — xanh trong aggregator; pool degenerate listen-fallback gõ-nghĩa
+được FLOW driver đi thật (browser-verify.mjs B4).
+
+Teardown: assert 0 rows còn sót (words/progress/activity/user/book) ✓ —
+`select count(*)` từng bảng = 0 sau whenAll.

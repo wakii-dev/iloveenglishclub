@@ -1,0 +1,53 @@
+# SF-2 acceptance walkthrough — 2026-10-09T16:13:09.884Z
+# dev server http://localhost:3327 · book A=9902 (12 từ) · book B=9903 (6 từ prod-shape)
+PASS — login credentials + session cookie — user=qa-sf2@test.local
+PASS — A1 GET learn 200
+PASS — A1 sessionKey UUID
+PASS — A1 phiên 5 từ (level 1) — words=1,2,3,4,5
+PASS — A1: chuỗi per từ = introduce,mc,listen,type
+PASS — A1 đan xen batch 2 (intro pos 0,1,8,9,16) — pos=0,1,8,9,16
+PASS — A1 no-leak: không cờ đáp án; meaningVi chỉ type; word ẩn listen/type
+PASS — A2 mc#1: grade null, +1 XP (đúng đầu trong ngày của từ)
+PASS — A2 listen#1: grade null, 0 XP (lần-đầu đã dùng) — xp=0
+PASS — A2 type#1: q=4, reps tiến đúng 1, lapses 0 — grade={"quality":4,"ease":2.5,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:13:32.859Z","lapses":0}
+PASS — A2 type#1: xpAwarded = 4 (learn-complete; step-XP đã dùng ở mc) — xp=4
+PASS — A2 mc#2: grade null, +1 XP (đúng đầu trong ngày của từ)
+PASS — A2 listen#2: grade null, 0 XP (lần-đầu đã dùng) — xp=0
+PASS — A2 type#2: q=4, reps tiến đúng 1, lapses 0 — grade={"quality":4,"ease":2.5,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:13:55.407Z","lapses":0}
+PASS — A2 type#2: xpAwarded = 4 (learn-complete; step-XP đã dùng ở mc) — xp=4
+PASS — A2 mc#3: grade null, +1 XP (đúng đầu trong ngày của từ)
+PASS — A2 listen#3: grade null, 0 XP (lần-đầu đã dùng) — xp=0
+PASS — A2 type#3: q=4, reps tiến đúng 1, lapses 0 — grade={"quality":4,"ease":2.5,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:14:19.292Z","lapses":0}
+PASS — A2 type#3: xpAwarded = 4 (learn-complete; step-XP đã dùng ở mc) — xp=4
+PASS — A2 mc#4: grade null, +1 XP (đúng đầu trong ngày của từ)
+PASS — A2 listen#4: grade null, 0 XP (lần-đầu đã dùng) — xp=0
+PASS — A2 type#4: q=4, reps tiến đúng 1, lapses 0 — grade={"quality":4,"ease":2.5,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:14:43.441Z","lapses":0}
+PASS — A2 type#4: xpAwarded = 4 (learn-complete; step-XP đã dùng ở mc) — xp=4
+PASS — A2 mc#5: grade null, +1 XP (đúng đầu trong ngày của từ)
+PASS — A2 listen#5: grade null, 0 XP (lần-đầu đã dùng) — xp=0
+PASS — A2 type#5: q=4, reps tiến đúng 1, lapses 0 — grade={"quality":4,"ease":2.5,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:15:05.744Z","lapses":0}
+PASS — A2 type#5: xpAwarded = 4 (learn-complete; step-XP đã dùng ở mc) — xp=4
+PASS — A2 tổng XP = 25 (5×5 theo §4 lần-đầu-trong-ngày) — totalXp=25
+PASS — A2 goalDone sau 5 từ (goal 5)
+PASS — A2 DB: 5 row progress reps=1 lapses=0 — [{"word_id":1,"reps":1,"lapses":0},{"word_id":2,"reps":1,"lapses":0},{"word_id":3,"reps":1,"lapses":0},{"word_id":4,"reps":1,"lapses":0},{"word_id":5,"reps":1,"lapses":0}]
+PASS — A3 phiên mới chứa từ 6 (chưa planted) — words=6,7,8,9,10
+PASS — A3 mc sai: correct=false, xpAwarded=0 — xp=0
+PASS — A3 type đúng sau mc sai: q=0, reps=0, lapses=1, KHÔNG learn-complete (xp=1) — grade={"quality":0,"ease":1.7000000000000002,"intervalDays":1,"reps":0,"dueAt":"2026-10-10T16:15:30.894Z","lapses":1} xp=1
+PASS — A3 retry mc (attempt 2) đúng: 0 XP (lần-đầu đã dùng — §4) — xp=0
+PASS — A3 retry type (attempt 2) đúng: q=4 reps=0→1, learn-complete +4 (lần đầu planting) — grade={"quality":4,"ease":1.7,"intervalDays":1,"reps":1,"dueAt":"2026-10-10T16:15:44.826Z","lapses":1} xp=4
+PASS — A3 DB từ 6: reps=1 lapses=1 — {"reps":1,"lapses":1}
+PASS — A4 duplicate POST: cached (xpAwarded mirror row xp=0 — step-XP lần-đầu đã dùng), due_at + XP DB KHÔNG đổi — xp=0 before={"due_at":"2026-10-10T16:15:44.826Z","reps":1,"xp":30} after={"due_at":"2026-10-10T16:15:44.826Z","reps":1,"xp":30}
+PASS — A5 reload: từ 6 biến mất; queue = 4 từ còn reps=0 TRONG level 1 (không tràn level 2) — words=7,8,9,10
+PASS — A6 book 6 từ: MC 3 lựa chọn (pool 3 nghĩa), từ b-05 không audio bỏ listen, không crash — mc options=[3] b5 chain="introduce,mc,type"
+PASS — A7 review: đúng 2 từ due (SQL-side oldest-first) — words=1,2
+PASS — A7: chuỗi per từ = listen,type
+PASS — A7 listen từ 1 đúng: correct, 0 XP (lần-đầu đã dùng — §4) — xp=0
+PASS — A7 type SAI từ 1: q=0, reps 1→0, lapses 1, 0 XP — grade={"quality":0,"ease":1.7000000000000002,"intervalDays":1,"reps":0,"dueAt":"2026-10-10T16:16:17.120Z","lapses":1}
+PASS — A7 listen từ 2 đúng: correct (0 XP — lần-đầu đã dùng ở A2)
+PASS — A7 từ 2 đúng cả 2 bước: q=4, reps 1→2, interval 6 (SM-2 tiến đúng) — grade={"quality":4,"ease":2.5,"intervalDays":6,"reps":2,"dueAt":"2026-10-15T16:16:32.298Z","lapses":0} listen xp=0 (lần-đầu đã dùng ở A2 — §4)
+PASS — A7 review lại: queue rỗng (q=0 due +1d + q=4 due +6d đều rời hôm nay) — steps=0
+PASS — A7 prefill ?word= → queue đúng 1 từ (KHÔNG đòi due)
+PASS — taxonomy 401 không cookie
+PASS — taxonomy 400 invalidKind
+PASS — taxonomy 404 wordNotFound (prefill không có progress)
+# Kết quả: 50 PASS / 0 FAIL

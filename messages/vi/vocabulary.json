@@ -10,16 +10,75 @@
   "reviewTitle": "Ôn tập từ vựng",
   "dueToday": "Hôm nay cần ôn: {count, plural, other {# từ}}",
   "reviewEmpty": "Hôm nay không có từ cần ôn — quay lại sau nhé.",
-  "flipHint": "Bấm vào thẻ để lật",
-  "flipBack": "Lật lại mặt trước",
-  "cardProgress": "Thẻ {current}/{total}",
-  "gradeGroup": "Chấm mức nhớ",
-  "gradeAgain": "Lại",
-  "gradeHard": "Nhớ-kho",
-  "gradeGood": "Nhớ",
-  "gradeEasy": "Dễ",
-  "reviewDone": "Đã ôn hết thẻ trong phiên này — giỏi lắm!",
-  "reviewError": "Không lưu được kết quả ôn — thử lại nhé.",
+  "session": {
+    "back": "Quay lại",
+    "bookLevel": "Level {level} · Từ {from}–{to}",
+    "xpChip": "+{xp} XP",
+    "progressAria": "Tiến độ phiên: {done} trên {total} từ đã trồng",
+    "stateLine": "Từ {current}/{total} · {planted} từ đã trồng — đang ở bước {step}",
+    "step": {
+      "introduce": "giới thiệu",
+      "mc": "chọn nghĩa",
+      "listen": "nghe-chọn",
+      "type": "gõ từ"
+    },
+    "theme": {
+      "toDark": "Chuyển chế độ tối",
+      "toLight": "Chuyển chế độ sáng"
+    },
+    "introduce": {
+      "badge": "Từ mới · {count} bước kiểm tra",
+      "listenCta": "Nghe từ này",
+      "continue": "Tiếp tục"
+    },
+    "mc": {
+      "label": "Chọn nghĩa đúng",
+      "group": "Các lựa chọn nghĩa"
+    },
+    "listen": {
+      "label": "Nghe và chọn nghĩa bạn nghe được",
+      "replay": "Phát lại",
+      "group": "Các lựa chọn nghĩa",
+      "fallbackLabel": "Gõ nghĩa bạn vừa nghe",
+      "fallbackPlaceholder": "Gõ nghĩa…",
+      "fallbackCheck": "Kiểm tra"
+    },
+    "type": {
+      "label": "Gõ từ tiếng Anh có nghĩa là",
+      "placeholder": "Gõ từ tiếng Anh…",
+      "check": "Kiểm tra",
+      "inputAria": "Nhập từ tiếng Anh nghĩa: {meaning}"
+    },
+    "feedback": {
+      "correct": "Chính xác!",
+      "near": "Gần đúng — sai 1 ký tự vẫn được chấp nhận",
+      "wrong": "Chưa đúng — từ sẽ quay lại cuối hàng phiên này",
+      "xp": "+{xp} XP",
+      "continue": "Tiếp tục"
+    },
+    "summary": {
+      "label": "Phiên hoàn tất",
+      "xp": "+{xp} XP",
+      "learnSub": "Đã trồng {planted} từ (+{plantedXp} XP) · các bước đúng (+{stepXp} XP)",
+      "reviewSub": "{steps} bước đúng",
+      "statPlanted": "từ đã trồng",
+      "statStage": "stage đạt được",
+      "statLevel": "Level {level}",
+      "statStreak": "ngày streak",
+      "capnote": "Bạn đã chạm cap XP từ vựng trong ngày — mọi bước vẫn được chấm đầy đủ và SRS vẫn tiến.",
+      "nextLevel": "Học Level {level}",
+      "reviewAgain": "Ôn tiếp",
+      "dashboard": "Về dashboard"
+    },
+    "learnDone": {
+      "title": "Sách hoàn thành!",
+      "body": "Bạn đã trồng hết từ mới của sách này — level mới sẽ mở khi sách cập nhật.",
+      "cta": "Về dashboard"
+    },
+    "error": "Không lưu được bước học — thử lại nhé.",
+    "loginRequired": "Phiên đăng nhập hết hạn — đăng nhập lại để giữ tiến độ.",
+    "loginCta": "Đăng nhập"
+  },
   "quizTitle": "Kiểm tra từ vựng",
   "quizLead": "Bài kiểm tra {book} — {count} câu xen kẽ trắc nghiệm, điền từ và ghép nghĩa.",
   "quizEmpty": "Sách chưa có từ vựng để tạo đề — quay lại sau nhé.",
@@ -54,6 +113,41 @@
   },
   "hub": {
     "title": "Tổng quan từ vựng",
+    "dash": {
+      "greeting": "Chào {name}",
+      "xpPill": "{count} XP",
+      "continueTag": "Học tiếp",
+      "continueDoneTag": "Hoàn thành",
+      "continueMeta": "Level {level} · Từ {from}–{to} — còn {count} từ mới trong level",
+      "continueMetaDone": "Bạn đã hoàn thành lộ trình sách — chờ sách mới nhé!",
+      "continueProgressAria": "Level {level}: {planted} trên {total} từ đã trồng",
+      "continueProgressNum": "{planted}/{total} từ trong level",
+      "continueCta": "Học {count} từ mới",
+      "goalCardLabel": "từ mới hôm nay",
+      "goalRingAria": "Mục tiêu hôm nay: {planted} trên {goal} từ mới",
+      "goalEdit": "Sửa mục tiêu ▾",
+      "goalPopLabel": "Chỉnh mục tiêu hàng ngày",
+      "goalEachDay": "Mỗi ngày:",
+      "goalSaveError": "Không lưu được mục tiêu — thử lại nhé.",
+      "streakDays": "{count} ngày",
+      "streakNote": "vocab · dictation đều giữ lửa",
+      "dueValue": "{count} từ",
+      "dueNote": "đến hạn ôn tập hôm nay",
+      "reviewCta": "Ôn ngay",
+      "noWordsYet": "Bạn chưa trồng từ nào —",
+      "gardenTitle": "Vườn từ vựng",
+      "gardenGrowing": "{count} từ đang lớn dần",
+      "gardenAria": "Vườn từ vựng — phân bố theo 8 giai đoạn tăng trưởng",
+      "booksTitle": "Lộ trình {count} sách",
+      "booksAria": "Lộ trình các sách",
+      "bookTagDone": "Hoàn thành",
+      "bookTagLearning": "Đang học",
+      "bookTagNone": "Chưa bắt đầu",
+      "discoverCardAria": "Thêm {count} từ vào lộ trình",
+      "themeToDark": "Chuyển chế độ tối",
+      "themeToLight": "Chuyển chế độ sáng",
+      "greetingFallback": "bạn"
+    },
     "tabs": {
       "overview": "Tổng quan",
       "library": "Thư viện",
