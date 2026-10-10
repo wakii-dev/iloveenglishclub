@@ -267,6 +267,19 @@ test.describe("Full-chain SF-4", () => {
     // Mục đích chính của test giữ nguyên: audio Blob phát THẬT qua nút phát
     // lại ("Dừng audio" = state playing). Listen ẩn word — chọn option đầu,
     // sai thì từ requeue cuối phiên, bước type vẫn chấm đúng (server-side).
+    // waitAdvanced: chờ feedback TÁT (auto-advance 1s) trước bước kế — chống
+    // bấm lại option disabled của bước cũ (Playwright click ăn trọn timeout).
+    const waitAdvanced = async () => {
+      for (let w = 0; w < 150; w++) {
+        if (await page.getByText("Phiên hoàn tất").isVisible().catch(() => false)) return;
+        const fb =
+          (await page.getByTestId("feedback-correct").isVisible().catch(() => false)) ||
+          (await page.getByTestId("feedback-wrong").isVisible().catch(() => false));
+        if (!fb) return;
+        await page.waitForTimeout(200);
+      }
+      throw new Error("feedback không tự mất sau 30s");
+    };
     for (let i = 0; i < 12; i++) {
       if (await page.getByText("Phiên hoàn tất").isVisible()) break;
       if (await page.getByTestId("type-input").isVisible()) {
@@ -281,6 +294,7 @@ test.describe("Full-chain SF-4", () => {
         await expect(page.getByTestId("feedback-correct")).toBeVisible({
           timeout: 30_000,
         });
+        await waitAdvanced();
       } else if (await page.getByTestId("listen-replay").isVisible()) {
         await page.getByTestId("listen-replay").click();
         await expect(
@@ -295,15 +309,33 @@ test.describe("Full-chain SF-4", () => {
         ).toBeVisible({ timeout: 30_000 });
         const cont = page.getByTestId("continue-after-wrong");
         if (await cont.isVisible()) await cont.click();
+        await waitAdvanced();
+      } else if (await page.getByTestId("option-group").isVisible()) {
+        // mc (từ KHÔNG audio — ví dụ elm khi enrich test không chạy trong
+        // --grep): heading lộ từ → chọn ĐÚNG nghĩa qua map DB
+        const word = (
+          await page.getByTestId("step-card").getByRole("heading").innerText()
+        ).trim();
+        const meaning = [...wordByMeaning.entries()].find(
+          ([, w]) => w === word,
+        )?.[0];
+        expect(meaning, `mc từ fixture: ${word}`).toBeTruthy();
+        await page
+          .getByTestId("session-option")
+          .filter({ hasText: meaning! })
+          .click({ timeout: 10_000 });
+        await expect(
+          page
+            .getByTestId("feedback-correct")
+            .or(page.getByTestId("feedback-wrong"))
+            .first(),
+        ).toBeVisible({ timeout: 30_000 });
+        const cont = page.getByTestId("continue-after-wrong");
+        if (await cont.isVisible()) await cont.click();
+        await waitAdvanced();
       } else {
         break;
       }
-      await expect(
-        page
-          .getByTestId("step-card")
-          .or(page.getByText("Phiên hoàn tất"))
-          .first(),
-      ).toBeVisible({ timeout: 30_000 });
     }
     await expect(page.getByText("Phiên hoàn tất")).toBeVisible();
 
