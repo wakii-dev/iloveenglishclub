@@ -86,5 +86,7 @@ coercion vô hại.
 6cc5563 fix(vocab-dashboard): continue CTA href bookId số — slug rơi 404
 bd9a9f9 test(vocab-convergence): aggregator lane + suite top-users (port 3340) + sửa stale specs
 978b902 test(vocab-convergence): review fixes — port 3340 + tách nguồn weekly/all_time (amend từ e8fa4de)
-bffe82b docs(vocab-convergence): evidence pack (commit này — hash trong file để B1 đối chiếu HEAD~1)
+bffe82b docs(vocab-convergence): evidence pack + runbook + plan (suites/flow/rehearsal/review/security)
+72bba8e docs: sửa hash commit trong evidence sau amend (B1)
+2b36684 docs: tick plan T13 — story-verify B1/B2/B2b/B3 PASS, B4 (merge) + B5 (Done) = coordinator; push branch
 
