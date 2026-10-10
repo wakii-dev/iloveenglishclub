@@ -84,7 +84,10 @@ export function SessionSummary({
                 data-testid="summary-level"
                 className="block font-display text-[19px] font-bold text-leaf-deep tabular-nums"
               >
-                {levelInfo.plantedInChunk}/{levelInfo.chunkTotal}
+                {/* plantedInChunk chụp lúc page-load (trước phiên) — cộng planted
+                    phiên này (từ reps=0 lúc load, không trùng) */}
+                {levelInfo.plantedInChunk + summary.planted}/
+                {levelInfo.chunkTotal}
               </b>
               <span className="text-[12px] leading-[1.3] text-muted-foreground">
                 {t("summary.statLevel", { level: levelInfo.level })}

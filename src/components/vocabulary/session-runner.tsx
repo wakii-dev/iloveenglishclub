@@ -64,9 +64,12 @@ export function SessionRunner({
   const [state, dispatch] = useReducer(sessionReducer, undefined, () =>
     createSessionState(steps, kind),
   );
-  // Mirror cho async handler (chống stale closure khi double-submit)
+  // Mirror cho async handler + HARD-GUARD double-submit ĐỒNG BỘ: state ref
+  // chỉ cập nhật lúc render — 2 click cùng frame đều thấy submitting=false;
+  // pendingRef chặn ngay trong handler (server idempotency là lớp sau cùng).
   const stateRef = useRef<SessionState>(state);
   stateRef.current = state;
+  const pendingRef = useRef(false);
   const [dark, setDark] = useState(false);
   const pathname = usePathname();
 
@@ -101,8 +104,15 @@ export function SessionRunner({
     return () => clearTimeout(timer);
   }, [state.feedback]);
 
+  // Mở hard-guard SAU khi state post-submit (feedback/postError/authExpired)
+  // đã RENDER — click giữa chừng vẫn thấy pendingRef=true.
+  useEffect(() => {
+    if (!state.submitting) pendingRef.current = false;
+  }, [state.submitting]);
+
   function answer(step: SessionStep, response: string) {
-    if (stateRef.current.submitting || stateRef.current.feedback) return;
+    if (pendingRef.current || stateRef.current.feedback) return;
+    pendingRef.current = true;
     dispatch({ type: "submit" });
     const attemptNo = stateRef.current.attempts.get(step.wordId) ?? 1;
     void (async () => {

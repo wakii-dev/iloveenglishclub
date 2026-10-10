@@ -52,7 +52,7 @@ export function TypeStep({
       <p className="mb-3 text-[12.5px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground">
         {t("type.label")}
       </p>
-      <p className="mb-4 font-display text-[26px] font-bold">
+      <p data-testid="type-prompt" className="mb-4 font-display text-[26px] font-bold">
         “{step.meaningVi}”
       </p>
 
