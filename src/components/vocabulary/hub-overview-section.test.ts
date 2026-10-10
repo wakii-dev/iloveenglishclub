@@ -5,19 +5,40 @@ import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Tab Tổng quan hub — SSR render (pattern page.test.ts trang sách): section
- * Khám phá (vocabulary-learn t-1.3) chỉ hiện khi listDiscoverBooks trả ≥ 1
- * book còn từ chưa học, mỗi book 1 hàng (tiêu đề + count + nút bulk seed t-
- * 1.2). HubFilters (Radix select) stub — không thuộc đối tượng test. Translator
- * dựng từ messages THẬT en/vi — key thiếu một phía làm test fail rõ.
+ * Tab Tổng quan = dashboard Memrise-style (vocab-memrise SF-4, VU-41) — SSR
+ * render với translator dựng từ messages THẬT en/vi (key thiếu một phía làm
+ * test fail rõ — giữ pattern cũ). Store mocked: dashboard-store (summary/
+ * garden/continue/levels) + hub-store.listDiscoverBooks (Khám phá giữ logic).
+ * Contract pin: continue CTA href /vocabulary/learn/[slug] (plain link — SF-3
+ * route), sách hoàn thành → KHÔNG link, số liệu đúng qua aria/text.
  */
 
 const localeState = vi.hoisted(() => ({ locale: "en" as "en" | "vi" }));
 
 const storeState = vi.hoisted(() => ({
-  stats: { total: 3, dueToday: 1, mastered: 1 },
-  books: [] as { id: number; title: string }[],
-  rows: [] as unknown[],
+  summary: {
+    plantedToday: 3,
+    dailyGoalWords: 5,
+    totalXp: 1248,
+    streak: 7,
+    activeToday: true,
+    dueToday: 12,
+  },
+  distribution: [96, 74, 58, 34, 22, 15, 8, 6] as number[],
+  continueCard:
+    null as null | Record<string, unknown>,
+  levelBooks: [] as {
+    bookId: number;
+    slug: string;
+    titleEn: string;
+    titleVi: string | null;
+    cefrLabel: string;
+    progress: {
+      levels: { levelIndex: number; planted: number; total: number }[];
+      planted: number;
+      total: number;
+    };
+  }[],
   discover: [] as {
     id: number;
     slug: string;
@@ -25,27 +46,19 @@ const storeState = vi.hoisted(() => ({
     titleVi: string | null;
     unlearned: number;
   }[],
-  plan: {
-    newDue: 0,
-    reviewDue: 0,
-    totalDue: 0,
-    upcoming: 0,
-    total: 0,
-    mastered: 0,
-    streakDays: 0,
-  },
 }));
 
 vi.mock("next-intl/server", () => ({
-  getTranslations: async () => makeT(localeState.locale),
+  getTranslations: async (namespace: string) =>
+    makeT(localeState.locale, namespace),
 }));
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => makeT(localeState.locale),
+  useTranslations: () => makeT(localeState.locale, "vocabulary"),
 }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: () => {} }),
+  useRouter: () => ({ push: () => {}, refresh: () => {} }),
   usePathname: () => "/en/vocabulary",
 }));
 
@@ -53,32 +66,37 @@ vi.mock("@/i18n/navigation", () => ({
   Link: (props: React.ComponentProps<"a">) => createElement("a", props),
 }));
 
-vi.mock("@/components/vocabulary/hub-filters", () => ({
-  HubFilters: () => createElement("div", null, "filters"),
+vi.mock("@/lib/vocabulary/dashboard-store", () => ({
+  getDashboardSummary: async () => storeState.summary,
+  getGardenDistribution: async () => storeState.distribution,
+  getContinueTarget: async () => storeState.continueCard,
+  getBookLevelProgresses: async () => storeState.levelBooks,
 }));
 
 vi.mock("@/lib/vocabulary/hub-store", () => ({
-  getHubStats: async () => storeState.stats,
-  listHubBooks: async () => storeState.books,
-  listHubWords: async () => storeState.rows,
   listDiscoverBooks: async () => storeState.discover,
-}));
-
-vi.mock("@/lib/vocabulary/daily-plan-store", () => ({
-  getDailyPlan: async () => storeState.plan,
 }));
 
 const { HubOverviewSection } = await import("./hub-overview-section");
 
 const MESSAGES_DIR = path.resolve(__dirname, "../../../messages");
 
-function loadDict(locale: "en" | "vi"): Record<string, unknown> {
+function loadDict(
+  locale: "en" | "vi",
+  namespace: "vocabulary" | "learn",
+): Record<string, unknown> {
+  const file =
+    namespace === "learn" ? "learn.json" : "vocabulary.json";
   return JSON.parse(
-    readFileSync(path.join(MESSAGES_DIR, locale, "vocabulary.json"), "utf8"),
+    readFileSync(path.join(MESSAGES_DIR, locale, file), "utf8"),
   ) as Record<string, unknown>;
 }
 
-function msg(locale: "en" | "vi", key: string): string {
+function msg(
+  locale: "en" | "vi",
+  key: string,
+  namespace: "vocabulary" | "learn" = "vocabulary",
+): string {
   const template = key
     .split(".")
     .reduce<unknown>(
@@ -86,17 +104,17 @@ function msg(locale: "en" | "vi", key: string): string {
         typeof node === "object" && node !== null
           ? (node as Record<string, unknown>)[part]
           : undefined,
-      loadDict(locale),
+      loadDict(locale, namespace),
     );
   if (typeof template !== "string") {
-    throw new Error(`missing message: vocabulary.${key} (${locale})`);
+    throw new Error(`missing message: ${namespace}.${key} (${locale})`);
   }
   return template;
 }
 
-function makeT(locale: "en" | "vi") {
+function makeT(locale: "en" | "vi", namespace: string = "vocabulary") {
   return (key: string, values?: Record<string, string | number>): string => {
-    const template = msg(locale, key);
+    const template = msg(locale, key, namespace as "vocabulary" | "learn");
     if (!values) return template;
     return template
       .replace(
@@ -117,141 +135,235 @@ function esc(text: string): string {
 }
 
 async function renderSection(): Promise<string> {
-  // server component async — await để resolve JSX rồi mới SSR
   const element = await HubOverviewSection({
     userId: "u1",
-    sp: {},
     locale: localeState.locale,
     now: new Date("2026-10-04T03:00:00.000Z"),
+    name: "Minh",
   });
-  return renderToString(element);
+  // React SSR chèn <!-- --> giữa text nodes liền nhau (3/5 → 3<!-- -->/<!-- -->5)
+  return renderToString(element).replaceAll("<!-- -->", "");
 }
+
+const CONTINUE_ACTIVE = {
+  completed: false,
+  bookId: 5,
+  slug: "level-5",
+  titleEn: "Prepare 5",
+  titleVi: null,
+  cefrLabel: "B1",
+  level: {
+    levelIndex: 5,
+    words: [
+      { wordId: 0, order: 51, reps: 1 },
+      { wordId: 1, order: 52, reps: 1 },
+      { wordId: 2, order: 53, reps: 1 },
+      { wordId: 3, order: 54, reps: 1 },
+      { wordId: 4, order: 55, reps: 1 },
+      { wordId: 5, order: 56, reps: 0 },
+      { wordId: 6, order: 57, reps: 0 },
+      { wordId: 7, order: 58, reps: 0 },
+      { wordId: 8, order: 59, reps: 0 },
+      { wordId: 9, order: 60, reps: 0 },
+    ],
+  },
+  newCount: 5,
+};
+
+const BOOK_PROGRESS = (
+  over: Partial<{
+    bookId: number;
+    slug: string;
+    titleEn: string;
+    titleVi: string | null;
+    cefrLabel: string;
+    planted: number;
+    total: number;
+  }> = {},
+) => ({
+  bookId: over.bookId ?? 5,
+  slug: over.slug ?? "level-5",
+  titleEn: over.titleEn ?? "Prepare 5",
+  titleVi: over.titleVi ?? null,
+  cefrLabel: over.cefrLabel ?? "B1",
+  progress: {
+    levels: [
+      {
+        levelIndex: 0,
+        planted: over.planted ?? 54,
+        total: over.total ?? 120,
+      },
+    ],
+    planted: over.planted ?? 54,
+    total: over.total ?? 120,
+  },
+});
 
 beforeEach(() => {
   localeState.locale = "en";
-  storeState.stats = { total: 3, dueToday: 1, mastered: 1 };
-  storeState.books = [];
-  storeState.rows = [];
-  storeState.discover = [];
-  storeState.plan = {
-    newDue: 0,
-    reviewDue: 0,
-    totalDue: 0,
-    upcoming: 0,
-    total: 0,
-    mastered: 0,
-    streakDays: 0,
+  storeState.summary = {
+    plantedToday: 3,
+    dailyGoalWords: 5,
+    totalXp: 1248,
+    streak: 7,
+    activeToday: true,
+    dueToday: 12,
   };
+  storeState.distribution = [96, 74, 58, 34, 22, 15, 8, 6];
+  storeState.continueCard = CONTINUE_ACTIVE;
+  storeState.levelBooks = [BOOK_PROGRESS()];
+  storeState.discover = [];
 });
 
-describe("HubOverviewSection — Lộ trình hôm nay (vocabulary-learn t-1.5)", () => {
-  it("[en] có lộ trình → tiêu đề + summary X mới/Y ôn + streak + CTA /me/vocabulary", async () => {
-    storeState.plan = {
-      newDue: 5,
-      reviewDue: 3,
-      totalDue: 8,
-      upcoming: 4,
-      total: 12,
-      mastered: 1,
-      streakDays: 2,
-    };
+describe("HubOverviewSection — dashboard header + stat row", () => {
+  it("[en] greeting + XP pill + goal ring aria + streak + due + review CTA", async () => {
     const html = await renderSection();
-    expect(html).toContain(esc(msg("en", "hub.roadmap.title")));
+    expect(html).toContain("Hi Minh");
+    expect(html).toContain("1,248 XP");
     expect(html).toContain(
-      makeT("en")("hub.roadmap.summary", { newCount: 5, reviewCount: 3 }),
+      esc(makeT("en")("hub.dash.goalRingAria", { planted: 3, goal: 5 })),
     );
-    expect(html).toContain(makeT("en")("hub.roadmap.streak", { count: 2 }));
-    expect(html).toContain(esc(msg("en", "hub.roadmap.cta")));
-    expect(html).toContain('href="/me/vocabulary"');
+    expect(html).toContain("3/5");
+    expect(html).toContain(
+      esc(makeT("en")("hub.dash.streakDays", { count: 7 })),
+    );
+    expect(html).toContain(
+      esc(makeT("en")("hub.dash.dueValue", { count: 12 })),
+    );
+    expect(html).toContain('href="/me/vocabulary?scope=all"');
+    expect(html).toContain(esc(msg("en", "hub.dash.reviewCta")));
   });
 
-  it("[vi] nhãn lộ trình theo messages vi", async () => {
+  it("[vi] nhãn theo messages vi", async () => {
     localeState.locale = "vi";
-    storeState.plan = {
-      newDue: 5,
-      reviewDue: 3,
-      totalDue: 8,
-      upcoming: 4,
-      total: 12,
-      mastered: 1,
-      streakDays: 2,
-    };
     const html = await renderSection();
-    expect(html).toContain(msg("vi", "hub.roadmap.title"));
     expect(html).toContain(
-      makeT("vi")("hub.roadmap.summary", { newCount: 5, reviewCount: 3 }),
+      esc(makeT("vi")("hub.dash.greeting", { name: "Minh" })),
     );
-    expect(html).toContain(makeT("vi")("hub.roadmap.streak", { count: 2 }));
-    expect(html).toContain(msg("vi", "hub.roadmap.cta"));
-  });
-
-  it("streak 0 (mới seed chưa ôn) → không có dòng streak", async () => {
-    storeState.plan = {
-      newDue: 5,
-      reviewDue: 0,
-      totalDue: 5,
-      upcoming: 7,
-      total: 12,
-      mastered: 0,
-      streakDays: 0,
-    };
-    const html = await renderSection();
-    expect(html).toContain(esc(msg("en", "hub.roadmap.title")));
-    expect(html).not.toContain(
-      makeT("en")("hub.roadmap.streak", { count: 0 }),
+    expect(html).toContain(msg("vi", "hub.dash.gardenTitle"));
+    expect(html).toContain(
+      esc(msg("vi", "hub.dash.reviewCta")),
+    );
+    // garden growing = tổng distribution
+    expect(html).toContain(
+      esc(makeT("vi")("hub.dash.gardenGrowing", { count: 313 })),
     );
   });
 
-  it("chưa có từ nào trong lộ trình → không render section lộ trình", async () => {
-    storeState.plan = {
-      newDue: 0,
-      reviewDue: 0,
-      totalDue: 0,
-      upcoming: 0,
-      total: 0,
-      mastered: 0,
-      streakDays: 0,
-    };
-    const html = await renderSection();
-    expect(html).not.toContain(msg("en", "hub.roadmap.title"));
+  it("name null → greeting fallback (không crash)", async () => {
+    const element = await HubOverviewSection({
+      userId: "u1",
+      locale: "en",
+      now: new Date("2026-10-04T03:00:00.000Z"),
+      name: null,
+    });
+    const html = renderToString(element).replaceAll("<!-- -->", "");
+    expect(html).toContain("Hi there");
   });
 });
 
-describe("HubOverviewSection — Khám phá (vocabulary-learn t-1.3)", () => {
-  it("[en] có book còn từ chưa học → hàng: tiêu đề sách + count + nút bulk", async () => {
+describe("HubOverviewSection — continue card", () => {
+  it("level kế tiếp: tên sách + meta Level N · Từ X–Y + CTA href learn/[slug]", async () => {
+    const html = await renderSection();
+    expect(html).toContain("Prepare 5");
+    expect(html).toContain(
+      esc(makeT("en")("hub.dash.continueMeta", { level: 6, from: 51, to: 60, count: 5 })),
+    );
+    expect(html).toContain('href="/vocabulary/learn/level-5"');
+    expect(html).toContain(esc(makeT("en")("hub.dash.continueCta", { count: 5 })));
+    // progress aria level 6: 5/10 planted
+    expect(html).toContain(
+      esc(
+        makeT("en")("hub.dash.continueProgressAria", {
+          level: 6,
+          planted: 5,
+          total: 10,
+        }),
+      ),
+    );
+  });
+
+  it("sách hoàn thành → KHÔNG link learn + tên sách vẫn hiện (acceptance #4)", async () => {
+    storeState.continueCard = {
+      completed: true,
+      bookId: 5,
+      slug: "level-5",
+      titleEn: "Prepare 5",
+      titleVi: null,
+      cefrLabel: "B1",
+    };
+    const html = await renderSection();
+    expect(html).not.toContain("/vocabulary/learn/");
+    expect(html).toContain("Prepare 5");
+    expect(html).toContain(esc(msg("en", "hub.dash.continueDoneTag")));
+    expect(html).toContain(esc(msg("en", "hub.dash.continueMetaDone")));
+  });
+
+  it("continue null (DB lỗi) → render còn lại, không crash", async () => {
+    storeState.continueCard = null;
+    const html = await renderSection();
+    expect(html).not.toContain("/vocabulary/learn/");
+    expect(html).toContain(msg("en", "hub.dash.gardenTitle"));
+  });
+});
+
+describe("HubOverviewSection — garden + lộ trình sách", () => {
+  it("garden 8 cây + legend tên stage từ learn.json", async () => {
+    const html = await renderSection();
+    expect(html).toContain(msg("en", "hub.dash.gardenAria"));
+    expect(html).toContain(
+      esc(msg("en", "stage.0", "learn")),
+    ); // legend dùng learn.stage.*
+    expect(html).toContain(">96<"); // đếm stage 0 text thật
+    expect(html).toContain(">6<");
+  });
+
+  it("lộ trình: tên sách + chip CEFR + tag + planted/total + bar aria", async () => {
+    const html = await renderSection();
+    expect(html).toContain(
+      esc(makeT("en")("hub.dash.booksTitle", { count: 1 })),
+    );
+    expect(html).toContain("B1"); // chip CEFR
+    expect(html).toContain("54/120");
+    expect(html).toContain("Prepare 5: 54/120"); // bar aria-label
+    expect(html).toContain(esc(msg("en", "hub.dash.bookTagLearning")));
+  });
+
+  it("sách planted hết → tag Hoàn thành", async () => {
+    storeState.levelBooks = [BOOK_PROGRESS({ planted: 120, total: 120 })];
+    const html = await renderSection();
+    expect(html).toContain(esc(msg("en", "hub.dash.bookTagDone")));
+  });
+});
+
+describe("HubOverviewSection — Khám phá giữ logic + empty", () => {
+  it("discover books → dcard: tiêu đề + unlearned + nút bulk seed + icon stroke", async () => {
     storeState.discover = [
       { id: 2, slug: "level-2", titleEn: "Prepare Level 2", titleVi: null, unlearned: 12 },
     ];
     const html = await renderSection();
     expect(html).toContain(msg("en", "hub.discover.title"));
     expect(html).toContain("Prepare Level 2");
-    expect(html).toContain(esc(msg("en", "hub.discover.lead")));
-    // count plural en + nút bulk seed (t-1.2) ngay trên hàng
-    expect(html).toContain(makeT("en")("hub.discover.unlearned", { count: 12 }));
-    expect(html).toContain((loadDict("en").bookStudy as { cta: string }).cta);
+    expect(html).toContain(
+      makeT("en")("hub.discover.unlearned", { count: 12 }),
+    );
+    expect(html).toContain((loadDict("en", "vocabulary").bookStudy as { cta: string }).cta);
+    // icon không đen đặc — stroke currentColor (review B P1 meta-test)
+    expect(html).toContain('stroke="currentColor"');
   });
 
-  it("[vi] nhãn theo messages vi, tiêu đề sách lấy titleVi", async () => {
-    localeState.locale = "vi";
-    storeState.discover = [
-      { id: 2, slug: "level-2", titleEn: "Prepare Level 2", titleVi: "Cấp độ 2", unlearned: 3 },
-    ];
+  it("không có sách nào trong lộ trình → emptyAll + link /books", async () => {
+    storeState.levelBooks = [];
     const html = await renderSection();
-    expect(html).toContain(msg("vi", "hub.discover.title"));
-    expect(html).toContain("Cấp độ 2");
-    expect(html).toContain(makeT("vi")("hub.discover.unlearned", { count: 3 }));
-    expect(html).toContain((loadDict("vi").bookStudy as { cta: string }).cta);
+    expect(html).toContain(esc(msg("en", "hub.emptyAll")));
+    expect(html).toContain('href="/books"');
+    expect(html).not.toContain(msg("en", "hub.dash.gardenTitle"));
   });
 
-  it("không còn từ chưa học → không render section Khám phá", async () => {
-    storeState.discover = [];
+  it("dark toggle render với container id (scope vocabulary)", async () => {
     const html = await renderSection();
-    expect(html).not.toContain(msg("en", "hub.discover.title"));
-  });
-
-  it("KPI + bảng Từ của bạn vẫn render (hành vi SF-1 giữ nguyên)", async () => {
-    const html = await renderSection();
-    expect(html).toContain(msg("en", "hub.stats.learning"));
-    expect(html).toContain(msg("en", "hub.wordsTitle"));
+    expect(html).toContain('id="vocab-dashboard"');
+    expect(html).toContain('aria-label="Switch to dark mode"');
+    expect(html).toContain('aria-pressed="false"');
   });
 });

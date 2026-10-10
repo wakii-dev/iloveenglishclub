@@ -1,225 +1,195 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { StatsCards } from "@/components/gamification/stats-cards";
-import { localize } from "@/lib/content/localize";
-import { HubFilters } from "@/components/vocabulary/hub-filters";
+import {
+  DashboardBookLevelsProgress,
+} from "@/components/vocabulary/dashboard-book-levels-progress";
+import { DashboardContinueCard } from "@/components/vocabulary/dashboard-continue-card";
+import { DashboardGardenStrip } from "@/components/vocabulary/dashboard-garden-strip";
+import { DashboardStatsRow } from "@/components/vocabulary/dashboard-stats-row";
+import { DashboardThemeToggle } from "@/components/vocabulary/dashboard-theme-toggle";
 import { BookStudyButton } from "@/components/vocabulary/book-study-button";
-import { buttonVariants } from "@/components/ui/button";
+import { localize } from "@/lib/content/localize";
 import {
-  displayStatus,
-  formatBookTitles,
-  hubStatusChipClass,
-  parseHubFilters,
-} from "@/lib/vocabulary/hub-status";
-import {
-  getHubStats,
-  listDiscoverBooks,
-  listHubBooks,
-  listHubWords,
-} from "@/lib/vocabulary/hub-store";
-import { getDailyPlan } from "@/lib/vocabulary/daily-plan-store";
+  getBookLevelProgresses,
+  getContinueTarget,
+  getDashboardSummary,
+  getGardenDistribution,
+} from "@/lib/vocabulary/dashboard-store";
+import { listDiscoverBooks } from "@/lib/vocabulary/hub-store";
+
+export const DASHBOARD_CONTAINER_ID = "vocab-dashboard";
 
 /**
- * Tab Tổng quan (SF-1 t-1.2) — tách khỏi page.tsx khi SF-2 thêm tab Thư viện:
- * KPI mọi book + bảng từ đang học ⋈ filter book/trạng thái. Như cũ, data cá
- * nhân → query live; guest không bao giờ render section này (page điều phối).
- * story vocabulary-learn t-1.5: hàng Lộ trình hôm nay (X từ mới + Y ôn due +
- * streak derive từ user_word_progress — không bảng mới) + CTA vào phiên ôn.
- * story vocabulary-learn t-1.3: thêm hàng Khám phá — sách bạn đọc còn từ chưa
- * học, nút bulk seed (t-1.2) ngay trên hàng để học luôn không rời hub.
+ * Icon dcards Khám phá (copy proto-A + attrs `.ic`: stroke currentColor
+ * 2.2 fill none — không có thì SVG render fill đen đặc, review B P1) —
+ * xoay theo index.
+ */
+const DISCOVER_ICONS = [
+  // Học theo sách
+  <svg key="book" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="block" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2" />
+    <path d="M9 3v18M13 7h3M13 11h3" />
+  </svg>,
+  // Quiz từ vựng
+  <svg key="quiz" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="block" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="12" cy="12" r=".8" fill="currentColor" />
+  </svg>,
+  // Bảng xếp hạng
+  <svg key="trophy" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" className="block" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 21h8M12 17v4M7 4h10v4.5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3.2 4M17 6h3a3 3 0 0 1-3.2 4" />
+  </svg>,
+] as const;
+const DISCOVER_ICON_STYLES = [
+  "bg-teal-soft text-secondary",
+  "bg-gold-soft text-gold",
+  "bg-leaf-soft text-leaf-deep",
+] as const;
+
+/**
+ * Tab Tổng quan = DASHBOARD Memrise-style (vocab-memrise SF-4, VU-41 —
+ * hand-off `vocab-memrise-direction.md` §2.1, proto-A source of truth): đầu
+ * trang ngày + "Chào {name}" + pill XP · continue card · stat row (goal
+ * ring / streak / due) · vườn 8 stage · lộ trình sách · Khám phá (GIỮ logic
+ * listDiscoverBooks + BookStudyButton — chỉ đổi hình hài dcard, context pack
+ * boundary). Desktop ≥900 (lg): 2 cột — trái continue+stats+khám phá, phải
+ * vườn+lộ trình. Data cá nhân → query live; guest không bao giờ render
+ * (page điều phối, tab contract ?tab= giữ nguyên). Class `dark` scope CHỈ
+ * container này (toggle client + localStorage ilec.vocab-theme — hand-off §4).
  */
 export async function HubOverviewSection({
   userId,
-  sp,
   locale,
   now,
+  name,
 }: {
   userId: string;
-  sp: { book?: string; status?: string };
   locale: string;
   now: Date;
+  name: string | null;
 }) {
   const t = await getTranslations("vocabulary");
-  const filter = parseHubFilters(sp);
-  const [stats, books, rows, discover, plan] = await Promise.all([
-    getHubStats(userId),
-    listHubBooks(),
-    listHubWords(userId, filter),
-    listDiscoverBooks(userId),
-    getDailyPlan(userId, now),
-  ]);
-  const bookOptions = books.map((book) => ({
-    id: book.id,
-    title: localize(locale, { en: book.titleEn, vi: book.titleVi }),
-  }));
+  const tl = await getTranslations("learn");
+  const [summary, distribution, continueCard, levelBooks, discover] =
+    await Promise.all([
+      getDashboardSummary(userId, now),
+      getGardenDistribution(userId),
+      getContinueTarget(userId),
+      getBookLevelProgresses(userId),
+      listDiscoverBooks(userId),
+    ]);
+
+  const dateLine = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+    { weekday: "long", day: "numeric", month: "long" },
+  ).format(now);
+  const xpLine = new Intl.NumberFormat(
+    locale === "vi" ? "vi-VN" : "en-US",
+  ).format(summary.totalXp);
 
   return (
-    <>
-      <div className="mt-6">
-        <StatsCards
-          columns={3}
-          items={[
-            { label: t("hub.stats.learning"), value: stats.total },
-            { label: t("hub.stats.dueToday"), value: stats.dueToday },
-            { label: t("hub.stats.mastered"), value: stats.mastered },
-          ]}
-        />
+    // scope dark (hand-off §4): container = surface riêng — dark mode đổi cả
+    // nền (bg-background) + text (text-foreground) trong phạm vi, nền page
+    // ngoài (tab strip/library) giữ nguyên; -mx-5/p-5 bù để mép nội dung
+    // khớp tab strip, light mode nền kem-trên-kem vô hình
+    <div
+      id={DASHBOARD_CONTAINER_ID}
+      className="-mx-5 rounded-[24px] bg-background p-5 text-foreground"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[13px] text-muted-foreground">{dateLine}</p>
+          <h1 className="font-display text-[27px] leading-tight font-extrabold">
+            {t("hub.dash.greeting", {
+              name: name ?? t("hub.dash.greetingFallback"),
+            })}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-full border-[1.5px] border-gold-soft-line bg-gold-soft px-3.5 py-2 font-display text-[14.5px] font-bold tabular-nums text-gold">
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="block">
+              <path
+                d="M12 2l2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17l-5.9 3.2 1.3-6.6L2.5 9l6.6-.8L12 2z"
+                fill="currentColor"
+              />
+            </svg>
+            {t("hub.dash.xpPill", { count: xpLine })}
+          </span>
+          <DashboardThemeToggle containerId={DASHBOARD_CONTAINER_ID} />
+        </div>
       </div>
 
-      {plan.total > 0 ? (
-        <section
-          aria-labelledby="hub-roadmap-heading"
-          className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2
-                id="hub-roadmap-heading"
-                className="font-display text-[20px] font-bold"
-              >
-                {t("hub.roadmap.title")}
-              </h2>
-              <p className="mt-1 text-[14px] font-semibold text-muted-foreground tabular-nums">
-                {t("hub.roadmap.summary", {
-                  newCount: plan.newDue,
-                  reviewCount: plan.reviewDue,
-                })}
-              </p>
-              {plan.streakDays > 0 ? (
-                <p className="mt-1 text-[13px] font-bold text-secondary tabular-nums">
-                  {t("hub.roadmap.streak", { count: plan.streakDays })}
-                </p>
-              ) : null}
-            </div>
-            <Link
-              href="/me/vocabulary"
-              className={buttonVariants({ variant: "default" })}
-            >
-              {t("hub.roadmap.cta")}
-            </Link>
+      {levelBooks.length === 0 ? (
+        <p className="rounded-[14px] border-2 border-dashed border-border p-5 text-center text-[14px] font-semibold text-muted-foreground">
+          {t("hub.emptyAll")}{" "}
+          <Link
+            href="/books"
+            className="text-primary underline-offset-2 hover:underline focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
+          >
+            {t("hub.ctaBrowseBooks")}
+          </Link>
+        </p>
+      ) : (
+        <>
+          {/* ≥900px 2 cột (hand-off §2.1 — lg=1024 chật 900-1023, review B P2) */}
+        <div className="min-[900px]:grid min-[900px]:grid-cols-[1.1fr_.9fr] min-[900px]:items-start min-[900px]:gap-3.5">
+          <div>
+            {continueCard !== null ? (
+              <DashboardContinueCard card={continueCard} locale={locale} t={t} />
+            ) : null}
+            <DashboardStatsRow summary={summary} t={t} />
           </div>
-        </section>
-      ) : null}
 
-      {discover.length > 0 ? (
-        <section
-          aria-labelledby="hub-discover-heading"
-          className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
-        >
-          <h2
-            id="hub-discover-heading"
-            className="font-display text-[20px] font-bold"
-          >
-            {t("hub.discover.title")}
-          </h2>
-          <p className="mt-1 text-[14px] font-semibold text-muted-foreground">
-            {t("hub.discover.lead")}
-          </p>
-          <ul className="mt-4 flex flex-col gap-3">
-            {discover.map((book) => (
-              <li
-                key={book.id}
-                className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[14px] border-2 border-border bg-background/40 p-4"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-[16px] font-bold">
-                    {localize(locale, {
-                      en: book.titleEn,
-                      vi: book.titleVi,
-                    })}
-                  </span>
-                  <span className="mt-0.5 block text-[13px] font-semibold text-muted-foreground tabular-nums">
-                    {t("hub.discover.unlearned", { count: book.unlearned })}
-                  </span>
-                </span>
-                <BookStudyButton
-                  bookId={book.id}
-                  locale={locale}
-                  nextPath={`/${locale}/vocabulary`}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section
-        aria-labelledby="hub-words-heading"
-        className="mt-[18px] rounded-[18px] border-2 border-border bg-card p-5"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2
-            id="hub-words-heading"
-            className="font-display text-[20px] font-bold"
-          >
-            {t("hub.wordsTitle")}
-          </h2>
-          <HubFilters books={bookOptions} bookId={filter.bookId} status={filter.status} />
+          <div>
+            <DashboardGardenStrip distribution={distribution} t={t} tl={tl} />
+            <DashboardBookLevelsProgress books={levelBooks} locale={locale} t={t} />
+          </div>
         </div>
 
-        <div className="mt-4">
-          {rows.length === 0 ? (
-            stats.total === 0 ? (
-              <p className="rounded-[14px] border-2 border-dashed border-border p-5 text-center text-[14px] font-semibold text-muted-foreground">
-                {t("hub.emptyAll")}{" "}
-                <Link
-                  href="/books"
-                  className="text-primary underline-offset-2 hover:underline focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
+        {/* Khám phá full-width sau cùng — đúng proto (.discover ngoài .cols) */}
+        {discover.length > 0 ? (
+          <section aria-label={t("hub.discover.title")} className="mt-5">
+            <h2 className="mb-2.5 font-display text-[19px] font-extrabold">
+              {t("hub.discover.title")}
+            </h2>
+            <div className="grid gap-2.5 sm:grid-cols-3">
+              {discover.map((book, i) => (
+                <div
+                  key={book.id}
+                  className="flex flex-col gap-2.5 rounded-[18px] border-[1.5px] border-border bg-card p-3.5"
                 >
-                  {t("hub.ctaBrowseBooks")}
-                </Link>
-              </p>
-            ) : (
-              <p className="rounded-[14px] border-2 border-dashed border-border p-5 text-center text-[14px] font-semibold text-muted-foreground">
-                {t("hub.emptyFiltered")}
-              </p>
-            )
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-[14px]">
-                <thead>
-                  <tr className="border-b-2 border-border text-left text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-muted-foreground">
-                    <th className="px-4 py-3">{t("hub.table.colWord")}</th>
-                    <th className="px-4 py-3">{t("hub.table.colMeaning")}</th>
-                    <th className="px-4 py-3">{t("hub.table.colBook")}</th>
-                    <th className="px-4 py-3">{t("hub.table.colStatus")}</th>
-                    <th className="px-4 py-3">{t("hub.table.colDue")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const status = displayStatus(row, now);
-                    return (
-                      <tr
-                        key={row.wordId}
-                        className="border-b border-border/60 last:border-0"
-                      >
-                        <td className="px-4 py-3 font-bold">{row.word}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {row.meaningVi}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {formatBookTitles(locale, row.books)}
-                        </td>
-                        <td
-                          className={`px-4 py-3 font-bold ${hubStatusChipClass(status)}`}
-                        >
-                          {t(`hub.chip.${status}`)}
-                        </td>
-                        <td className="px-4 py-3 tabular-nums text-muted-foreground">
-                          {row.dueAt.toLocaleDateString(
-                            locale === "vi" ? "vi-VN" : "en-US",
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`grid h-11 w-11 flex-none place-items-center rounded-[14px] ${DISCOVER_ICON_STYLES[i % 3]}`}
+                      aria-hidden="true"
+                    >
+                      {DISCOVER_ICONS[i % 3]}
+                    </span>
+                    <span className="min-w-0">
+                      <b className="block truncate text-[14.5px]">
+                        {localize(locale, {
+                          en: book.titleEn,
+                          vi: book.titleVi,
+                        })}
+                      </b>
+                      <span className="block text-[12px] tabular-nums text-muted-foreground">
+                        {t("hub.discover.unlearned", { count: book.unlearned })}
+                      </span>
+                    </span>
+                  </div>
+                  <BookStudyButton
+                    bookId={book.id}
+                    locale={locale}
+                    nextPath={`/${locale}/vocabulary`}
+                  />
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
-    </>
+          </section>
+        ) : null}
+        </>
+      )}
+    </div>
   );
 }
