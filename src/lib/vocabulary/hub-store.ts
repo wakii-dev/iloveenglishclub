@@ -35,7 +35,23 @@ import {
   type LibraryFilters,
   escapeLikeTerm,
 } from "./hub-status";
-import type { DueWord } from "./review-store";
+
+/**
+ * Shape thẻ prefill "Học từ này" (SF-2 t-2.2) — TRƯỚC đây import từ
+ * review-store (nghỉ hưu SF-3 VU-40: flow review mới dùng
+ * /api/vocabulary/session). Type-only, giữ nguyên cho getStudyWord.
+ */
+type DueWord = {
+  wordId: number;
+  word: string;
+  ipa: string | null;
+  meaningVi: string;
+  example: string | null;
+  audioUrl: string | null;
+  ease: number;
+  intervalDays: number;
+  reps: number;
+};
 
 export const HUB_LIST_LIMIT = 100;
 
