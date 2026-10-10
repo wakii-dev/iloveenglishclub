@@ -89,4 +89,6 @@ bd9a9f9 test(vocab-convergence): aggregator lane + suite top-users (port 3340) +
 bffe82b docs(vocab-convergence): evidence pack + runbook + plan (suites/flow/rehearsal/review/security)
 72bba8e docs: sửa hash commit trong evidence sau amend (B1)
 2b36684 docs: tick plan T13 — story-verify B1/B2/B2b/B3 PASS, B4 (merge) + B5 (Done) = coordinator; push branch
+ec038cc docs(vocab-convergence): cập nhật danh sách commit trong evidence — B1 HEAD~1 đối chiếu
+4c62262 docs(vocab-convergence): improvements-log — 3 pattern SF-5 (commit cuối nhánh — evidence refresh theo hash này; không có commit code sau lần chạy thật: suite/flow/rehearsal đo tại bd9a9f9/978b902)
 
