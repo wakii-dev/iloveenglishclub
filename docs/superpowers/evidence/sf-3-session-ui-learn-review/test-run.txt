@@ -1,8 +1,10 @@
-tdd: RED→GREEN — code commit 735635a (VU-40 SF-3 session UI learn + review)
+tdd: RED→GREEN — code commit 735635a, HEAD = caf9d3d (VU-40 SF-3 session UI learn + review)
 TDD RED đã pass: session-state.test.ts chạy trước khi có module → "Cannot find module
 session-runner" (13 tests) → implement lib/vocabulary/session-state.ts → GREEN 13/13.
+HEAD caf9d3d = P1 review fix (prefill e2e → qa-ru-02 phủ nhánh listen-fallback) — re-run
+deterministic TẠI HEAD caf9d3d: vitest 863 passed | 4 skipped · tsc 0 · eslint 0/0 (14:5x).
 
-== Full suite (vitest, sau commit 5777f47 + oxford/rule0 fix) ==
+== Full suite (vitest — re-run tại HEAD caf9d3d) ==
 node node_modules/vitest/vitest.mjs run → exit 0
 Test Files 69 passed | 1 skipped (70)
 Tests      863 passed | 4 skipped (867)
@@ -32,7 +34,7 @@ node node_modules/@playwright/test/cli.js test --config playwright.vocabulary-le
      Tab+type+Enter (gõ) — chip +5 XP, slot done ×1
   5. mobile 375: scrollWidth ≤ 375 (không vỡ)
 node node_modules/@playwright/test/cli.js test --config playwright.vocabulary-review-upgrade.config.ts
-→ 5 passed / 0 failed (6.2m):
+→ 5 passed / 0 failed (6.4m — re-run 5/5 TẠI caf9d3d với test prefill fallback MỚI):
   1. gõ đúng 4 từ due → +4 XP (1/từ lần-đầu-ngày), DB reps 2→3 + due_at tương lai, lapses 0
   2. sai type → requeue cuối phiên + lapses=1; retry q4 → reps 0→1 → learn-complete +4
      (tổng +8 — "trồng lại nổ mầm", engine pin)

@@ -25,7 +25,7 @@ Contract SF-2 tiêu thụ (đọc `learn-session.ts` + route): GET `{ok, session
 - [x] T7. e2e 3318 review-upgrade: config mới + fixture `qa-ru-*` (seed due pattern `seedDueProgress`) + spec: gõ đúng → +1 XP + due_at tiến; gõ sai → requeue trong phiên + lapses+1 + 0 XP; double-submit (delay network hoặc re-click) không cộng XP; `?word=` prefill đúng 1 từ; `?scope=book&book=` lọc
 - [x] T8. Verify kỹ thuật: vitest full exit 0 + `tsc --noEmit` + eslint changed + `next build` + quiz 3312 xanh + grep=0 — evidence `docs/superpowers/evidence/sf-3-session-ui-learn-review/test-run.txt` (dòng đầu `tdd:` + hash)
 - [x] T9. Rule 0 BROWSER VERIFY 3 tầng: DOM (eval hỗ trợ) · VISUAL (screenshot learn/review/dark/mobile-375 so proto-A hand-off) · FLOW (login→learn trọn phiên→review→logout) — screenshot lưu evidence; fail → nói thật + fix trước review
-- [ ] T10. code-reviewer ĐỘC LẬP trên diff SF (rolling: nhóm UI core khi T5 xong, nhóm e2e khi T7 xong) — CHANGES-REQUESTED → fix → re-review; APPROVED → comment VU-40 kèm literal CHECKLIST-4Q
+- [x] T10. code-reviewer ĐỘC LẬP trên diff SF (rolling: nhóm UI core khi T5 xong, nhóm e2e khi T7 xong) — CHANGES-REQUESTED → fix → re-review; APPROVED → comment VU-40 kèm literal CHECKLIST-4Q
 - [ ] T11. story-verify `sf-3-session-ui-learn-review` sạch (B3 false-FAIL do Linear 429 khi APPROVED đã post → note evidence + dừng) + push `wakii-dev/sf-3-session-ui-learn-review` + report DONE — KHÔNG merge, KHÔNG set Done
 
 ## Rolling review (CHECK 3)
