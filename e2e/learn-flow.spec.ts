@@ -108,7 +108,8 @@ test.describe("Learn flow (vocabulary-learn sf-1)", () => {
     );
   });
 
-  // t-1.3 — hub Tổng quan: hàng Khám phá sách còn từ chưa học + nút bulk
+  // t-1.3 — hub Khám phá (SF-4 dashboard: dcard thay listitem, giữ data +
+  // nút bulk): QA Learn Book còn 12 từ chưa học, có nút bulk
   test("EN: hub Khám phá — QA Learn Book còn 12 từ chưa học, có nút bulk", async ({
     page,
   }) => {
@@ -119,7 +120,7 @@ test.describe("Learn flow (vocabulary-learn sf-1)", () => {
       .locator("section")
       .filter({ has: page.getByRole("heading", { name: "Discover" }) });
     await expect(discover).toBeVisible();
-    const row = discover.getByRole("listitem").filter({
+    const row = discover.locator(".grid > div").filter({
       hasText: "QA Learn Book",
     });
     await expect(row).toContainText("12 words to learn");
@@ -128,22 +129,26 @@ test.describe("Learn flow (vocabulary-learn sf-1)", () => {
     ).toBeVisible();
   });
 
-  // t-1.5 — lộ trình hôm nay: 5 mới + 3 ôn, streak 2 ngày, CTA vào phiên ôn
-  test("EN: Lộ trình hôm nay — 5 mới + 3 ôn, streak 2 ngày, CTA /me/vocabulary", async ({
+  // t-1.5 — stat row hôm nay (SF-4 dashboard thay "Today's plan"): streak 2
+  // ngày + 3 ôn due + CTA review giữ contract /me/vocabulary?scope=all
+  test("EN: stat row — streak 2 ngày + 3 ôn due, CTA review scope=all", async ({
     page,
   }) => {
     const email = await registerUser(page, "QA Learn Plan");
     await seedDailyPlanProgress(email);
 
     await page.goto("/en/vocabulary");
-    const roadmap = page
-      .locator("section")
-      .filter({ has: page.getByRole("heading", { name: "Today's plan" }) });
-    await expect(roadmap).toContainText("5 new words · 3 words to review");
-    await expect(roadmap).toContainText("2-day streak");
-    const cta = roadmap.getByRole("link", {
-      name: "Start today's session",
-    });
-    await expect(cta).toHaveAttribute("href", "/en/me/vocabulary");
+    await expect(
+      page.locator("main").getByText("2 days", { exact: true }),
+    ).toBeVisible();
+    // dashboard SF-4 gộp due: 5 từ mới (reps 0, due quá khứ) + 3 ôn = 8 từ
+    // đến hạn — khớp review queue (due_at <= now, không phân biệt reps)
+    const dueTile = page
+      .locator("main article")
+      .filter({ hasText: "due for review today" });
+    await expect(dueTile).toContainText("8 words");
+    await expect(
+      dueTile.getByRole("link", { name: "Review now" }),
+    ).toHaveAttribute("href", "/en/me/vocabulary?scope=all");
   });
 });

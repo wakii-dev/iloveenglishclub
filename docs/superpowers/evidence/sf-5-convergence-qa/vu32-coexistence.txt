@@ -1,0 +1,14 @@
+VU-32 coexistence — 2026-10-10T11:00:57.563Z
+dryRun calls: 6, all ok: true
+sample: {"ok":true,"candidates":4,"fillableIpa":0,"fillableExample":0,"fillableCefr":0,"fillableAudio":0}
+words snapshot before/after identical: true
+
+static write-paths vào words (chỉ enrich.ts VU-32 + admin vocabulary-store):
+src/lib/oxford/enrich.ts:288:        .update(words)
+src/lib/admin/vocabulary-store.ts:128:        .insert(words)
+src/lib/admin/vocabulary-store.ts:155:            .update(words)
+src/lib/admin/vocabulary-store.ts:205:      .update(words)
+src/lib/admin/vocabulary-store.ts:263:        .insert(words)
+
+Kết luận: vocab flow (learn/review/lookup) KHÔNG ghi words;
+enrich dryRun:true chỉ counts — source='oxford-ld'/cefr không bị ghi đè.

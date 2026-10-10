@@ -10,16 +10,75 @@
   "reviewTitle": "Review vocabulary",
   "dueToday": "{count, plural, one {# word to review today} other {# words to review today}}",
   "reviewEmpty": "Nothing to review today — check back later.",
-  "flipHint": "Tap the card to flip",
-  "flipBack": "Flip to front",
-  "cardProgress": "Card {current}/{total}",
-  "gradeGroup": "Grade recall",
-  "gradeAgain": "Again",
-  "gradeHard": "Hard",
-  "gradeGood": "Good",
-  "gradeEasy": "Easy",
-  "reviewDone": "All cards reviewed this session — great job!",
-  "reviewError": "Could not save the review — please try again.",
+  "session": {
+    "back": "Back",
+    "bookLevel": "Level {level} · Words {from}–{to}",
+    "xpChip": "+{xp} XP",
+    "progressAria": "Session progress: {done} of {total} words planted",
+    "stateLine": "Word {current}/{total} · {planted} planted — step: {step}",
+    "step": {
+      "introduce": "introduce",
+      "mc": "choose meaning",
+      "listen": "listen & choose",
+      "type": "type the word"
+    },
+    "theme": {
+      "toDark": "Switch to dark mode",
+      "toLight": "Switch to light mode"
+    },
+    "introduce": {
+      "badge": "New word · {count} check steps",
+      "listenCta": "Listen to this word",
+      "continue": "Continue"
+    },
+    "mc": {
+      "label": "Choose the correct meaning",
+      "group": "Meaning options"
+    },
+    "listen": {
+      "label": "Listen and choose the meaning you hear",
+      "replay": "Play again",
+      "group": "Meaning options",
+      "fallbackLabel": "Type the meaning you heard",
+      "fallbackPlaceholder": "Type the meaning…",
+      "fallbackCheck": "Check"
+    },
+    "type": {
+      "label": "Type the English word that means",
+      "placeholder": "Type the English word…",
+      "check": "Check",
+      "inputAria": "Type the word meaning: {meaning}"
+    },
+    "feedback": {
+      "correct": "Correct!",
+      "near": "Almost — a one-letter typo is still accepted",
+      "wrong": "Not quite — the word will come back at the end of this session",
+      "xp": "+{xp} XP",
+      "continue": "Continue"
+    },
+    "summary": {
+      "label": "Session complete",
+      "xp": "+{xp} XP",
+      "learnSub": "Planted {planted} words (+{plantedXp} XP) · correct steps (+{stepXp} XP)",
+      "reviewSub": "{steps} correct steps",
+      "statPlanted": "words planted",
+      "statStage": "stage reached",
+      "statLevel": "Level {level}",
+      "statStreak": "day streak",
+      "capnote": "Daily vocab XP cap reached — every step is still fully graded and SRS keeps advancing.",
+      "nextLevel": "Learn Level {level}",
+      "reviewAgain": "Review again",
+      "dashboard": "Back to dashboard"
+    },
+    "learnDone": {
+      "title": "Book completed!",
+      "body": "You've planted every new word in this book — new levels open as the book grows.",
+      "cta": "Back to dashboard"
+    },
+    "error": "Couldn't save this step — try again.",
+    "loginRequired": "Your session expired — log in again to keep your progress.",
+    "loginCta": "Log in"
+  },
   "quizTitle": "Vocabulary quiz",
   "quizLead": "Test yourself on {book} — {count} questions mixing multiple choice, word typing and matching.",
   "quizEmpty": "No words in this book yet — check back soon.",
@@ -54,6 +113,41 @@
   },
   "hub": {
     "title": "Vocabulary hub",
+    "dash": {
+      "greeting": "Hi {name}",
+      "xpPill": "{count} XP",
+      "continueTag": "Keep learning",
+      "continueDoneTag": "Completed",
+      "continueMeta": "Level {level} · Words {from}–{to} — {count} new words left in this level",
+      "continueMetaDone": "You've completed the whole roadmap — new books coming soon!",
+      "continueProgressAria": "Level {level}: {planted} of {total} words planted",
+      "continueProgressNum": "{planted}/{total} words in level",
+      "continueCta": "Learn {count} new words",
+      "goalCardLabel": "new words today",
+      "goalRingAria": "Today's goal: {planted} of {goal} new words",
+      "goalEdit": "Edit goal ▾",
+      "goalPopLabel": "Edit daily goal",
+      "goalEachDay": "Per day:",
+      "goalSaveError": "Couldn't save the goal — please try again.",
+      "streakDays": "{count} days",
+      "streakNote": "vocab · dictation both keep it alive",
+      "dueValue": "{count} words",
+      "dueNote": "due for review today",
+      "reviewCta": "Review now",
+      "noWordsYet": "You haven't planted any words yet —",
+      "gardenTitle": "Word garden",
+      "gardenGrowing": "{count} words growing",
+      "gardenAria": "Word garden — distribution across 8 growth stages",
+      "booksTitle": "Roadmap of {count} books",
+      "booksAria": "Book roadmap",
+      "bookTagDone": "Completed",
+      "bookTagLearning": "In progress",
+      "bookTagNone": "Not started",
+      "discoverCardAria": "Add {count} words to your plan",
+      "themeToDark": "Switch to dark mode",
+      "themeToLight": "Switch to light mode",
+      "greetingFallback": "there"
+    },
     "tabs": {
       "overview": "Overview",
       "library": "Library",

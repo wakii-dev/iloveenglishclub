@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   HUB_WORDS,
   cleanupLibraryBulkWords,
+  countAllWords,
   seedHubProgress,
   seedLibraryBulkWords,
 } from "./vocabulary-hub-fixture";
@@ -9,10 +10,13 @@ import {
 /**
  * E2E tab Thư viện (story vocabulary-hub SF-2 t-2.3): danh sách toàn bảng
  * (fixture qa-hub-3 từ + 55 từ độc lập qa-lib-), nút "Học từ này" prefill
- * thẻ flashcard /me/vocabulary?word=, search debounce + filter audio/book,
- * pagination 50/trang, i18n vi + guest duyệt không trạng thái. Tên spec
- * `hub-library` (né testMatch `/vocabulary*` config khác — như hub-overview).
- * Fixture qa-hub-* do globalSetup seed; qa-lib-* spec tự seed + afterAll dọn.
+ * phiên review /me/vocabulary?word= (SF-3 — flashcard nghỉ hưu), search
+ * debounce + filter audio/book, pagination 50/trang, i18n vi + guest duyệt
+ * không trạng thái. Tên spec `hub-library` (né testMatch `/vocabulary*`
+ * config khác — như hub-overview). Fixture qa-hub-* do globalSetup seed;
+ * qa-lib-* spec tự seed + afterAll dọn.
+ * SF-5 convergence: DB template còn 6 từ demo non-qa (4 từ có audio, tất cả
+ * thuộc book level-1) — count assertion KHÔNG được hardcode "chỉ có qa-*".
  */
 
 const [ALPHA, BRAVO, CHARLIE] = HUB_WORDS;
@@ -47,7 +51,7 @@ test.describe("Vocabulary hub library (SF-2)", () => {
     await cleanupLibraryBulkWords();
   });
 
-  test("EN: danh sách + Học từ này prefill thẻ flashcard", async ({ page }) => {
+  test("EN: danh sách + Học từ này prefill phiên review", async ({ page }) => {
     const email = await registerUser(page, "QA Lib EN");
     await seedHubProgress(email);
 
@@ -67,7 +71,7 @@ test.describe("Vocabulary hub library (SF-2)", () => {
     // fixture không có audio → cột audio "—"
     await expect(rows.filter({ hasText: BRAVO.word })).toContainText("—");
 
-    // "Học từ này" trên từ CHƯA đến hạn → prefill thẻ đầu hàng ôn
+    // "Học từ này" trên từ CHƯA đến hạn → prefill phiên review đúng từ đó
     await rows
       .filter({ hasText: CHARLIE.word })
       .getByRole("link", { name: "Learn this word" })
@@ -75,12 +79,20 @@ test.describe("Vocabulary hub library (SF-2)", () => {
     await page.waitForURL(/\/en\/me\/vocabulary\?word=\d+/);
     // due list vẫn 1 (alpha) — charlie chỉ vào hàng qua prefill
     await expect(page.getByText(/1 word to review today/)).toBeVisible();
-    await expect(page.getByText("Card 1/2")).toBeVisible();
-    // mặt trước thẻ là đúng từ bấm (charlie chỉ prefill đưa vào — do đó đứng
-    // trước alpha trong hàng); 2 mặt cùng text → khoá nút mặt trước
-    await expect(
-      page.getByRole("button", { name: new RegExp(`^${CHARLIE.word}`) }),
-    ).toBeVisible();
+    // SF-3: flashcard nghỉ hưu — prefill mở SESSION RUNNER; prefill queue
+    // 1 từ → pool degenerate 1 nghĩa → engine BỎ MC, mở thẳng bước type
+    // (learn-session.ts buildReviewSteps) — prompt nghĩa phải là THÂN
+    // charlie (mcOption giữ làm nhánh phòng hờ nếu engine đổi pool)
+    await expect(page.getByTestId("step-card")).toBeVisible();
+    const mcOption = page
+      .getByTestId("option-group")
+      .getByText(CHARLIE.word);
+    const typePrompt = page
+      .getByTestId("type-prompt")
+      .filter({ hasText: CHARLIE.meaning });
+    await expect(mcOption.or(typePrompt).first()).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("EN: search + filter audio/book hoạt động", async ({ page }) => {
@@ -103,16 +115,26 @@ test.describe("Vocabulary hub library (SF-2)", () => {
     await expect(page).toHaveURL(/\/en\/vocabulary\?tab=library$/);
     await expect(rows).toHaveCount(3);
 
-    // filter audio: fixture không từ nào có audio → empty-filter
+    // search vô nghĩa → 0 hàng TOÀN BẢNG → empty-filter state (SF-5: 6 từ
+    // template DB có audio nên filter audio không còn rỗng — coverage
+    // empty-state chuyển sang search không khớp)
+    await searchBox.fill("zzqqxq-no-hit");
+    await expect(page).toHaveURL(/search=zzqqxq-no-hit/);
+    await expect(
+      page.getByText("No words match these filters."),
+    ).toBeVisible();
+    await searchBox.fill("");
+    await expect(page).toHaveURL(/\/en\/vocabulary\?tab=library$/);
+    await expect(rows).toHaveCount(3);
+
+    // filter audio: fixture không từ nào có audio → 0 hàng qa- (4/6 từ
+    // template DB có audio — hàng non-qa không vào count qaRows)
     await page
       .getByRole("combobox", { name: "Filter by audio" })
       .click();
     await page.getByRole("option", { name: "With audio" }).click();
     await expect(page).toHaveURL(/audio=1/);
     await expect(rows).toHaveCount(0);
-    await expect(
-      page.getByText("No words match these filters."),
-    ).toBeVisible();
 
     // tắt audio, filter book Level 1 → chỉ charlie
     await page
@@ -135,23 +157,28 @@ test.describe("Vocabulary hub library (SF-2)", () => {
   test("EN: phân trang 50/trang (55 từ độc lập qa-lib-)", async ({ page }) => {
     await registerUser(page, "QA Lib EN Paging");
     await seedLibraryBulkWords();
+    // expected ĐỘNG: tổng words thật (3 qa-hub + 55 qa-lib + từ template DB)
+    const total = await countAllWords();
 
     await page.goto("/en/vocabulary?tab=library");
-    const rows = qaRows(page);
-    // 3 qa-hub + 55 qa-lib = 58 → 2 trang, trang 1 đủ 50 hàng
+    // trang 1: đúng 50 hàng/trang (đếm TẤT CẢ hàng tbody — từ template DB
+    // non-qa sort trước qa-* cũng chiếm chỗ, không hardcode)
+    const dataRows = page.locator("table tbody tr");
     await expect(page.getByText("Page 1/2")).toBeVisible();
-    await expect(rows).toHaveCount(50);
+    await expect(dataRows).toHaveCount(50);
 
     await page.getByRole("link", { name: "Next" }).click();
     await expect(page).toHaveURL(/page=2/);
     await expect(page.getByText("Page 2/2")).toBeVisible();
-    await expect(rows).toHaveCount(8);
+    await expect(dataRows).toHaveCount(total - 50);
 
     await page.getByRole("link", { name: "Previous" }).click();
     await expect(page).toHaveURL(/\/en\/vocabulary\?tab=library$/);
     await expect(page.getByText("Page 1/2")).toBeVisible();
     // từ độc lập: cột Sách "—" (hàng qa-lib không gắn book_words)
-    await expect(rows.filter({ hasText: "qa-lib-001" })).toContainText("—");
+    await expect(
+      dataRows.filter({ hasText: "qa-lib-001" }),
+    ).toContainText("—");
   });
 
   test("VI + guest: duyệt Thư viện không cần đăng nhập, không cột trạng thái", async ({

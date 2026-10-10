@@ -1,0 +1,77 @@
+data @ EXPLAIN: {"words":200,"act":4000,"prog":200} (~5k rows vocab_activity)
+
+== review queue (due SQL-side, LIMIT 50) ==
+Limit  (cost=5.63..5.74 rows=43 width=173) (actual time=0.173..0.178 rows=40.00 loops=1)
+  Buffers: shared hit=6
+  ->  Sort  (cost=5.63..5.74 rows=43 width=173) (actual time=0.172..0.174 rows=40.00 loops=1)
+        Sort Key: uwp.due_at
+        Sort Method: quicksort  Memory: 30kB
+        Buffers: shared hit=6
+        ->  Merge Join  (cost=3.79..4.46 rows=43 width=173) (actual time=0.090..0.161 rows=40.00 loops=1)
+              Merge Cond: (uwp.word_id = w.id)
+              Buffers: shared hit=6
+              ->  Index Scan using user_word_progress_user_id_word_id_pk on user_word_progress uwp  (cost=0.14..27.27 rows=43 width=24) (actual time=0.016..0.055 rows=40.00 loops=1)
+                    Index Cond: (user_id = 'qa-reh-user'::text)
+                    Filter: (due_at <= now())
+                    Rows Removed by Filter: 160
+                    Index Searches: 1
+                    Buffers: shared hit=3
+              ->  Sort  (cost=3.56..3.60 rows=18 width=153) (actual time=0.070..0.080 rows=202.00 loops=1)
+                    Sort Key: w.id
+                    Sort Method: quicksort  Memory: 36kB
+                    Buffers: shared hit=3
+                    ->  Seq Scan on words w  (cost=0.00..3.18 rows=18 width=153) (actual time=0.011..0.034 rows=206.00 loops=1)
+                          Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=10
+Planning Time: 0.269 ms
+Execution Time: 0.218 ms
+
+== planted-today count filter (dashboard) ==
+Aggregate  (cost=201.26..201.27 rows=1 width=8) (actual time=0.885..0.885 rows=1.00 loops=1)
+  Buffers: shared hit=58
+  ->  Seq Scan on vocab_activity va  (cost=0.00..113.10 rows=4408 width=21) (actual time=0.015..0.478 rows=4000.00 loops=1)
+        Filter: (user_id = 'qa-reh-user'::text)
+        Buffers: shared hit=58
+Planning Time: 0.081 ms
+Execution Time: 0.916 ms
+
+== streak lookback (daily_activity by user) ==
+Limit  (cost=6.65..6.65 rows=1 width=4) (actual time=0.048..0.060 rows=90.00 loops=1)
+  Buffers: shared hit=4
+  ->  Sort  (cost=6.65..6.65 rows=1 width=4) (actual time=0.047..0.051 rows=90.00 loops=1)
+        Sort Key: date DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=4
+        ->  Seq Scan on daily_activity  (cost=0.00..6.64 rows=1 width=4) (actual time=0.011..0.036 rows=90.00 loops=1)
+              Filter: (user_id = 'qa-reh-user'::text)
+              Rows Removed by Filter: 211
+              Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.135 ms
+Execution Time: 0.082 ms
+
+== book pool LIMIT 500 (learn session) ==
+Limit  (cost=5.41..5.42 rows=1 width=157) (actual time=0.183..0.216 rows=200.00 loops=1)
+  Buffers: shared hit=5
+  ->  Sort  (cost=5.41..5.42 rows=1 width=157) (actual time=0.182..0.199 rows=200.00 loops=1)
+        Sort Key: bw."order"
+        Sort Method: quicksort  Memory: 39kB
+        Buffers: shared hit=5
+        ->  Hash Join  (cost=2.16..5.40 rows=1 width=157) (actual time=0.090..0.151 rows=200.00 loops=1)
+              Hash Cond: (w.id = bw.word_id)
+              Buffers: shared hit=5
+              ->  Seq Scan on words w  (cost=0.00..3.18 rows=18 width=153) (actual time=0.027..0.041 rows=206.00 loops=1)
+                    Buffers: shared hit=3
+              ->  Hash  (cost=2.15..2.15 rows=1 width=8) (actual time=0.058..0.065 rows=200.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 16kB
+                    Buffers: shared hit=2
+                    ->  Seq Scan on book_words bw  (cost=0.00..2.15 rows=1 width=8) (actual time=0.011..0.032 rows=200.00 loops=1)
+                          Filter: (book_id = 9420)
+                          Rows Removed by Filter: 6
+                          Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.212 ms
+Execution Time: 0.254 ms

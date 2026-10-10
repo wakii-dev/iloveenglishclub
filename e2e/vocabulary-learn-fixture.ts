@@ -144,6 +144,16 @@ export async function seedDailyPlanProgress(email: string): Promise<void> {
       due_at = excluded.due_at, ease = 2.5, interval_days = 0,
       reps = 0, last_reviewed_at = excluded.last_reviewed_at
   `;
+  // presence hôm nay + hôm qua — dashboard SF-4 tính streak từ daily_activity
+  // (source of truth, getDashboardSummary) — seed cũ chỉ có progress nên
+  // streak hiển thị 0 dù progress có dấu hiệu 2 ngày (SF-5 convergence fix)
+  await c`
+    insert into daily_activity (user_id, date, vocab_steps)
+    values
+      (${user.id}, (now() at time zone 'Asia/Ho_Chi_Minh')::date, 5),
+      (${user.id}, ((now() at time zone 'Asia/Ho_Chi_Minh')::date - 1), 3)
+    on conflict (user_id, date) do update set vocab_steps = excluded.vocab_steps
+  `;
 }
 
 /** Self-clean cuối run — xoá words QA + book QA (cascade assignments/progress). */

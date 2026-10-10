@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VU-37 · Hướng C — Đêm rực lửa (gamified dark-warm)</title>
+<!--
+  VU-37 vocab-memrise · DIRECTION C "Đêm rực lửa" — gamified bold, dark-warm (brand .dark tokens).
+  Khác skeleton A/B: dashboard = mobile-app HUD (streak-hero + goal-ring trung tâm + segment progress), books progress
+  dạng khối đậm % lớn; learn = HUD trên cùng + 5 segment chunk + options lưới 2×2 + nút to có độ nảy.
+  Tokens: bg #1c130d · card #2b1f16 · card2 #35271a · ink #f8efe3 · coral #ff7a50 · teal #2dd4bf · gold #fbbf24
+  (đúng bảng .dark trong globals.css — warm dark có chủ đích, KHÔNG phải deep-blue neon). L7 badge sáng hơn (#334155) cho dark mode.
+  A11y: contrast đã kiểm (coral 7.1:1, teal 9.8:1, muted 8.5:1 trên nền), focus 3px #fbbf24, reduced-motion, touch ≥44px.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1c130d; --card:#2b1f16; --card2:#35271a; --line:#43301f;
+  --ink:#f8efe3; --mut:#c9ac90;
+  --coral:#ff7a50; --coral-deep:#b94a2c; --coral-ink:#2b1408;
+  --teal:#2dd4bf; --teal-ink:#062a26;
+  --gold:#fbbf24; --green:#4ade80; --green-ink:#052e16;
+  --red:#f87171;
+  --lv1:#fbbf24; --lv2:#ff7a50; --lv3:#2dd4bf; --lv4:#38bdf8; --lv5:#a78bfa; --lv6:#f472b6; --lv7:#94a3b8;
+  color-scheme:dark;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+svg{display:block}
+.ic{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ---- chrome ---- */
+.pbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:rgba(28,19,13,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.pbrand{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
+.pbrand b{font-family:'Baloo 2';color:var(--coral);font-size:14px;white-space:nowrap}
+.ptabs{display:flex;gap:4px;background:var(--card2);padding:4px;border-radius:999px;margin-inline:auto}
+.ptab{min-height:36px;padding:4px 18px;border-radius:999px;font-weight:800;font-size:14px;color:var(--mut)}
+.ptab.on{background:var(--coral);color:var(--coral-ink)}
+.phint{display:none;font-size:12px;color:var(--mut)}
+@media(min-width:760px){.phint{display:block}}
+main{max-width:1020px;margin:0 auto;padding:18px 16px 40px}
+.surface{display:none}.surface.on{display:block;animation:pop .4s cubic-bezier(.22,1,.36,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.99)}to{opacity:1;transform:none}}
+
+/* ============ LEARN ============ */
+#s-learn{max-width:480px;margin:0 auto}
+.hud{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.hud .title{flex:1;line-height:1.2}
+.hud .title b{font-family:'Baloo 2';font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.hud .title span{display:block;font-size:12px;color:var(--mut)}
+.xc{display:inline-flex;align-items:center;gap:5px;font-family:'Baloo 2';font-weight:700;font-size:13.5px;padding:7px 12px;border-radius:999px}
+.xc.gold{background:#3a2c12;color:var(--gold)}
+.xc.flame{background:#3a2312;color:var(--gold)}
+.xbtn{width:44px;height:44px;border-radius:14px;background:var(--card2);display:grid;place-items:center;color:var(--mut)}
+.segprog{display:flex;gap:6px;margin:2px 0 6px}
+.seg{flex:1;height:12px;border-radius:6px;background:var(--card2)}
+.seg.done{background:var(--green)}
+.seg.act{background:var(--coral);animation:glowpulse 1.6s ease-in-out infinite}
+@keyframes glowpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,122,80,.4)}50%{box-shadow:0 0 0 6px rgba(255,122,80,0)}}
+.lstate{font-size:12.5px;color:var(--mut);text-align:center;margin-bottom:14px}
+.stepchips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
+.stepchips .lab{width:100%;text-align:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8a6f52}
+.schip{min-height:38px;padding:4px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:13px;color:var(--mut)}
+.schip.on{background:var(--teal);border-color:var(--teal);color:var(--teal-ink)}
+
+.screen{display:none}.screen.on{display:block;animation:pop .35s cubic-bezier(.22,1,.36,1) both}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 20px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.qlabel{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:14px}
+.qword{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.word-big{font-family:'Baloo 2';font-weight:800;font-size:40px;line-height:1.05}
+.ipa{color:var(--mut)}
+.spk{width:52px;height:52px;border-radius:50%;background:var(--coral);color:var(--coral-ink);display:grid;place-items:center;box-shadow:0 0 0 6px rgba(255,122,80,.15)}
+.opts{display:grid;gap:10px}
+@media(min-width:430px){.opts.grid2{grid-template-columns:1fr 1fr}}
+.obtn{min-height:56px;padding:10px 14px;border-radius:14px;background:var(--card2);border:1.5px solid var(--line);font-weight:800;font-size:15.5px;text-align:left;transition:border-color .15s,transform .1s;display:flex;align-items:center;gap:10px}
+.obtn:hover:not(:disabled){border-color:var(--coral)}
+.obtn:active:not(:disabled){transform:scale(.97)}
+.obtn .k{width:24px;height:24px;border-radius:7px;background:var(--bg);display:grid;place-items:center;font-size:11.5px;color:var(--mut);flex:none}
+.obtn.correct{background:#17331f;border-color:var(--green);color:var(--green)}
+.obtn.correct .k{background:var(--green);color:var(--green-ink)}
+.obtn.wrong{background:#3a1a1a;border-color:var(--red);color:var(--red)}
+.obtn:disabled{cursor:default}
+.fb{display:none;align-items:center;gap:9px;margin-top:14px;min-height:50px;padding:10px 14px;border-radius:12px;font-weight:800;font-size:14.5px}
+.fb.show{display:flex}
+.fb-ok{background:#17331f;color:var(--green)}
+.fb-no{background:#3a1a1a;color:var(--red)}
+.fb .xp{margin-left:auto;font-family:'Baloo 2';background:var(--green);color:var(--green-ink);border-radius:999px;padding:2px 10px;font-size:12.5px}
+.demo-note{margin-top:12px;font-size:12.5px;color:#8a6f52;font-style:italic}
+.bigcta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:58px;margin-top:20px;border-radius:16px;background:var(--coral);color:var(--coral-ink);font-family:'Baloo 2';font-weight:800;font-size:18px;box-shadow:0 5px 0 var(--coral-deep);transition:transform .1s,box-shadow .1s}
+.bigcta:active{transform:translateY(4px);box-shadow:0 1px 0 var(--coral-deep)}
+.ghost{width:100%;min-height:48px;margin-top:10px;border-radius:12px;font-weight:800;color:var(--mut)}
+/* intro */
+.stagechip{display:inline-flex;align-items:center;gap:6px;background:#332a16;color:var(--gold);font-weight:800;font-size:13px;padding:6px 13px;border-radius:999px;margin-bottom:14px}
+.meaning{font-size:18px;font-weight:800;margin:12px 0 14px}
+.excard{background:var(--card2);border-radius:14px;padding:14px;font-size:14.5px}
+.excard em{color:var(--mut);display:block;margin-top:4px;font-size:13px;font-style:normal}
+/* listen */
+.playhero{display:flex;flex-direction:column;align-items:center;gap:14px;margin:6px 0 20px}
+.playbig{width:88px;height:88px;border-radius:50%;background:var(--teal);color:var(--teal-ink);display:grid;place-items:center;box-shadow:0 0 0 10px rgba(45,212,191,.12)}
+.eq{display:flex;gap:4px;align-items:center;height:34px}
+.eq i{width:5px;border-radius:3px;background:var(--line)}
+.eq i.t{background:var(--teal)}
+/* type */
+.prompt{font-family:'Baloo 2';font-size:26px;font-weight:800;margin-bottom:16px}
+.typerow{display:flex;gap:10px}
+.typein{flex:1;min-height:56px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);padding:10px 16px;font:inherit;font-weight:800;font-size:17px;color:var(--ink)}
+.typein::placeholder{color:#8a6f52;font-weight:600}
+.typein:focus-visible{outline:3px solid var(--gold)}
+.checkbtn{min-height:56px;padding:0 22px;border-radius:14px;background:var(--card2);border:1.5px solid var(--line);font-weight:800;color:var(--ink)}
+/* summary */
+.sumlabel{text-align:center;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--teal)}
+.sumxp{font-family:'Baloo 2';font-weight:800;font-size:64px;text-align:center;color:var(--gold);line-height:1.15;text-shadow:0 0 34px rgba(251,191,36,.25)}
+.sumsub{text-align:center;color:var(--mut);font-size:14px;margin-bottom:18px}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.chips span{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:800;font-size:13px}
+.chips .g{color:var(--green)}.chips .t{color:var(--teal)}
+.capbar{margin:4px 0 6px}
+.capbar .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-bottom:5px}
+.capbar .bar{height:8px;border-radius:99px;background:var(--card2);overflow:hidden}
+.capbar .bar i{display:block;height:100%;width:43%;background:var(--gold);border-radius:99px}
+
+/* ============ DASHBOARD ============ */
+#s-dash{display:none}#s-dash.on{display:block}
+.dhud{position:sticky;top:56px;z-index:40;display:flex;align-items:center;gap:10px;margin:-6px -2px 14px;padding:10px 2px;background:linear-gradient(rgba(28,19,13,.96),rgba(28,19,13,.85));backdrop-filter:blur(6px);border-radius:12px}
+.ava{width:42px;height:42px;border-radius:50%;background:var(--coral);color:var(--coral-ink);display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:17px}
+.dhud .who b{display:block;font-family:'Baloo 2';font-size:16px;line-height:1.1}
+.dhud .who span{font-size:12px;color:var(--mut)}
+.dhud .right{margin-left:auto;display:flex;gap:8px}
+/* streak hero */
+.herostreak{background:linear-gradient(135deg,#33210f,#2b1f16);border:1px solid #4a3212;border-radius:24px;padding:20px;display:flex;align-items:center;gap:18px;margin-bottom:12px;flex-wrap:wrap}
+.herostreak>div:nth-of-type(2){flex:1;min-width:160px}
+@media(max-width:479px){.herostreak{gap:12px}.herostreak .f{width:48px;height:48px;border-radius:14px}.herostreak .f svg{width:28px;height:28px}.weekdots{flex-basis:100%;justify-content:flex-end;margin-left:0}}
+.herostreak .f{width:64px;height:64px;border-radius:20px;background:#3a2312;display:grid;place-items:center;flex:none}
+.herostreak .num{font-family:'Baloo 2';font-weight:800;font-size:46px;line-height:1;color:var(--gold)}
+.herostreak .num small{font-size:19px;color:var(--ink);font-weight:700}
+.herostreak .sub{font-size:13px;color:var(--mut)}
+.weekdots{margin-left:auto;display:flex;gap:6px}
+.wd{width:14px;height:14px;border-radius:50%;background:#3a2312}
+.wd.hit{background:var(--gold)}
+.wd.today{background:transparent;border:2.5px solid var(--coral)}
+/* goal + due */
+.gdue{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+@media(min-width:640px){.gdue{grid-template-columns:1.3fr 1fr}}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.ringbig{position:relative;width:118px;height:118px}
+.ringbig svg{width:118px;height:118px}
+.ringbig .track{fill:none;stroke:var(--card2);stroke-width:11}
+.ringbig .val{fill:none;stroke:var(--coral);stroke-width:11;stroke-linecap:round}
+.ringbig .mid{position:absolute;inset:0;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:27px}
+.gcard .lbl{font-size:13px;color:var(--mut)}
+.presets{display:flex;gap:6px}
+.presets button{min-width:42px;min-height:36px;border-radius:10px;border:1.5px solid var(--line);background:var(--card2);font-weight:800;font-size:13.5px;color:var(--mut)}
+.presets button.on{background:var(--coral);border-color:var(--coral);color:var(--coral-ink)}
+.gcard .hint{font-size:11.5px;color:#8a6f52}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.dcard .row1{display:flex;align-items:center;gap:12px}
+.dico2{width:46px;height:46px;border-radius:14px;background:#12312e;color:var(--teal);display:grid;place-items:center;flex:none}
+.dcard b{font-family:'Baloo 2';font-size:24px;line-height:1.1;display:block}
+.dcard .lbl{font-size:13px;color:var(--mut)}
+.btn-review{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:14px;background:var(--teal);color:var(--teal-ink);font-family:'Baloo 2';font-weight:800;font-size:16.5px;box-shadow:0 4px 0 #0f766e}
+.btn-review:active{transform:translateY(3px);box-shadow:0 1px 0 #0f766e}
+/* continue */
+.continue{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px}
+.ctag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--coral);margin-bottom:6px}
+.continue h2{font-family:'Baloo 2';font-size:21px}
+.cmeta{font-size:13px;color:var(--mut);margin:2px 0 12px}
+.blocks{display:flex;gap:5px;margin-bottom:8px}
+.blocks i{flex:1;height:14px;border-radius:5px;background:var(--card2)}
+.blocks i.f{background:var(--coral)}
+.cfoot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cfoot span{font-size:12.5px;color:var(--mut)}
+.btn-go{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;border-radius:14px;background:var(--coral);color:var(--coral-ink);font-family:'Baloo 2';font-weight:800;font-size:16px;box-shadow:0 4px 0 var(--coral-deep)}
+.btn-go:active{transform:translateY(3px);box-shadow:0 1px 0 var(--coral-deep)}
+/* garden bars */
+.garden2{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px}
+.ghead3{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.ghead3 h2{font-family:'Baloo 2';font-size:19px}
+.ghead3 span{font-size:12.5px;color:var(--mut)}
+.gbars{display:flex;justify-content:space-between;align-items:flex-end;gap:6px;height:110px}
+.gcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.gcol i{width:100%;max-width:26px;border-radius:6px 6px 3px 3px}
+.gcol b{font-family:'Baloo 2';font-size:13px;color:var(--mut)}
+.glegend2{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:12px}
+.glegend2 span{font-size:11px;color:#8a6f52;font-weight:600}
+/* books */
+.books2{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px}
+.books2 h2{font-family:'Baloo 2';font-size:19px;margin-bottom:10px}
+.brow2{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.brow2:first-of-type{border-top:0}
+.blv{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:'Baloo 2';font-weight:800;font-size:15px;color:#1c130d;flex:none}
+.binfo2{flex:1;min-width:0}
+.binfo2 b{font-size:14.5px;display:block;line-height:1.2}
+.binfo2 span{font-size:12px;color:var(--mut)}
+.bar2{height:9px;border-radius:99px;background:var(--card2);overflow:hidden;flex:1.2}
+.bar2 i{display:block;height:100%;border-radius:99px}
+.bpct2{font-family:'Baloo 2';font-weight:800;font-size:17px;width:52px;text-align:right;flex:none}
+/* discover tiles */
+.tiles{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(3,1fr)}}
+.tile{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;transition:transform .15s,border-color .15s}
+.tile:hover{transform:translateY(-2px);border-color:var(--coral)}
+.tico{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:none}
+.tile b{display:block;font-size:14.5px}
+.tile span{font-size:12px;color:var(--mut)}
+.pfoot{max-width:760px;margin:10px auto 50px;padding:0 16px;font-size:12.5px;color:var(--mut)}
+.pfoot b{color:var(--ink)}
+@media(min-width:900px){
+  #s-dash .lower2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .garden2,.books2{margin-bottom:0}
+}
+</style>
+</head>
+<body>
+
+<header class="pbar">
+  <div class="pbrand"><b>VU-37</b> Hướng C · Đêm rực lửa <span style="opacity:.7">gamified dark-warm</span></div>
+  <nav class="ptabs" role="tablist" aria-label="Chuyển surface">
+    <button class="ptab on" data-s="learn" role="tab" aria-selected="true">Phiên học</button>
+    <button class="ptab" data-s="dash" role="tab" aria-selected="false">Dashboard</button>
+  </nav>
+  <span class="phint">Mobile-first 375px · co hẹp cửa sổ để xem</span>
+</header>
+
+<main>
+
+<!-- ================= LEARN SESSION ================= -->
+<section id="s-learn" class="surface on" aria-label="Phiên học — state mẫu: 5 từ, 2 đã trồng, từ thứ 3 ở bước chọn nghĩa">
+  <div class="hud">
+    <button class="xbtn" aria-label="Thoát phiên"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="title"><b>Prepare 5 · Level 6</b><span>Từ 51–60 · B1</span></div>
+    <span class="xc gold"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>+26</span>
+    <span class="xc flame"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 2c.6 3.4-3.6 5-3.6 8.8a5.1 5.1 0 0 0 10.2 0c0-2.1-1-3.6-2.2-5.2-.3 1.5-1.1 2.2-2.2 2.4.6-1.9-.2-4.1-2.2-6z" fill="currentColor"/></svg>7</span>
+  </div>
+
+  <div class="segprog" role="img" aria-label="Tiến độ phiên: 2 trên 5 từ đã trồng, đang ở từ thứ 3">
+    <span class="seg done"></span><span class="seg done"></span><span class="seg act"></span><span class="seg"></span><span class="seg"></span>
+  </div>
+  <p class="lstate">Từ 3/5 · 2 từ đã trồng — đang ở bước <b style="color:var(--coral)">chọn nghĩa</b></p>
+
+  <div class="stepchips" role="tablist" aria-label="Xem trước các màn của phiên (điều khiển prototype)">
+    <span class="lab">Dạo nhanh các màn</span>
+    <button class="schip" data-st="intro">Giới thiệu</button>
+    <button class="schip on" data-st="mc">Chọn nghĩa</button>
+    <button class="schip" data-st="listen">Nghe-chọn</button>
+    <button class="schip" data-st="type">Gõ từ</button>
+    <button class="schip" data-st="sum">Tổng kết</button>
+  </div>
+
+  <!-- MC -->
+  <div class="screen on" data-st="mc" role="tabpanel" aria-label="Bước chọn nghĩa">
+    <article class="panel">
+      <p class="qlabel">Chọn nghĩa đúng</p>
+      <div class="qword">
+        <h2 class="word-big">depart</h2>
+        <span class="ipa">/dɪˈpɑːt/</span>
+        <button class="spk" style="width:44px;height:44px" aria-label="Phát âm depart"><svg class="ic" viewBox="0 0 24 24" style="width:19px;height:19px"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg></button>
+      </div>
+      <div class="opts grid2" aria-label="Các lựa chọn nghĩa">
+        <button class="obtn"><span class="k">A</span>hành lý</button>
+        <button class="obtn" data-ok="1"><span class="k">B</span>khởi hành</button>
+        <button class="obtn"><span class="k">C</span>đi làm hằng ngày</button>
+        <button class="obtn"><span class="k">D</span>tiền hoàn lại</button>
+      </div>
+      <div class="fb fb-ok" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác!<span class="xp">+1 XP</span></div>
+      <div class="fb fb-no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — từ sẽ quay lại cuối hàng phiên</div>
+      <p class="demo-note">Demo: bấm một lựa chọn để xem phản hồi chấm của server</p>
+    </article>
+  </div>
+
+  <!-- Giới thiệu -->
+  <div class="screen" data-st="intro" role="tabpanel" aria-label="Bước giới thiệu từ">
+    <article class="panel" style="text-align:center">
+      <span class="stagechip"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="15" r="3.4" fill="#fbbf24"/></svg>Hạt mầm · từ mới</span>
+      <h2 class="word-big" style="font-size:46px">commute</h2>
+      <p class="ipa" style="margin-bottom:14px">/kəˈmjuːt/ · động từ</p>
+      <div style="display:flex;justify-content:center"><button class="spk" style="width:72px;height:72px" aria-label="Nghe từ commute"><svg class="ic" viewBox="0 0 24 24" style="width:28px;height:28px"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/></svg></button></div>
+      <p class="meaning" style="text-align:left">đi làm hằng ngày — di chuyển đều đặn giữa nhà và nơi làm việc, học tập</p>
+      <div class="excard" style="text-align:left">"I commute to school by bike to avoid the traffic."<em>Theo nó đi học bằng xe đạp để tránh kẹt xe.</em></div>
+      <button class="bigcta">Tiếp tục<svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </article>
+  </div>
+
+  <!-- Nghe-chọn -->
+  <div class="screen" data-st="listen" role="tabpanel" aria-label="Bước nghe và chọn">
+    <article class="panel">
+      <p class="qlabel">Nghe và chọn từ bạn nghe được</p>
+      <div class="playhero">
+        <button class="playbig" aria-label="Phát lại audio"><svg class="ic" viewBox="0 0 24 24" style="width:32px;height:32px"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" stroke="none"/></svg></button>
+        <div class="eq" aria-hidden="true"><i style="height:11px"></i><i class="t" style="height:24px"></i><i class="t" style="height:34px"></i><i style="height:15px"></i><i class="t" style="height:28px"></i><i style="height:10px"></i><i class="t" style="height:20px"></i><i style="height:13px"></i></div>
+      </div>
+      <div class="opts grid2" aria-label="Các lựa chọn từ">
+        <button class="obtn"><span class="k">A</span>deposit</button>
+        <button class="obtn" data-ok="1"><span class="k">B</span>depart</button>
+        <button class="obtn"><span class="k">C</span>deport</button>
+        <button class="obtn"><span class="k">D</span>report</button>
+      </div>
+      <div class="fb fb-ok" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác!<span class="xp">+1 XP</span></div>
+      <div class="fb fb-no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — nghe lại và thử lần sau</div>
+      <p class="demo-note">Bước này CHỈ xuất hiện khi từ có audio (server lọc sẵn)</p>
+    </article>
+  </div>
+
+  <!-- Gõ từ -->
+  <div class="screen" data-st="type" role="tabpanel" aria-label="Bước gõ từ">
+    <article class="panel">
+      <p class="qlabel">Gõ từ tiếng Anh có nghĩa là</p>
+      <p class="prompt">"tiền hoàn lại"</p>
+      <div class="typerow">
+        <input class="typein" placeholder="Gõ từ tiếng Anh…" aria-label="Nhập từ tiếng Anh" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <button class="checkbtn">Kiểm tra</button>
+      </div>
+      <div class="fb fb-ok exact" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Chính xác — "refund"!<span class="xp">+1 XP</span></div>
+      <div class="fb fb-ok near" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>Gần đúng — typo ≤1 ký tự vẫn được chấp nhận<span class="xp">+1 XP</span></div>
+      <div class="fb fb-no" aria-live="polite"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Chưa đúng — từ sẽ quay lại cuối hàng phiên</div>
+      <p class="demo-note">Demo: gõ "refund" / "refun" / từ khác rồi Enter · sai ≤1 ký tự với từ ≥5 chữ tính đúng</p>
+    </article>
+  </div>
+
+  <!-- Tổng kết -->
+  <div class="screen" data-st="sum" role="tabpanel" aria-label="Tổng kết phiên">
+    <article class="panel">
+      <p class="sumlabel">Phiên hoàn tất</p>
+      <p class="sumxp">+26 XP</p>
+      <p class="sumsub">Hoàn thành 5 từ (+20) · bước đúng (+6)</p>
+      <div class="chips">
+        <span class="g"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 12.5 9.5 18 20 6.5"/></svg>5 từ đã trồng</span>
+        <span class="t">Stage: Nảy mầm</span>
+        <span>Level 6 · 10/10</span>
+      </div>
+      <div class="capbar">
+        <div class="lbl"><span>XP từ vựng hôm nay</span><b>26/60</b></div>
+        <div class="bar"><i></i></div>
+      </div>
+      <p class="demo-note" style="text-align:center">Sau cap 60 XP/ngày: SRS vẫn tiến đầy đủ, XP = 0 (xpCapped)</p>
+      <button class="bigcta">Học Level 7<svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="ghost">Về dashboard</button>
+    </article>
+  </div>
+</section>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="s-dash" class="surface" aria-label="Dashboard từ vựng — state mẫu trước phiên">
+  <div class="dhud">
+    <span class="ava">M</span>
+    <div class="who"><b>Minh</b><span>Thứ Hai, 5 tháng 10</span></div>
+    <div class="right">
+      <span class="xc gold"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/></svg>1.248 XP</span>
+      <span class="xc flame"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M12 2c.6 3.4-3.6 5-3.6 8.8a5.1 5.1 0 0 0 10.2 0c0-2.1-1-3.6-2.2-5.2-.3 1.5-1.1 2.2-2.2 2.4.6-1.9-.2-4.1-2.2-6z" fill="currentColor"/></svg>7</span>
+    </div>
+  </div>
+
+  <section class="herostreak" aria-label="Streak 7 ngày liên tiếp">
+    <span class="f"><svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true"><path d="M12 2c.6 3.4-3.6 5-3.6 8.8a5.1 5.1 0 0 0 10.2 0c0-2.1-1-3.6-2.2-5.2-.3 1.5-1.1 2.2-2.2 2.4.6-1.9-.2-4.1-2.2-6z" fill="#fbbf24"/></svg></span>
+    <div>
+      <div class="num">7 <small>ngày</small></div>
+      <div class="sub">vocab · dictation đều giữ lửa</div>
+    </div>
+    <div class="weekdots" role="img" aria-label="Tuần này: 6 ngày đã học, hôm nay đang chờ">
+      <span class="wd hit"></span><span class="wd hit"></span><span class="wd hit"></span><span class="wd hit"></span><span class="wd hit"></span><span class="wd hit"></span><span class="wd today"></span>
+    </div>
+  </section>
+
+  <div class="gdue">
+    <article class="gcard">
+      <div class="ringbig" role="img" aria-label="Mục tiêu hôm nay: 3 trên 5 từ mới">
+        <svg viewBox="0 0 118 118" aria-hidden="true"><circle class="track" cx="59" cy="59" r="50"/><circle class="val" cx="59" cy="59" r="50" stroke-dasharray="188.5 314.16" transform="rotate(-90 59 59)"/></svg>
+        <span class="mid">3/5</span>
+      </div>
+      <span class="lbl">từ mới hôm nay</span>
+      <div class="presets" role="group" aria-label="Chỉnh mục tiêu hàng ngày">
+        <button class="on" aria-pressed="true">5</button><button aria-pressed="false">10</button><button aria-pressed="false">20</button>
+      </div>
+      <span class="hint">chạm để chỉnh mục tiêu</span>
+    </article>
+    <article class="dcard">
+      <div class="row1">
+        <span class="dico2"><svg class="ic" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></span>
+        <div><b>12 từ</b><span class="lbl">đến hạn ôn tập (SM-2)</span></div>
+      </div>
+      <button class="btn-review">Ôn ngay<svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </article>
+  </div>
+
+  <section class="continue">
+    <span class="ctag">Học tiếp</span>
+    <h2>Level 5 · B1 — Level 6</h2>
+    <p class="cmeta">Từ 51–60 · 5/10 đã trồng</p>
+    <div class="blocks" role="img" aria-label="Level 6: 5 trên 10 từ đã trồng">
+      <i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="cfoot">
+      <span>còn 5 từ mới trong level</span>
+      <button class="btn-go">Học 5 từ<svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+  </section>
+
+  <div class="lower2">
+    <section class="garden2" aria-label="Vườn từ vựng — phân bố 8 giai đoạn">
+      <div class="ghead3"><h2>Vườn từ vựng</h2><span>313 từ đang lớn</span></div>
+      <div class="gbars" role="img" aria-label="Hạt mầm 96, Nảy mầm 74, Cây con 58, Nụ 34, Cây non 22, Cây xanh 15, Trỗi dậy 8, Nở hoa 6">
+        <span class="gcol"><b>96</b><i style="height:96px;background:#8fd694"></i></span>
+        <span class="gcol"><b>74</b><i style="height:74px;background:#6fc878"></i></span>
+        <span class="gcol"><b>58</b><i style="height:58px;background:#54b562"></i></span>
+        <span class="gcol"><b>34</b><i style="height:34px;background:#42a052"></i></span>
+        <span class="gcol"><b>22</b><i style="height:22px;background:#358a45"></i></span>
+        <span class="gcol"><b>15</b><i style="height:15px;background:#2a7139"></i></span>
+        <span class="gcol"><b>8</b><i style="height:8px;background:#1f5a2d"></i></span>
+        <span class="gcol"><b>6</b><i style="height:6px;background:#174a24"></i></span>
+      </div>
+      <div class="glegend2"><span>0 Hạt mầm</span><span>1 Nảy mầm</span><span>2 Cây con</span><span>3 Nụ</span><span>4 Cây non</span><span>5 Cây xanh</span><span>6 Trỗi dậy</span><span>7 Nở hoa</span></div>
+    </section>
+
+    <section class="books2" aria-label="Lộ trình 7 sách">
+      <h2>Lộ trình 7 sách</h2>
+      <div class="brow2"><span class="blv" style="background:var(--lv1)">1</span><div class="binfo2"><b>Level 1 · Starter</b><span>Pre-A1 · 120/120 — hoàn thành</span></div><div class="bar2"><i style="width:100%;background:var(--lv1)"></i></div><span class="bpct2">100%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv2)">2</span><div class="binfo2"><b>Level 2</b><span>A1 · 86/120 từ</span></div><div class="bar2"><i style="width:72%;background:var(--lv2)"></i></div><span class="bpct2">72%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv3)">3</span><div class="binfo2"><b>Level 3</b><span>A2 · 41/130 từ</span></div><div class="bar2"><i style="width:32%;background:var(--lv3)"></i></div><span class="bpct2">32%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv4)">4</span><div class="binfo2"><b>Level 4</b><span>A2+ · 12/110 từ</span></div><div class="bar2"><i style="width:11%;background:var(--lv4)"></i></div><span class="bpct2">11%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv5)">5</span><div class="binfo2"><b>Level 5 · đang học</b><span>B1 · 54/120 từ</span></div><div class="bar2"><i style="width:45%;background:var(--lv5)"></i></div><span class="bpct2">45%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv6)">6</span><div class="binfo2"><b>Level 6</b><span>B1+ · chưa bắt đầu</span></div><div class="bar2"><i style="width:0%;background:var(--lv6)"></i></div><span class="bpct2">0%</span></div>
+      <div class="brow2"><span class="blv" style="background:var(--lv7)">7</span><div class="binfo2"><b>Level 7</b><span>B2 · chưa bắt đầu</span></div><div class="bar2"><i style="width:0%;background:var(--lv7)"></i></div><span class="bpct2">0%</span></div>
+    </section>
+  </div>
+
+  <section class="tiles" style="margin-top:12px" aria-label="Khám phá">
+    <a class="tile" href="#"><span class="tico" style="background:#31283f;color:#a78bfa"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18"/></svg></span><span><b>Học theo sách</b><span>7 lộ trình Cambridge Prepare</span></span></a>
+    <a class="tile" href="#"><span class="tico" style="background:#3a2c12;color:var(--gold)"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg></span><span><b>Quiz từ vựng</b><span>Củng cố theo unit đã học</span></span></a>
+    <a class="tile" href="#"><span class="tico" style="background:#12312e;color:var(--teal)"><svg class="ic" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v4.5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3.2 4M17 6h3a3 3 0 0 1-3.2 4"/></svg></span><span><b>Bảng xếp hạng</b><span>Tuần này bạn hạng 12</span></span></a>
+  </section>
+</section>
+
+</main>
+
+<footer class="pfoot">
+  <b>Hướng C — "Đêm rực lửa" (gamified dark-warm).</b> Tokens: dùng đúng bảng .dark của brand — bg #1c130d · card #2b1f16/#35271a · coral #ff7a50 (CTA/tiến độ) · teal #2dd4bf (ôn tập/nghe) · gold #fbbf24 (streak/XP) · radius 14–22 · nút có "độ nảy" shadow-đáy.
+  Motif: HUD game — streak-hero + vòng mục tiêu trung tâm + progress dạng segment/khối. A11y: coral 7.1:1, teal 9.8:1 trên nền (đạt ≥4.5), focus 3px gold, touch ≥44px, aria-live feedback, reduced-motion tắt glow/pulse.
+</footer>
+
+<script>
+document.querySelectorAll('.ptab').forEach(function(t){t.addEventListener('click',function(){
+  document.querySelectorAll('.ptab').forEach(function(x){var on=x===t;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});
+  document.querySelectorAll('.surface').forEach(function(s){s.classList.toggle('on',s.id==='s-'+t.dataset.s)});
+})});
+document.querySelectorAll('.schip[data-st]').forEach(function(c){c.addEventListener('click',function(){
+  document.querySelectorAll('.schip[data-st]').forEach(function(x){x.classList.toggle('on',x===c)});
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on',s.dataset.st===c.dataset.st)});
+})});
+document.querySelectorAll('.opts').forEach(function(g){g.addEventListener('click',function(e){
+  var o=e.target.closest('.obtn');if(!o||o.disabled)return;
+  var p=g.closest('.panel');var ok=o.dataset.ok==='1';
+  p.querySelectorAll('.fb').forEach(function(f){f.classList.remove('show')});
+  if(ok){o.classList.add('correct');g.querySelectorAll('.obtn').forEach(function(x){x.disabled=true});var f=p.querySelector('.fb-ok');if(f)f.classList.add('show');}
+  else{o.classList.add('wrong');o.disabled=true;var f2=p.querySelector('.fb-no');if(f2)f2.classList.add('show');}
+})});
+function lev(a,b){var m=[],i,j;for(i=0;i<=a.length;i++){m[i]=[i];for(j=1;j<=b.length;j++)m[i][j]=i?Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1)):j}return m[a.length][b.length]}
+var ti=document.querySelector('.typein');
+function checkType(){var v=ti.value.trim().toLowerCase();if(!v)return;var p=ti.closest('.panel');
+  p.querySelectorAll('.fb').forEach(function(f){f.classList.remove('show')});
+  var d=lev(v,'refund');
+  if(d===0)p.querySelector('.fb.exact').classList.add('show');
+  else if(d===1)p.querySelector('.fb.near').classList.add('show');
+  else p.querySelector('.fb-no').classList.add('show');}
+ti.addEventListener('keydown',function(e){if(e.key==='Enter')checkType()});
+document.querySelector('.checkbtn').addEventListener('click',checkType);
+document.querySelectorAll('.presets button').forEach(function(b){b.addEventListener('click',function(){
+  b.closest('.presets').querySelectorAll('button').forEach(function(x){var on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+})});
+</script>
+</body>
+</html>

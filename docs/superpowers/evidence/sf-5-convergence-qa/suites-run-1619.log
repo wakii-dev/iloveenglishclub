@@ -1,0 +1,246 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocab-convergence
+> npm run test:e2e:vocabulary && npm run test:e2e:vocabulary-quiz && npm run test:e2e:vocabulary-lookup && npm run test:e2e:vocabulary-hub && npm run test:e2e:vocabulary-learn && npm run test:e2e:vocabulary-hub-quiz && npm run test:e2e:vocabulary-learn-session && npm run test:e2e:vocabulary-review-upgrade && npm run test:e2e:vocabulary-dashboard
+
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary
+> playwright test --config playwright.vocabulary.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] ◇ injected env (0) from .env.local
+[WebServer] (node:38484) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/vocabulary-fixture.ts is not specified and it doesn't parse as CommonJS.
+[WebServer] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[WebServer] To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/package.json.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 2 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/vocabulary-public.spec.ts:13:5 › vocabulary EN: list từ của book + nút phát chỉ cho từ có audio (1.0s)
+  ✓  2 [chromium] › e2e/vocabulary-public.spec.ts:38:5 › vocabulary VI: nhãn i18n tiếng Việt (3.3s)
+
+  2 passed (36.4s)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-quiz
+> playwright test --config playwright.vocabulary-quiz.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 3 tests using 1 worker
+
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/quiz-flow.spec.ts:60:7 › Quiz flow (vocabulary SF-4) › EN: đề 10 câu → trả lời 3 loại → tổng kết % → làm lại → điểm lên top-users (20.6s)
+  ✓  2 [chromium] › e2e/quiz-flow.spec.ts:94:7 › Quiz flow (vocabulary SF-4) › VI: nhãn i18n — đề 10 câu, điền từ và ghép nghĩa đều nhãn tiếng Việt (6.8s)
+  ✓  3 [chromium] › e2e/quiz-flow.spec.ts:139:7 › Quiz flow (vocabulary SF-4) › chưa đăng nhập → redirect login kèm ?next (2.2s)
+
+  3 passed (1.2m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-lookup
+> playwright test --config playwright.vocabulary-lookup.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 1 test using 1 worker
+
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/word-lookup.spec.ts:39:7 › Word lookup popover (vocabulary SF-5) › bấm từ có trong bộ từ vựng → popover nghĩa + audio; click ngoài/Escape đóng; từ lạ → miss (7.9s)
+
+  1 passed (22.4s)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-hub
+> playwright test --config playwright.vocabulary-hub.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 7 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✘  1 [chromium] › e2e/hub-library.spec.ts:50:7 › Vocabulary hub library (SF-2) › EN: danh sách + Học từ này prefill thẻ flashcard (18.6s)
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✘  2 [chromium] › e2e/hub-library.spec.ts:86:7 › Vocabulary hub library (SF-2) › EN: search + filter audio/book hoạt động (15.7s)
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✘  3 [chromium] › e2e/hub-library.spec.ts:135:7 › Vocabulary hub library (SF-2) › EN: phân trang 50/trang (55 từ độc lập qa-lib-) (14.7s)
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  4 [chromium] › e2e/hub-library.spec.ts:157:7 › Vocabulary hub library (SF-2) › VI + guest: duyệt Thư viện không cần đăng nhập, không cột trạng thái (3.7s)
+  ✓  5 [chromium] › e2e/hub-overview.spec.ts:36:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › EN: dashboard khối + tab hrefs giữ nguyên (?tab= contract) (9.6s)
+  ✓  6 [chromium] › e2e/hub-overview.spec.ts:82:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › VI: nhãn i18n dashboard tiếng Việt — navbar/tab/khối (8.9s)
+  ✓  7 [chromium] › e2e/hub-overview.spec.ts:128:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › guest: mặc định tab Thư viện; đòi Tổng quan → login ?next (không regression) (2.5s)
+
+
+  1) [chromium] › e2e/hub-library.spec.ts:50:7 › Vocabulary hub library (SF-2) › EN: danh sách + Học từ này prefill thẻ flashcard 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('row').filter({ hasText: 'qa-' })
+    Expected: 3
+    Received: 15
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('row').filter({ hasText: 'qa-' }) with timeout 5000ms
+      - waiting for getByRole('row').filter({ hasText: 'qa-' })
+        14 × locator resolved to 15 elements
+           - unexpected value "15"
+
+
+      59 |     // toàn bảng: 3 từ fixture (55 bulk thêm ở test pagination — test tuần tự)
+      60 |     const rows = qaRows(page);
+    > 61 |     await expect(rows).toHaveCount(3);
+         |                        ^
+      62 |     // trạng thái SRS của tôi: alpha đến hạn, charlie đang học (fixture seed)
+      63 |     await expect(rows.filter({ hasText: ALPHA.word })).toContainText("Due");
+      64 |     await expect(
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/hub-library.spec.ts:61:24
+
+    Error Context: test-results/hub-library-Vocabulary-hub-e79db-ừ-này-prefill-thẻ-flashcard-chromium/error-context.md
+
+    Error Context: test-results/hub-library-Vocabulary-hub-e79db-ừ-này-prefill-thẻ-flashcard-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/hub-library-Vocabulary-hub-e79db-ừ-này-prefill-thẻ-flashcard-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/hub-library-Vocabulary-hub-e79db-ừ-này-prefill-thẻ-flashcard-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/hub-library.spec.ts:86:7 › Vocabulary hub library (SF-2) › EN: search + filter audio/book hoạt động 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('row').filter({ hasText: 'qa-' })
+    Expected: 3
+    Received: 15
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('row').filter({ hasText: 'qa-' }) with timeout 5000ms
+      - waiting for getByRole('row').filter({ hasText: 'qa-' })
+        14 × locator resolved to 15 elements
+           - unexpected value "15"
+
+
+      90 |     await page.goto("/en/vocabulary?tab=library");
+      91 |     const rows = qaRows(page);
+    > 92 |     await expect(rows).toHaveCount(3);
+         |                        ^
+      93 |
+      94 |     // search debounce → URL search= + đúng 1 hàng (input type=search → role searchbox)
+      95 |     const searchBox = page.getByRole("searchbox", { name: "Search words" });
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/hub-library.spec.ts:92:24
+
+    Error Context: test-results/hub-library-Vocabulary-hub-66aa0-filter-audio-book-hoạt-động-chromium/error-context.md
+
+    Error Context: test-results/hub-library-Vocabulary-hub-66aa0-filter-audio-book-hoạt-động-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/hub-library-Vocabulary-hub-66aa0-filter-audio-book-hoạt-động-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/hub-library-Vocabulary-hub-66aa0-filter-audio-book-hoạt-động-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e/hub-library.spec.ts:135:7 › Vocabulary hub library (SF-2) › EN: phân trang 50/trang (55 từ độc lập qa-lib-) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('row').filter({ hasText: 'qa-' })
+    Expected: 50
+    Received: 47
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('row').filter({ hasText: 'qa-' }) with timeout 5000ms
+      - waiting for getByRole('row').filter({ hasText: 'qa-' })
+        14 × locator resolved to 47 elements
+           - unexpected value "47"
+
+
+      141 |     // 3 qa-hub + 55 qa-lib = 58 → 2 trang, trang 1 đủ 50 hàng
+      142 |     await expect(page.getByText("Page 1/2")).toBeVisible();
+    > 143 |     await expect(rows).toHaveCount(50);
+          |                        ^
+      144 |
+      145 |     await page.getByRole("link", { name: "Next" }).click();
+      146 |     await expect(page).toHaveURL(/page=2/);
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/hub-library.spec.ts:143:24
+
+    Error Context: test-results/hub-library-Vocabulary-hub-8f984-rang-55-từ-độc-lập-qa-lib---chromium/error-context.md
+
+    Error Context: test-results/hub-library-Vocabulary-hub-8f984-rang-55-từ-độc-lập-qa-lib---chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/hub-library-Vocabulary-hub-8f984-rang-55-từ-độc-lập-qa-lib---chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/hub-library-Vocabulary-hub-8f984-rang-55-từ-độc-lập-qa-lib---chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e/hub-library.spec.ts:50:7 › Vocabulary hub library (SF-2) › EN: danh sách + Học từ này prefill thẻ flashcard 
+    [chromium] › e2e/hub-library.spec.ts:86:7 › Vocabulary hub library (SF-2) › EN: search + filter audio/book hoạt động 
+    [chromium] › e2e/hub-library.spec.ts:135:7 › Vocabulary hub library (SF-2) › EN: phân trang 50/trang (55 từ độc lập qa-lib-) 
+  4 passed (1.7m)
+EXIT_CODE=1

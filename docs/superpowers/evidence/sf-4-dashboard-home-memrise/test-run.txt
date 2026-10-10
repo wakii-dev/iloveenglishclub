@@ -1,0 +1,32 @@
+tdd: RED→GREEN — dashboard-store.test.ts (RED: module thiếu → GREEN 15/15; sau review A +stageBoundFilter sweep RED trên code cũ → GREEN 17/17) · route.goal.test.ts (RED: route thiếu → GREEN 13/13) · hub-overview-section.test.ts (SSR rewrite cho dashboard — 12/12) · UI components verify qua e2e + Rule 0 browser (ghi dưới) — không unit-test render pixel
+Code commit: 75fe18c (tick evidence-refresh — HEAD~1 so với evidence commit này; commit CODE cuối = 0ae3c59 fix review C P1 — không có commit code nào sau 0ae3c59, 2 commit kế là docs; chuỗi đầy đủ: d277a54 tokens/icons/i18n · 4c1e7b5 store · d9316f9 goal API · 891040d fix review A P0 · 80eb957 components+entry · 89b766d fix review B P1/Q2 · 3b31fb0 e2e+config · 52205a2 strict-mode · 1585abe dark surface · a22b7c8 fixture seed reading · 0ae3c59 fix review C P1 click-with-retry)
+
+════ Rule 0 / BROWSER VERIFY — TỰ ĐI FLOW + SCREENSHOTS (SF-4 = UI surface) ════
+Script: e2e/rule0-dashboard-flow.ts (headless Chrome trên CÙNG dev build 3319 — kit fallback FI-464, coordinator tự Read ảnh). Screens: docs/superpowers/evidence/sf-4-dashboard-home-memrise/screens/ (8 ảnh).
+KẾT QUẢ: 12/12 PASS — register qua UI → dashboard VI: h1 "Chào QA Dash Rule0" + pill 1.248 XP (vi-VN format) + continue "Cấp độ 5 · Level 2 · Từ 11–20 — còn 10 từ mới" + ring 3/5 + streak 2 ngày + due 1 từ + vườn [3,2,1,1,1,0,0,5] 13 từ + lộ trình 3 sách (10/25 Đang học) → goal popover 5→10 (click-with-retry chống pre-hydration) → ring 3/10 → RELOAD GIỮ 10 (acceptance #2) → dark toggle class dark scope container (screens 4) → mobile 375 không tràn ngang + cuộn đủ khối (screens 5) → guest Thư viện + login ?next (screens 6-7).
+Dark surface: container -mx-5 p-5 bg-background text-foreground — dark mode khối nền #211711 + text sáng, tab strip/library giữ sáng (scope hand-off §4); light mode nền kem-trên-kem vô hình. ĐÃ NHÌN BẰNG MẮT ảnh 1/1b/2/3/4/5/6/7 — khớp proto-A (tokens, thứ tự khối, 2 cột ≥900, legend vườn, chip CEFR).
+
+════ (1) FULL VITEST — exit 0 ════
+Lệnh: node node_modules/vitest/vitest.mjs run
+Output: Test Files 67 · Tests 835 passed | 4 skipped (integration skip-by-design khi thiếu template env) · EXIT=0 · 37s
+SF-4 slice: dashboard-store 17/17 · goal route 13/13 · hub-overview-section SSR 12/12 · messages parity 3/3
+
+════ (2) E2E SUITES ════
+- Dashboard 3319 (mới — playwright.vocabulary-dashboard.config.ts + fixture qa-dash-* pin số): **6/6 PASS** (2.8m, RUN CUỐI trên 0ae3c59 sau fix review C) — VI đúng số fixture (garden [3,2,1,1,1,0,0,5], continue level-5 Level 2 · 11–20, ring 3/5, streak 2, due 1, XP 1.248) · goal 5→10 reload giữ (click-with-retry chống pre-hydration — review C P1; .first() chống strict-mode mid-RSC-swap) · EN labels + /en/ href + 1,248 · dark toggle persist localStorage · mobile 375 · guest regression. Continue-card CHỈ assert href — KHÔNG navigate learn runner (SF-3).
+- Hub 3314 (viết lại assertion dashboard): hub-overview 3/3 PASS (dashboard khối + tab hrefs ?tab= contract + guest login ?next + i18n vi).
+- Hub-quiz 3316: 4/4 PASS — tab quiz không regression sau entry rewrite.
+- Hub-library 3314 (2 FAIL — PRE-EXISTING ENV-DRIFT, ngoài touch map SF-4): "No words match" + phân trang 47/50 — DB dev giờ có 6 từ crawl template ('a'…) + audio_url, suite assumption "trang 1 toàn qa-"/"filter audio rỗng" vỡ. File hub-library.spec.ts + hub-library-section.tsx 0 dòng đổi (git diff 4b3562a..HEAD = ∅). FLAG coordinator: cần seed-guard hoặc điều chỉnh assumption — việc SF-5 convergence (back-compat sweep).
+
+════ (3) MIGRATION (DB dev) ════
+DB dev (DATABASE_URL .env.local) chưa có 0005/0006 khi nhận worktree — node node_modules/drizzle-kit/bin.cjs migrate → applied OK (vocab_activity + profiles.daily_goal_words + user_word_progress.lapses + daily_activity.vocab_steps + view leaderboard UNION ALL). Books template: level-1..7 tồn tại (level-1 6 từ crawl, còn lại trống — fixture qa-dash tự seed level-5/6).
+
+════ TYPECHECK + LINT ════
+tsc --noEmit: 0 lỗi (exit 0). eslint 22 files SF-4: clean (exit 0).
+
+════ i18n PARITY ════
+messages/{vi,en}/vocabulary.json hub.dash.* 33 keys + greetingFallback — parity test xanh (vi-only/en-only = ∅); stage labels tái dùng learn.stage.0..7 (SF-1).
+
+════ ROLLING REVIEW (CHECK 3) ════
+- Nhóm A (T1-T2 tokens+store): reviewer độc lập — CHANGES-REQUESTED P0 stageCountSql boundary dịch +1 (s1 nhầm [2,7), s7 undefined) + P1 streak asc + P1 shadow map → fix 891040d kèm test RED trên code cũ (stageBoundFilter sweep đối chiếu growthStage 0..250 + pin biên) — verdict + fix post VU-41.
+- Nhóm B (T3-T6 API+components): reviewer độc lập — CHANGES-REQUESTED 2 P1 (icon Khám phá đen đặc thiếu stroke attrs; ground-line border-b-2.5 không phải class Tailwind v4) + Q2 fetch timeout → fix 89b766d kèm meta-test — post VU-41.
+- Nhóm C (T7-T10 e2e+verify): review cuối trên toàn diff SF-4 — verdict VERDICT: APPROVED + CHECKLIST-4Q post VU-41 (B3 gate).

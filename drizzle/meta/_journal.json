@@ -36,6 +36,20 @@
       "when": 1791058515331,
       "tag": "0004_familiar_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791554964810,
+      "tag": "0005_shocking_hardball",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791555072676,
+      "tag": "0006_warm_gunslinger",
+      "breakpoints": true
     }
   ]
 }
