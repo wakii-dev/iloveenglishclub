@@ -1,0 +1,90 @@
+tdd: skipped-tdd: SF-5 là QA convergence — không có feature code mới (1 product fix 6cc5563: continue CTA href slug→bookId bắt được TỪ Rule 0 FLOW fail, không phải TDD red); thay bằng chứng: vitest 914 passed | 4 skipped + aggregator 10 lane/40 tests EXIT 0 + FLOW browser PASS. Code commits: 6cc5563 (fix) + bd9a9f9 (test/e2e) — evidence commit ngay sau.
+
+== Full vitest (TẠI HEAD bd9a9f9 + fix hub-overview unit test trong commit 6cc5563) ==
+node node_modules/vitest/vitest.mjs run → exit 0
+Test Files 70 passed | 1 skipped (71)
+Tests      914 passed | 4 skipped (918)
+(4 skipped = integration skip-điều-kiện pre-existing; rehearsal-5k.integration.test.ts đã XOÁ sau khi chạy theo touch map)
+tsc --noEmit → 0 · eslint (changed files) → 0
+
+== Aggregator MỘT LỆNH (npm run test:e2e:vocab-convergence — EXIT_CODE=0) ==
+Log đầy đủ: docs/superpowers/evidence/sf-5-convergence-qa/suites-run-final2.log
+3310 vocabulary            2 passed (30.2s)
+3312 vocabulary-quiz       3 passed (1.2m)
+3313 vocabulary-lookup     1 passed (19.4s)
+3314 vocabulary-hub        7 passed (1.7m)   ← 3 test stale sửa (flashcard retired/template words)
+3315 vocabulary-learn      4 passed (1.6m)   ← 2 test stale sửa + fixture streak daily_activity
+3316 hub-quiz              4 passed (58.5s)
+3317 learn-session         5 passed (11.4m)
+3318 review-upgrade        5 passed (6.3m)
+3319 dashboard             6 passed (2.7m)   ← href bookId assertion mới
+3320 top-users-vocab       3 passed (56.3s)  ← SUITE MỚI (SF-5)
+Tổng: 40/40 tests, liên tiếp trong MỘT lần chạy, EXIT 0.
+Lane 3311 (vocabulary-review) VẮNG khỏi package.json ✓ (retired SF-3).
+
+== Rule 0 FLOW (browser-verify.mjs — chuẩn duy nhất cho "xong") ==
+FLOW PASS — EXIT 0. Log: /tmp log + step logs trong evidence dir:
+b1 register (session API ground truth) → b2 dashboard → b3 continue CTA href
+bookId ✓ → learn /vi/vocabulary/learn/1 → b4 5 từ (introduce/MC/listen/type,
+listen-fallback gõ-nghĩa, 19 steps) → b5 summary "+25 XP" planted 5, DB xp=25
+khớp → b6 /top-users weekly "SF5 Flow Walk" +25 XP (flow-05 png) → b7 review
+seed-due +0 XP đúng semantics lần-đầu-ngày (21 vocab_activity rows) → b8 /me
+streak 1 → b9 library → b10 logout guest ✓ → b11 desktop shot → b12
+reduced-motion (media=true; dashboard không có animation tại rest — clamp CSS
+được chứng minh ở suite 3317 a11y test + globals.css).
+2 console errors = Next.js dev hydration warning (dateLine SSR/client) — benign,
+không xuất hiện trong build prod.
+
+== Rehearsal ~5k rows ==
+rehearsal-5k.txt (timings cold/warm trung thực — RTT VN→Neon chi phối) +
+rehearsal-explain.txt (server-side: review queue 0.218ms Index Scan PK ·
+planted-today 0.916ms · streak 0.082ms · pool 0.254ms — không seq-scan bảng
+lớn). Teardown assert 0 rows còn sót. File test tạm ĐÃ XOÁ.
+6-từ degenerate: lane 3310 fixture + 3317 walkthrough + FLOW listen-fallback.
+
+== VU-32 coexistence ==
+vu32-coexistence.txt: enrich dryRun:true ×6 (HTTP 200 ok, counts 4 candidates
+0 fillable — không ghi) SONG SONG flow học; words snapshot trước/sau
+byte-identical; static grep: chỉ enrich.ts + admin vocabulary-store.ts ghi
+words (VU-32 surface). words READ-only từ vocab flow ✓.
+
+== Back-compat ==
+back-compat-sweep.md: 8 contract URL — ?tab=library|quiz, ?word=, ?scope=,
+scope=all (grep callers + e2e assert href), guest redirect, 404 learn lạ
+(page regex ^\d+$ + notFound — runtime probe trong FLOW), review-flashcards
+grep = 0.
+
+== Independent REVIEW (T12 — code-reviewer độc lập, 2 vòng) ==
+Vòng 1: CHANGES-REQUESTED — P1 port 3320 TRÙNG playwright.oxford-crawl.config.ts
+(lỗi thực tế: context pack gợi ý 3320 nhưng lane oxford đã chiếm) + 4 P2
+(weekly XP == profiles.xp không tách nguồn; comment MC sai semantic; title
+unit test stale; DASH_BOOK_ID hardcode — accepted).
+Vòng 2 (re-review targeted): **VERDICT: APPROVED** — P1 đóng (port 3340
+unique toàn repo, verified grep 14 configs); tách nguồn weekly 42 / all_time
+5000 đạt meta-test (view regression đọc nhầm nguồn bắt được cả 2 chiều);
+CHECKLIST-4Q 4/4 PASS (SQL trong tx, bcrypt ngoài begin, throw loud, seed
+atomic). Coverage pass 14/14 files verdict (reviewed, clean hoặc finding).
+P2 còn lại: 2 comment stale "1000"→5000 (đã sửa), DASH_BOOK_ID hardcode
+(template pin — chấp nhận), enrich wordIds TypeError→500 (route VU-32 —
+boundary cấm đụng, report coordinator).
+
+== SECURITY AUDIT (T10 — security-audit độc lập) ==
+**SECURITY: CLEAN — không P0/P1** (3 P2 informational):
+- session POST: grading server-side ✓ · idempotency server-derive + UNIQUE ✓ ·
+  user scoping mọi query ✓ · injection 0 (parameterized 100%, không sql.raw) ·
+  anti-farm 3 lớp (lock + lần-đầu + cap 60) ✓
+- goal PATCH: auth 401 trước parse, validate 1..100, WHERE user session ✓
+- GET payload không lộ đáp án (pin test no-leak tồn tại) ✓
+- repo hygiene: không secrets/.env/exec-bit mới; package.json chỉ thêm
+  scripts, lockfile KHÔNG đổi ✓
+- enrich route: assertAdmin đầu handler; dryRun early-return trước mọi write ✓
+P2 được ghi: wordIds parse TypeError→500 (VU-32 surface — report, không fix
+theo boundary); fixture password plaintext (QA pattern accepted); positiveInt
+coercion vô hại.
+
+== Commits SF-5 ==
+6cc5563 fix(vocab-dashboard): continue CTA href bookId số — slug rơi 404
+bd9a9f9 test(vocab-convergence): aggregator lane + suite 3320→3340 + sửa stale specs
+e8fa4de test(vocab-convergence): review fixes — port 3340 + tách nguồn weekly/all_time
+(Evidence commit ngay sau — hash code commits = HEAD~1/HEAD~2/HEAD~3.)
+

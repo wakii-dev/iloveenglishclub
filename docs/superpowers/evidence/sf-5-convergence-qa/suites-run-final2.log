@@ -1,0 +1,415 @@
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocab-convergence
+> npm run test:e2e:vocabulary && npm run test:e2e:vocabulary-quiz && npm run test:e2e:vocabulary-lookup && npm run test:e2e:vocabulary-hub && npm run test:e2e:vocabulary-learn && npm run test:e2e:vocabulary-hub-quiz && npm run test:e2e:vocabulary-learn-session && npm run test:e2e:vocabulary-review-upgrade && npm run test:e2e:vocabulary-dashboard && npm run test:e2e:top-users-vocab
+
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary
+> playwright test --config playwright.vocabulary.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] ◇ injected env (0) from .env.local
+[WebServer] (node:15588) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/vocabulary-fixture.ts is not specified and it doesn't parse as CommonJS.
+[WebServer] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[WebServer] To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/package.json.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 2 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/vocabulary-public.spec.ts:13:5 › vocabulary EN: list từ của book + nút phát chỉ cho từ có audio (965ms)
+  ✓  2 [chromium] › e2e/vocabulary-public.spec.ts:38:5 › vocabulary VI: nhãn i18n tiếng Việt (3.3s)
+
+  2 passed (28.0s)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-quiz
+> playwright test --config playwright.vocabulary-quiz.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 3 tests using 1 worker
+
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/quiz-flow.spec.ts:60:7 › Quiz flow (vocabulary SF-4) › EN: đề 10 câu → trả lời 3 loại → tổng kết % → làm lại → điểm lên top-users (19.8s)
+  ✓  2 [chromium] › e2e/quiz-flow.spec.ts:94:7 › Quiz flow (vocabulary SF-4) › VI: nhãn i18n — đề 10 câu, điền từ và ghép nghĩa đều nhãn tiếng Việt (5.8s)
+  ✓  3 [chromium] › e2e/quiz-flow.spec.ts:139:7 › Quiz flow (vocabulary SF-4) › chưa đăng nhập → redirect login kèm ?next (2.2s)
+
+  3 passed (1.2m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-lookup
+> playwright test --config playwright.vocabulary-lookup.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 1 test using 1 worker
+
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/word-lookup.spec.ts:39:7 › Word lookup popover (vocabulary SF-5) › bấm từ có trong bộ từ vựng → popover nghĩa + audio; click ngoài/Escape đóng; từ lạ → miss (8.5s)
+
+  1 passed (19.4s)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-hub
+> playwright test --config playwright.vocabulary-hub.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 7 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/hub-library.spec.ts:54:7 › Vocabulary hub library (SF-2) › EN: danh sách + Học từ này prefill phiên review (17.0s)
+  ✓  2 [chromium] › e2e/hub-library.spec.ts:97:7 › Vocabulary hub library (SF-2) › EN: search + filter audio/book hoạt động (26.4s)
+  ✓  3 [chromium] › e2e/hub-library.spec.ts:156:7 › Vocabulary hub library (SF-2) › EN: phân trang 50/trang (55 từ độc lập qa-lib-) (13.4s)
+  ✓  4 [chromium] › e2e/hub-library.spec.ts:183:7 › Vocabulary hub library (SF-2) › VI + guest: duyệt Thư viện không cần đăng nhập, không cột trạng thái (3.8s)
+  ✓  5 [chromium] › e2e/hub-overview.spec.ts:36:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › EN: dashboard khối + tab hrefs giữ nguyên (?tab= contract) (8.3s)
+  ✓  6 [chromium] › e2e/hub-overview.spec.ts:82:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › VI: nhãn i18n dashboard tiếng Việt — navbar/tab/khối (9.5s)
+  ✓  7 [chromium] › e2e/hub-overview.spec.ts:128:7 › Vocabulary hub — tab Tổng quan dashboard (SF-4) › guest: mặc định tab Thư viện; đòi Tổng quan → login ?next (không regression) (2.5s)
+
+  7 passed (1.7m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-learn
+> playwright test --config playwright.vocabulary-learn.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] ◇ injected env (0) from .env.local
+[WebServer] (node:33959) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/vocabulary-learn-fixture.ts is not specified and it doesn't parse as CommonJS.
+[WebServer] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[WebServer] To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/package.json.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 4 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/learn-flow.spec.ts:63:7 › Learn flow (vocabulary-learn sf-1) › EN: per-book vocabulary — mỗi từ có link Học từ này ?word= (10.5s)
+[WebServer]  ⨯ [Error: aborted] { code: 'ECONNRESET', digest: '28012489' }
+  ✓  2 [chromium] › e2e/learn-flow.spec.ts:87:7 › Learn flow (vocabulary-learn sf-1) › EN: Bắt đầu học sách này — seed 12 từ trải 5/ngày, idempotent (9.6s)
+  ✓  3 [chromium] › e2e/learn-flow.spec.ts:113:7 › Learn flow (vocabulary-learn sf-1) › EN: hub Khám phá — QA Learn Book còn 12 từ chưa học, có nút bulk (10.4s)
+  ✓  4 [chromium] › e2e/learn-flow.spec.ts:134:7 › Learn flow (vocabulary-learn sf-1) › EN: stat row — streak 2 ngày + 3 ôn due, CTA review scope=all (11.7s)
+
+  4 passed (1.6m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-hub-quiz
+> playwright test --config playwright.vocabulary-hub-quiz.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+
+Running 4 tests using 1 worker
+
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/hub-quiz.spec.ts:79:7 › Vocabulary hub quiz (SF-3) › EN: picker mặc định Tất cả → trả lời đủ → tổng kết % → điểm lên top-users (15.1s)
+  ✓  2 [chromium] › e2e/hub-quiz.spec.ts:112:7 › Vocabulary hub quiz (SF-3) › EN: scope=book trong hub + scope=multi&books → đề render, Đổi phạm vi về picker (8.1s)
+  ✓  3 [chromium] › e2e/hub-quiz.spec.ts:132:7 › Vocabulary hub quiz (SF-3) › EN: picker — từng sách qua Select, nhiều sách qua checkbox, Bắt đầu đẩy đúng URL (7.9s)
+  ✓  4 [chromium] › e2e/hub-quiz.spec.ts:165:7 › Vocabulary hub quiz (SF-3) › guest: tab Kiểm tra và Ôn tập đều redirect login kèm ?next (3.3s)
+
+  4 passed (58.5s)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-learn-session
+> playwright test --config playwright.vocabulary-learn-session.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] ◇ injected env (0) from .env.local
+[WebServer] (node:46597) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/vocabulary-learn-session-fixture.ts is not specified and it doesn't parse as CommonJS.
+[WebServer] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[WebServer] To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/package.json.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 5 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+  ✓  1 [chromium] › e2e/learn-session.spec.ts:141:7 › Learn session UI (vocab-memrise SF-3) › walkthrough 5 từ UI thật — intro→MC→nghe→gõ, tổng kết +25 XP (5×[1 lần-đầu + 4 planted]) (2.7m)
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+  ✓  2 [chromium] › e2e/learn-session.spec.ts:165:7 › Learn session UI (vocab-memrise SF-3) › sai 1 bước → requeue CUỐI HÀNG thấy rõ, đúng lần sau vẫn tính (tổng vẫn +25) (2.8m)
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+  ✓  3 [chromium] › e2e/learn-session.spec.ts:179:7 › Learn session UI (vocab-memrise SF-3) › reload giữa phiên → queue còn lại (không làm lại từ đã planted) (3.6m)
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+  ✓  4 [chromium] › e2e/learn-session.spec.ts:197:7 › Learn session UI (vocab-memrise SF-3) › keyboard trọn 1 chuỗi từ — intro (Tab+Enter) → MC (mũi tên+Enter) → nghe → gõ (Enter) (38.9s)
+[e2e] POST session → 200
+[e2e] POST session → 200
+[e2e] POST session → 200
+  ✓  5 [chromium] › e2e/learn-session.spec.ts:268:7 › Learn session UI (vocab-memrise SF-3) › mobile 375 — đi 1 từ không vỡ layout (scrollWidth ≤ 375) (39.1s)
+
+  Slow test file: [chromium] › e2e/learn-session.spec.ts (10.5m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  5 passed (11.4m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-review-upgrade
+> playwright test --config playwright.vocabulary-review-upgrade.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] ◇ injected env (0) from .env.local
+[WebServer] (node:2371) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/e2e/vocabulary-review-upgrade-fixture.ts is not specified and it doesn't parse as CommonJS.
+[WebServer] Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+[WebServer] To eliminate this warning, add "type": "module" to /Users/hoivu/orca/workspaces/iloveenglishclup/sf-5-convergence-qa/package.json.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 5 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:44:12.557Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:44:28.648Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:44:45.356Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:45:01.097Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":fals
+  ✓  1 [chromium] › e2e/review-upgrade.spec.ts:138:7 › Review session UI (vocab-memrise SF-3) › gõ đúng 4 từ due → +4 XP (1/từ lần-đầu-ngày), DB reps tiến + due_at tương lai (1.4m)
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":false,"grade":{"quality":0,"ease":1.7000000000000002,"intervalDays":1,"reps":0,"dueAt":"2026-10-11T10:45:27.089Z","lapses":1},"xpAwarded":0,"xpCapped":false,"totalXp":1,"streak":1
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:45:42.524Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:45:58.645Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:46:16.388Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":1.7,"intervalDays":1,"reps":1,"dueAt":"2026-10-11T10:46:25.316Z","lapses":1},"xpAwarded":4,"xpCapped":false,"totalXp":8,"streak":1,"goalDone":fals
+  ✓  2 [chromium] › e2e/review-upgrade.spec.ts:159:7 › Review session UI (vocab-memrise SF-3) › gõ sai type → requeue cuối phiên + lapses+1, retry vẫn tiến (tổng +4) (1.5m)
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:46:53.695Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:47:11.207Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:47:28.216Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:47:44.426Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":fals
+  ✓  3 [chromium] › e2e/review-upgrade.spec.ts:198:7 › Review session UI (vocab-memrise SF-3) › double-submit cùng bước → chỉ 1 POST, chip không cộng 2 lần, DB 1 row/bước (1.3m)
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:48:10.437Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":fals
+  ✓  4 [chromium] › e2e/review-upgrade.spec.ts:241:7 › Review session UI (vocab-memrise SF-3) › ?word= prefill qa-ru-02 (audio) → listen KHÔNG options → fallback GÕ NGHĨA (P1 review) → +1 XP (25.1s)
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:48:36.215Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":1,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:48:51.521Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":2,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:49:09.172Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":3,"streak":1,"goalDone":fals
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":null,"xpAwarded":1,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":false}
+[e2e] POST → 200 {"ok":true,"correct":true,"grade":{"quality":4,"ease":2.5,"intervalDays":3,"reps":3,"dueAt":"2026-10-13T10:49:27.191Z","lapses":0},"xpAwarded":0,"xpCapped":false,"totalXp":4,"streak":1,"goalDone":fals
+  ✓  5 [chromium] › e2e/review-upgrade.spec.ts:270:7 › Review session UI (vocab-memrise SF-3) › ?scope=book&book= lọc khỏi từ due ngoài sách (1.3m)
+
+  Slow test file: [chromium] › e2e/review-upgrade.spec.ts (5.8m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  5 passed (6.3m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:vocabulary-dashboard
+> playwright test --config playwright.vocabulary-dashboard.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 6 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/dashboard.spec.ts:61:7 › Vocabulary dashboard home (SF-4) › VI: dashboard đúng số fixture — continue/ring/streak/due/XP/vườn/lộ trình (25.4s)
+  ✓  2 [chromium] › e2e/dashboard.spec.ts:118:7 › Vocabulary dashboard home (SF-4) › goal 5→10 qua popover → reload giữ 10, ring cập nhật (acceptance #2) (25.1s)
+  ✓  3 [chromium] › e2e/dashboard.spec.ts:157:7 › Vocabulary dashboard home (SF-4) › EN: labels + href en + số format en-US (17.3s)
+  ✓  4 [chromium] › e2e/dashboard.spec.ts:180:7 › Vocabulary dashboard home (SF-4) › dark toggle: class dark scope container + persist localStorage (22.0s)
+  ✓  5 [chromium] › e2e/dashboard.spec.ts:211:7 › Vocabulary dashboard home (SF-4) › mobile 375: dashboard cuộn dùng được — các khối hiện đủ (17.6s)
+  ✓  6 [chromium] › e2e/dashboard.spec.ts:237:7 › Vocabulary dashboard home (SF-4) › guest: /vi/vocabulary → Thư viện; đòi Tổng quan → login ?next (không regression) (3.8s)
+
+  6 passed (2.7m)
+npm warn Unknown env config "python". This will stop working in the next major version of npm.
+npm warn Unknown env config "user". This will stop working in the next major version of npm.
+npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+npm warn Unknown user config "python". This will stop working in the next major version of npm.
+npm warn Unknown user config "user". This will stop working in the next major version of npm.
+npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+> ilec-scaffold@0.1.0 test:e2e:top-users-vocab
+> playwright test --config playwright.top-users-vocab.config.ts
+
+◇ injected env (6) from .env.local
+[WebServer] npm warn Unknown env config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "unsafe-perm". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+◇ injected env (0) from .env.local
+
+Running 3 tests using 1 worker
+
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+  ✓  1 [chromium] › e2e/top-users-vocab.spec.ts:35:7 › Top-users vocab XP (SF-5) › user vocab-only 0 dictation vẫn hiện bảng weekly với XP vocab (7.3s)
+[WebServer]  ⨯ [Error: aborted] { code: 'ECONNRESET', digest: '28012489' }
+  ✓  2 [chromium] › e2e/top-users-vocab.spec.ts:47:7 › Top-users vocab XP (SF-5) › all_time khớp profiles.xp của user (6.0s)
+  ✓  3 [chromium] › e2e/top-users-vocab.spec.ts:60:7 › Top-users vocab XP (SF-5) › /me: streak giữ khi ngày chỉ học vocab (presence daily_activity) (6.3s)
+
+  3 passed (56.3s)
+EXIT_CODE=0
