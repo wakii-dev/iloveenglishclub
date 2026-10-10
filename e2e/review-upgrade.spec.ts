@@ -59,9 +59,6 @@ async function waitAdvanced(page: Page): Promise<void> {
 /** Trả lời ĐÚNG bước hiện tại (adaptive theo loại bước trên màn). */
 async function answerCurrent(page: Page): Promise<boolean> {
   if (await page.getByTestId("session-summary").isVisible()) return false;
-  console.log(
-    `[drv] type=${await page.getByTestId("type-input").isVisible().catch(() => "ERR")} listen=${await page.getByTestId("listen-replay").isVisible().catch(() => "ERR")} opt=${await page.getByTestId("option-group").isVisible().catch(() => "ERR")}`,
-  );
   if (await page.getByTestId("type-input").isVisible()) {
     const prompt = await page.getByTestId("type-prompt").innerText();
     const meaning = prompt.replaceAll("“", "").replaceAll("”", "").trim();
@@ -233,6 +230,7 @@ test.describe("Review session UI (vocab-memrise SF-3)", () => {
     const postsAfterFirstStep = postCount;
     expect(postsAfterFirstStep).toBeLessThanOrEqual(1); // chỉ 1 POST cho bước này
 
+    await waitAdvanced(page); // auto-advance 1s — playAll không bấm lại mc đã chọn
     await playAll(page);
     await expect(page.getByTestId("summary-xp")).toHaveText("+4 XP");
     // DB: mỗi bước đúng 1 row — mc + type của từ đầu
