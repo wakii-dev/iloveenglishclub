@@ -22,7 +22,7 @@ const PORT = Number(process.env.E2E_PORT ?? 3211);
 const BASE = `http://localhost:${PORT}`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /[\\/]progress.*\.spec\.ts$/,
   timeout: 60_000,
   fullyParallel: false, // DB seed + store singleton — tuần tự cho ổn định
@@ -49,7 +49,7 @@ export default defineConfig({
   webServer: {
     // QA-7 (SF-6 fix): webpack dev — bypass --turbopack (race font 1/4-1/7
     // start, audit SF-1); script `dev` dùng chung không đổi (team HMR).
-    command: `npx next dev --port ${PORT}`,
+    command: `cd .. && npx next dev --port ${PORT}`,
     url: `${BASE}/en`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

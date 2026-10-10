@@ -19,10 +19,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = `/vi/vocabulary`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /(^|\/)dashboard\.spec\.ts$/,
-  globalSetup: "./e2e/vocabulary-dashboard-global-setup.ts",
-  globalTeardown: "./e2e/vocabulary-dashboard-global-teardown.ts",
+  globalSetup: "../e2e/vocabulary-dashboard-global-setup.ts",
+  globalTeardown: "../e2e/vocabulary-dashboard-global-teardown.ts",
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
@@ -41,7 +41,7 @@ export default defineConfig({
   webServer: {
     // webpack dev — bypass --turbopack (race font, QA-7 SF-6); trang hub là
     // force-dynamic nên seed words ở globalSetup là đủ, progress spec tự seed
-    command: `npx next dev --port ${PORT}`,
+    command: `cd .. && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

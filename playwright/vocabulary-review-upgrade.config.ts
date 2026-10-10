@@ -16,10 +16,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = `/en/me/vocabulary`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /(^|\/)review-upgrade\.spec\.ts$/,
-  globalSetup: "./e2e/vocabulary-review-upgrade-global-setup.ts",
-  globalTeardown: "./e2e/vocabulary-review-upgrade-global-teardown.ts",
+  globalSetup: "../e2e/vocabulary-review-upgrade-global-setup.ts",
+  globalTeardown: "../e2e/vocabulary-review-upgrade-global-teardown.ts",
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
@@ -39,7 +39,7 @@ export default defineConfig({
     // webpack dev — bypass --turbopack (race font, QA-7 SF-6). Seed TRƯỚC khi
     // server bind: Playwright poll URL TRƯỚC globalSetup — render đầu chạy khi
     // DB chưa có fixture → unstable_cache giữ [] suốt run (987a9e8).
-    command: `node --input-type=module -e "import('./e2e/vocabulary-review-upgrade-fixture.ts').then(m=>m.ensureReviewUpgradeFixture()).then(()=>process.exit(0))" && npx next dev --port ${PORT}`,
+    command: `cd .. && node --input-type=module -e "import('./e2e/vocabulary-review-upgrade-fixture.ts').then(m=>m.ensureReviewUpgradeFixture()).then(()=>process.exit(0))" && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

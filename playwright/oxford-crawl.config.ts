@@ -23,10 +23,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = `/vi/login`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /\/oxford-crawl[^/]*\.spec\.ts$/,
-  globalSetup: "./e2e/oxford-crawl-global-setup.ts",
-  globalTeardown: "./e2e/oxford-crawl-global-teardown.ts",
+  globalSetup: "../e2e/oxford-crawl-global-setup.ts",
+  globalTeardown: "../e2e/oxford-crawl-global-teardown.ts",
   timeout: 120_000,
   expect: { timeout: 15_000 }, // pattern admin config — compile lạnh login/action
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
@@ -48,7 +48,7 @@ export default defineConfig({
     // webpack dev — bypass --turbopack (race font, QA-7 SF-6). Seed TRƯỚC khi
     // server bind (pattern vocabulary config): Playwright start webServer +
     // poll URL TRƯỚC globalSetup — fixture phải sẵn trước lần render đầu.
-    command: `node --input-type=module -e "import('./e2e/oxford-crawl-fixture.ts').then(m=>m.ensureOxfordCrawlFixture()).then((i)=>{console.log('[seed] book='+i.bookSlug);process.exit(0)}).catch((e)=>{console.error(e);process.exit(1)})" && npx next dev --port ${PORT}`,
+    command: `cd .. && node --input-type=module -e "import('./e2e/oxford-crawl-fixture.ts').then(m=>m.ensureOxfordCrawlFixture()).then((i)=>{console.log('[seed] book='+i.bookSlug);process.exit(0)}).catch((e)=>{console.error(e);process.exit(1)})" && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

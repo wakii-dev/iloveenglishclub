@@ -15,7 +15,7 @@ import { defineConfig, devices } from "@playwright/test";
  * title_vi; level-3/u2/l3 draft) — không tạo row.
  */
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   // Anchor basename (^|\/ … $): regex testMatch chạy trên FULL PATH — worktree
   // này tên `sf-5-seo-i18n-qa` chứa "i18n" nên pattern trần match MỌI file
   // (phát hiện khi --list ra 58 tests/12 file).
@@ -38,7 +38,7 @@ export default defineConfig({
   webServer: {
     // QA-7 (SF-6 fix): webpack dev — bypass --turbopack (race font 1/4-1/7
     // start, audit SF-1); script `dev` dùng chung không đổi (team HMR).
-    command: "npx next dev --port 3212",
+    command: "cd .. && npx next dev --port 3212",
     url: "http://localhost:3212/en",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

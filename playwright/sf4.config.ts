@@ -13,14 +13,14 @@ import { defineConfig } from "@playwright/test";
  * (QA-300): `[^/]*` không vượt dấu "/" → chỉ file admin-*.spec.ts thật.
  */
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /admin-[^/]*\.spec\.ts$/,
   timeout: 90_000,
   expect: { timeout: 15_000 },
   // Suite đụng DB state dùng chung (unit number unique-per-run, demo lesson) —
   // chạy TUẦN TỰ, không parallel (sẽ tự giành unit số + unpublish lẫn nhau)
   workers: 1,
-  globalSetup: "./e2e/global-setup.ts",
+  globalSetup: "../e2e/global-setup.ts",
   use: {
     baseURL: "http://localhost:3010",
     trace: "retain-on-failure",
@@ -29,7 +29,7 @@ export default defineConfig({
   webServer: {
     // QA-7 (SF-6 fix): webpack dev — bypass --turbopack (race font 1/4-1/7
     // start, audit SF-1); script `dev` dùng chung không đổi (team HMR).
-    command: "npx next dev --port 3010",
+    command: "cd .. && npx next dev --port 3010",
     url: "http://localhost:3010/en",
     // port 3010 riêng tránh bẫy chéo worktree (QA-2); server stale từ run cũ
     // vẫn phải kill tay khi nghi env cũ (lsof -i :3010)

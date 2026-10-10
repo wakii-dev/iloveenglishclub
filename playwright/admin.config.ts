@@ -9,7 +9,7 @@ import { defineConfig } from "@playwright/test";
  * giới hạn suite admin để không nhặt spec dictation (testDir chung ./e2e).
  */
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /admin-.*\.spec\.ts/,
   timeout: 90_000,
   expect: { timeout: 15_000 },
@@ -17,7 +17,7 @@ export default defineConfig({
   // chạy TUẦN TỰ, không parallel (4 workers sẽ tự giẫm chân: trùng số unit,
   // unpublish lesson đang test...)
   workers: 1,
-  globalSetup: "./e2e/global-setup.ts",
+  globalSetup: "../e2e/global-setup.ts",
   use: {
     baseURL: "http://localhost:3000",
     trace: "retain-on-failure",
@@ -27,7 +27,7 @@ export default defineConfig({
     // QA-7 (SF-6 fix): `npx next dev` (webpack) — bypass --turbopack của script
     // `dev` (race font Turbopack 1/4-1/7 start, audit SF-1); script dùng chung
     // KHÔNG đổi (team giữ HMR).
-    command: "npx next dev",
+    command: "cd .. && npx next dev",
     url: "http://localhost:3000/en",
     // QA-2 (SF-6 áp khuyến nghị): guard env — reuse server cùng worktree (Rule
     // 0 browser) nhưng KHÔNG reuse server stale từ worktree khác (DB khác →

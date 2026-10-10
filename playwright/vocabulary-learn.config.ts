@@ -18,10 +18,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = "/en/books/level-1/vocabulary";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /(^|\/)learn-flow\.spec\.ts$/,
-  globalSetup: "./e2e/vocabulary-learn-global-setup.ts",
-  globalTeardown: "./e2e/vocabulary-learn-global-teardown.ts",
+  globalSetup: "../e2e/vocabulary-learn-global-setup.ts",
+  globalTeardown: "../e2e/vocabulary-learn-global-teardown.ts",
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
@@ -43,7 +43,7 @@ export default defineConfig({
     // render đầu (poll + dev prerender generateStaticParams) chạy khi DB chưa
     // có fixture → unstable_cache `content` giữ [] suốt run (fail 03/10,
     // 987a9e8). node24 chạy .ts native (strip-only).
-    command: `node --input-type=module -e "import('./e2e/vocabulary-learn-fixture.ts').then(m=>m.ensureLearnWordsFixture()).then(()=>process.exit(0))" && npx next dev --port ${PORT}`,
+    command: `cd .. && node --input-type=module -e "import('./e2e/vocabulary-learn-fixture.ts').then(m=>m.ensureLearnWordsFixture()).then(()=>process.exit(0))" && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

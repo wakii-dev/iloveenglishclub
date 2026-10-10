@@ -19,10 +19,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = `/en/books/level-3/units/1/lessons/1/listen-and-type`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /(^|\/)word-lookup\.spec\.ts$/,
-  globalSetup: "./e2e/vocabulary-lookup-global-setup.ts",
-  globalTeardown: "./e2e/vocabulary-lookup-global-teardown.ts",
+  globalSetup: "../e2e/vocabulary-lookup-global-setup.ts",
+  globalTeardown: "../e2e/vocabulary-lookup-global-teardown.ts",
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
@@ -44,7 +44,7 @@ export default defineConfig({
   ],
   webServer: {
     // webpack dev — bypass --turbopack (race font, QA-7 SF-6)
-    command: `npx next dev --port ${PORT}`,
+    command: `cd .. && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

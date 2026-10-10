@@ -18,10 +18,10 @@ const BASE = `http://localhost:${PORT}`;
 const PAGE = `/en/vocabulary?tab=library`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "../e2e",
   testMatch: /(^|\/)hub-quiz\.spec\.ts$/,
-  globalSetup: "./e2e/vocabulary-hub-quiz-global-setup.ts",
-  globalTeardown: "./e2e/vocabulary-hub-quiz-global-teardown.ts",
+  globalSetup: "../e2e/vocabulary-hub-quiz-global-setup.ts",
+  globalTeardown: "../e2e/vocabulary-hub-quiz-global-teardown.ts",
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
@@ -40,7 +40,7 @@ export default defineConfig({
   webServer: {
     // webpack dev — bypass --turbopack (race font, QA-7 SF-6); tab quiz hub
     // force-dynamic → đề xáo mới mỗi reload
-    command: `npx next dev --port ${PORT}`,
+    command: `cd .. && npx next dev --port ${PORT}`,
     url: `${BASE}${PAGE}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
