@@ -108,9 +108,13 @@ const introChecks = await page.evaluate(() => {
 });
 say(`DOM learn intro: ${JSON.stringify(introChecks)}`);
 
-// ── VISUAL 2: dark toggle ──────────────────────────────────────────────────
-await page.getByTestId("vocab-theme-toggle").click();
-await page.waitForTimeout(400);
+// ── VISUAL 2: dark toggle (retry đến khi hydrate xong — click trước hydrate
+// bị React bỏ qua, dev compile chậm hay gặp) ────────────────────────────────
+for (let i = 0; i < 10; i++) {
+  await page.getByTestId("vocab-theme-toggle").click();
+  await page.waitForTimeout(500);
+  if (await page.evaluate(() => !!document.querySelector("div.dark"))) break;
+}
 const darkOn = await page.evaluate(() => !!document.querySelector("div.dark"));
 say(`DOM dark toggle: scope dark = ${darkOn}`);
 await page.screenshot({ path: `${OUT}/visual-learn-intro-dark.png`, fullPage: true });
@@ -225,6 +229,14 @@ await page.screenshot({ path: `${OUT}/flow-03-review-done.png`, fullPage: false 
 
 // ── VISUAL 4: mobile 375 ───────────────────────────────────────────────────
 const mobile = await browser.newPage({ viewport: { width: 375, height: 667 } });
+await mobile.goto(`${BASE}/en/login`, { waitUntil: "domcontentloaded" });
+await mobile.getByLabel(/email/i).fill(email);
+await mobile.getByLabel(/password|mật khẩu/i).fill("password123");
+await mobile
+  .locator("form")
+  .getByRole("button", { name: /log in|đăng nhập/i })
+  .click();
+await mobile.waitForURL(/\/en$/);
 await mobile.goto(`${BASE}/en/vocabulary/learn/${BOOK_ID}`, { waitUntil: "domcontentloaded" });
 try {
   await mobile

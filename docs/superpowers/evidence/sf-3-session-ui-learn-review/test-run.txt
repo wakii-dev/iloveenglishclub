@@ -1,0 +1,76 @@
+tdd: RED→GREEN — code commit 735635a (VU-40 SF-3 session UI learn + review)
+TDD RED đã pass: session-state.test.ts chạy trước khi có module → "Cannot find module
+session-runner" (13 tests) → implement lib/vocabulary/session-state.ts → GREEN 13/13.
+
+== Full suite (vitest, sau commit 5777f47 + oxford/rule0 fix) ==
+node node_modules/vitest/vitest.mjs run → exit 0
+Test Files 69 passed | 1 skipped (70)
+Tests      863 passed | 4 skipped (867)
+(4 skipped = integration pre-existing skip-điều kiện; gồm 13 tests state machine mới,
+ trừ tests của review-store.test + route review legacy đã nghỉ hưu)
+
+== tsc --noEmit ==
+node node_modules/typescript/bin/tsc --noEmit → exit 0
+
+== eslint (toàn bộ file SF-3) ==
+node node_modules/eslint/bin/eslint.js src/components/vocabulary/ src/lib/vocabulary/
+session-state* src/app/(public)/[locale]/vocabulary/learn/ me/vocabulary/page.tsx
+e2e/learn-session.spec.ts e2e/review-upgrade.spec.ts e2e/*fixture*.ts
+e2e/oxford-fullchain.spec.ts scripts/rule0-visual-verify.mjs → exit 0 (0 error 0 warning)
+
+== next build ==
+node node_modules/next/dist/bin/next build → exit 0
+
+== E2E (Rule 0 / FLOW tier — browser thật, DB shared Neon) ==
+node node_modules/@playwright/test/cli.js test --config playwright.vocabulary-learn-session.config.ts
+→ 5 passed / 0 failed (11.9m):
+  1. walkthrough 5 từ UI thật intro→MC→nghe→gõ — summary +25 XP (5×[1 lần-đầu-ngày + 4
+     learn-complete] — pin engine SF-2), planted 5, stage Sprouted, 5/10 Level 1
+  2. sai mc → requeue CUỐI HÀNG (chain từ bước sai xuống cuối, attemptNo 2) → tổng vẫn +25
+  3. reload giữa phiên → queue server-derived MỚI (planted rơi khỏi hàng, bù từ unplanted kế)
+  4. keyboard trọn 1 chuỗi từ: Tab+Enter (intro) → Tab+ArrowDown+Enter (radio-group) →
+     Tab+type+Enter (gõ) — chip +5 XP, slot done ×1
+  5. mobile 375: scrollWidth ≤ 375 (không vỡ)
+node node_modules/@playwright/test/cli.js test --config playwright.vocabulary-review-upgrade.config.ts
+→ 5 passed / 0 failed (6.2m):
+  1. gõ đúng 4 từ due → +4 XP (1/từ lần-đầu-ngày), DB reps 2→3 + due_at tương lai, lapses 0
+  2. sai type → requeue cuối phiên + lapses=1; retry q4 → reps 0→1 → learn-complete +4
+     (tổng +8 — "trồng lại nổ mầm", engine pin)
+  3. double-submit (route delay 400ms + click đôi): 1 POST duy nhất, chip +1 đứng, DB 1 row/bước
+  4. ?word= prefill → phiên 1 từ type-only (pool degenerate bỏ mc — pin buildReviewSteps), +1 XP
+  5. ?scope=book&book= → lọc khỏi từ due ngoài sách ("4 words to review today")
+node node_modules/@playwright/test/cli.js test --config playwright.vocabulary-quiz.config.ts
+→ 3 passed (quiz 3312 vẫn xanh — acceptance 6)
+node node_modules/@playwright/test/cli.js test --config playwright.oxford-fullchain.config.ts
+  --grep "review session mới" (ADMIN_EMAIL/PASSWORD env) → 1 passed
+  (test review của lane oxford đã vá sang flow mới — cascade nghỉ hưu flashcard:
+   listen phát audio Blob THẬT + gõ từ chấm server + scope-all do_at tiến)
+
+== Rule 0 / BROWSER VERIFY 3 tầng (scripts/rule0-visual-verify.mjs + đọc ảnh từng file) ==
+- FLOW (chuẩn duy nhất cho "xong"): login UI → learn TRỌN PHIÊN 5 từ (introduce→MC→nghe→gõ,
+  sai-đúng trộn) → summary +25 XP → review TRỌN PHIÊN 3 từ → logout (user-menu dropdown →
+  URL về home). Log: FLOW login OK / learn OK / review OK / logout OK.
+- VISUAL (6 ảnh trong thư mục này, SO proto-A hand-off):
+  visual-learn-intro-light.png — header phiên (back 44 + meta + toggle 40 + chip XP gold),
+  5 slot hạt giống (active coral pulse), card giới thiệu (chip Seed leaf-soft + ghost badge,
+  từ Baloo 38 + IPA + nghĩa + ví dụ bg2 + CTA coral) — audio pill ẨN khi audioUrl null ✓
+  visual-learn-intro-dark.png — toggle dark scope container: bg #211711, card #2b1f16,
+  mapping 1-1 hand-off §1.2
+  visual-learn-mc-feedback.png (dark) — option chọn ĐÚNG tô leaf-soft/leaf-deep, banner
+  "Correct! +1 XP" aria-live, options disable sau chấm, chip XP gold-soft dark
+  visual-learn-summary.png — "+25 XP" Baloo 52 coral + breakdown + 3 ô stats (5 planted /
+  Sprouted / 5-10 Level 1) + CTA "Learn Level 2" + ghost dashboard
+  visual-review-mc.png — review bar teal (queue có thể 50 — slot không vừa), MC từ + IPA
+  visual-mobile-375.png — trọn phiên không vỡ (scrollWidth 375; queue kế server-derived)
+- DOM (hỗ trợ): toggle 40×40 + back 44×44 (hand-off §3/§4), dark scope = div.dark trong
+  container vocab (KHÔNG đụng theme toàn app), localStorage ilec.vocab-theme, mobile
+  scrollWidth 375.
+- Lưu ý trung thực: ảnh dark/mc chụp lần 1 fail do click trước hydration (React bỏ qua) —
+  script đã retry-click đến khi div.dark; ảnh cuối là trạng thái dark THẬT.
+
+== Nghỉ hưu legacy (acceptance 6) ==
+grep review-flashcards src/ e2e/ messages/ playwright*.ts package.json scripts/ → 0 kết quả
+Lane test:e2e:vocabulary-review ĐÃ XOÁ khỏi package.json (3311 retired); XOÁ: ReviewFlashcards,
+POST /api/vocabulary/review + route.test, playwright.vocabulary-review.config.ts,
+e2e/review-flow.spec.ts, review-store.ts (+test — applyReview/listDueWords hết consumer;
+getStudyWord giữ nguyên cho SF-4, DueWord type nội bộ hoá trong hub-store).
