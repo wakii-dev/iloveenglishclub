@@ -26,10 +26,10 @@ Quyết định path evidence: context pack ghi `evidence/vocab-memrise/converge
 - [x] T7. Design fidelity (mục 6): checklist đối chiếu `vocab-memrise-direction.md` từng màn (token/spacing/màu) + screenshot so `proto-A.html` → bảng chênh lệch; fix nhỏ trực tiếp / escalate — KHÔNG đổi direction
 - [x] T8. VU-32 coexistence (mục 7): gọi enrich `dryRun:true` (admin API — counts, không ghi) SONG SONG flow học → verify `words` chỉ READ: `source='oxford-ld'`/`cefr` không đổi, learn/review/lookup không ghi `words` (audit INSERT paths) → evidence
 - [x] T9. Rule 0 BROWSER VERIFY 3 tầng: DOM (eval hỗ trợ) · VISUAL (screenshot 375 từng màn — chung T6, so direction) · **FLOW chuẩn duy nhất**: login → dashboard → learn 5 từ → nhận XP → `/top-users` THẤY tên mình weekly → review (seed due) → logout. Screenshot fail / flow đứt → NÓI THẬT, fix trước khi qua review
-- [ ] T10. Security-audit (mục 8): dispatch `security-audit` agent trên diff vocab (session POST grading server-side/idempotency/user scoping/injection `response`, goal PATCH auth/validate, secrets/.env diff, exec-bit, permissions, lockfile-deps) — P0/P1 → fix nhỏ/report; không dừng Phase checkpoint khi còn P0/P1
-- [ ] T11. Docs runbook + evidence pack (mục 9): `evidence/sf-5-convergence-qa/runbook.md` (migration đã áp, env cần, feature map URL mới/cũ, hướng dẫn merge) + evidence pack (screenshots + suites log + audit)
-- [ ] T12. code-reviewer ĐỘC LẬP trên diff SF-5 — KHÔNG tự duyệt; CHANGES-REQUESTED → fix → re-review; APPROVED → comment VU-42 kèm literal `CHECKLIST-4Q`
-- [ ] T13. Final: `story-verify sf-5-convergence-qa` sạch (429 false-FAIL khi APPROVED đã post → note evidence + dừng) · Epic audit comment VU-37 (SF→merge-hash map + hướng dẫn merge) · push `wakii-dev/sf-5-convergence-qa` · report DONE — KHÔNG merge, KHÔNG set Done
+- [x] T10. Security-audit (mục 8): dispatch `security-audit` agent trên diff vocab (session POST grading server-side/idempotency/user scoping/injection `response`, goal PATCH auth/validate, secrets/.env diff, exec-bit, permissions, lockfile-deps) — P0/P1 → fix nhỏ/report; không dừng Phase checkpoint khi còn P0/P1
+- [x] T11. Docs runbook + evidence pack (mục 9): `evidence/sf-5-convergence-qa/runbook.md` (migration đã áp, env cần, feature map URL mới/cũ, hướng dẫn merge) + evidence pack (screenshots + suites log + audit)
+- [x] T12. code-reviewer ĐỘC LẬP trên diff SF-5 — KHÔNG tự duyệt; CHANGES-REQUESTED → fix → re-review; APPROVED → comment VU-42 kèm literal `CHECKLIST-4Q`
+- [x] T13. Final: `story-verify sf-5-convergence-qa` sạch (429 false-FAIL khi APPROVED đã post → note evidence + dừng) · Epic audit comment VU-37 (SF→merge-hash map + hướng dẫn merge) · push `wakii-dev/sf-5-convergence-qa` · report DONE — KHÔNG merge, KHÔNG set Done
 
 ## ACCEPTANCE (context pack — verifier Phase 5 kiểm TỪNG dòng)
 
