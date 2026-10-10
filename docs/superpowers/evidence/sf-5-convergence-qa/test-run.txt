@@ -84,7 +84,7 @@ coercion vô hại.
 
 == Commits SF-5 ==
 6cc5563 fix(vocab-dashboard): continue CTA href bookId số — slug rơi 404
-bd9a9f9 test(vocab-convergence): aggregator lane + suite 3320→3340 + sửa stale specs
-e8fa4de test(vocab-convergence): review fixes — port 3340 + tách nguồn weekly/all_time
-(Evidence commit ngay sau — hash code commits = HEAD~1/HEAD~2/HEAD~3.)
+bd9a9f9 test(vocab-convergence): aggregator lane + suite top-users (port 3340) + sửa stale specs
+978b902 test(vocab-convergence): review fixes — port 3340 + tách nguồn weekly/all_time (amend từ e8fa4de)
+bffe82b docs(vocab-convergence): evidence pack (commit này — hash trong file để B1 đối chiếu HEAD~1)
 
