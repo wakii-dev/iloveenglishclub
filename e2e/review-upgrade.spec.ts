@@ -238,20 +238,32 @@ test.describe("Review session UI (vocab-memrise SF-3)", () => {
     expect(await countStepActivities(email, word.trim(), 1)).toBe(1);
   });
 
-  test("?word= prefill → phiên đúng 1 từ đó (+1 XP lần-đầu)", async ({ page }) => {
+  test("?word= prefill qa-ru-02 (audio) → listen KHÔNG options → fallback GÕ NGHĨA (P1 review) → +1 XP", async ({
+    page,
+  }) => {
     const email = await registerUser(page, "prefill");
     await seedDueProgress(email);
-    const w3 = await wordIdOf("qa-ru-03");
-    await page.goto(`/en/me/vocabulary?word=${w3}`);
+    const w2 = await wordIdOf(AUDIO_WORD);
+    await page.goto(`/en/me/vocabulary?word=${w2}`);
 
     await expect(page.getByText("1 word to review today")).toBeVisible();
-    // prefill queue 1 từ → pool scope-all = nghĩa chính nó (degenerate — pin
-    // buildReviewSteps) → mc BỎ, phiên type-only (word ẩn, prompt nghĩa RU 3)
-    await expect(page.getByTestId("type-input")).toBeVisible();
-    await expect(page.getByTestId("type-prompt")).toContainText("nghĩa RU 3");
+    // prefill queue 1 từ CÓ audio → pool scope-all = nghĩa chính nó (degenerate
+    // — pin buildReviewSteps/learn-session test 260) → listen step options
+    // undefined là CONTRACT → client fallback GÕ NGHĨA (gradeStep listen so
+    // meaningVi — review P1: nhánh này cần coverage)
+    const fallback = page.getByTestId("listen-fallback-input");
+    await expect(fallback).toBeVisible();
+    await expect(page.getByTestId("listen-replay")).toBeVisible();
+    await fallback.fill(MEANING_BY_WORD.get(AUDIO_WORD)!);
+    await fallback.press("Enter");
+    await expect(page.getByTestId("feedback-correct")).toBeVisible({
+      timeout: 30_000,
+    });
+    await waitAdvanced(page);
 
+    // chuỗi qa-ru-02 còn bước type (gõ từ) → đi nốt rồi tổng kết
     await playAll(page);
-    await expect(page.getByTestId("summary-xp")).toHaveText("+1 XP"); // type = bước đúng đầu ngày
+    await expect(page.getByTestId("summary-xp")).toHaveText("+1 XP"); // listen +1 lần-đầu-ngày, type +0
     await expect(page.getByTestId("summary-planted")).toHaveText("1");
   });
 
