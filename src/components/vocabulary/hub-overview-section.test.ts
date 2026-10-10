@@ -263,7 +263,7 @@ describe("HubOverviewSection — dashboard header + stat row", () => {
 });
 
 describe("HubOverviewSection — continue card", () => {
-  it("level kế tiếp: tên sách + meta Level N · Từ X–Y + CTA href learn/[slug]", async () => {
+  it("level kế tiếp: tên sách + meta Level N · Từ X–Y + CTA href learn/[bookId]", async () => {
     const html = await renderSection();
     expect(html).toContain("Prepare 5");
     expect(html).toContain(

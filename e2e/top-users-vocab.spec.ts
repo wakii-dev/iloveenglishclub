@@ -48,8 +48,11 @@ test.describe("Top-users vocab XP (SF-5)", () => {
     await login(page);
     await page.goto("/en/top-users", { waitUntil: "domcontentloaded" });
 
+    // profiles.xp (5000) CỐ TÝ ≠ tổng vocab_activity (42) — test 1 assert
+    // weekly 42, test này assert all_time 5000: hai nguồn tách bạch, view
+    // đọc nhầm nguồn sẽ sai số (review P2 VU-42)
     const dbXp = await tuProfileXp();
-    expect(dbXp).toBe(TU_XP);
+    expect(dbXp).not.toBe(TU_XP);
 
     const allTime = page.locator('[aria-labelledby="alltime-heading"]');
     const row = allTime.getByRole("row").filter({ hasText: TU_NAME });

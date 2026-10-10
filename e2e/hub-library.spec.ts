@@ -79,9 +79,10 @@ test.describe("Vocabulary hub library (SF-2)", () => {
     await page.waitForURL(/\/en\/me\/vocabulary\?word=\d+/);
     // due list vẫn 1 (alpha) — charlie chỉ vào hàng qua prefill
     await expect(page.getByText(/1 word to review today/)).toBeVisible();
-    // SF-3: flashcard nghỉ hưu — prefill mở SESSION RUNNER; charlie (không
-    // audio) vào bước MC (options chứa từ) hoặc listen-fallback/type
-    // (prompt chứa nghĩa) — một trong hai phải là THÂN charlie
+    // SF-3: flashcard nghỉ hưu — prefill mở SESSION RUNNER; prefill queue
+    // 1 từ → pool degenerate 1 nghĩa → engine BỎ MC, mở thẳng bước type
+    // (learn-session.ts buildReviewSteps) — prompt nghĩa phải là THÂN
+    // charlie (mcOption giữ làm nhánh phòng hờ nếu engine đổi pool)
     await expect(page.getByTestId("step-card")).toBeVisible();
     const mcOption = page
       .getByTestId("option-group")

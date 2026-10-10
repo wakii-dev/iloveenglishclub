@@ -10,8 +10,9 @@ import dotenv from "dotenv";
  *
  * Pin kỳ vọng user `qa-tu-vocab` (vocab-only — 0 row `attempts`):
  *  - vocab_activity tuần này: 3 learn-complete × 4xp + 30 session-step × 1xp
- *    = 42 → weekly /top-users hiện "QA TU Vocab" 42
- *  - profiles.xp = 42 → all_time = 42 (view đọc thẳng profiles.xp, khớp)
+ *    = 42 → weekly /top-users hiện "QA TU Vocab" 42 (phép CỘNG vocab)
+ *  - profiles.xp = 5000 ≠ 42 (CỐTÝ — tách nguồn: nếu view weekly regression
+ *    đọc thẳng profiles.xp thì weekly sai 5000 → test bắt được; all_time = 5000)
  *  - daily_activity hôm nay + hôm qua, profiles.streak_count = 2 → /me
  *    streak 2 dù ngày chỉ học vocab (presence giữ streak — SF-1 session
  *    engine recompute khi ngày chuyển active)
@@ -31,7 +32,12 @@ function client(): postgres.Sql {
 export const TU_EMAIL = "qa-tu-vocab@test.ilec";
 export const TU_NAME = "QA TU Vocab";
 export const TU_PASSWORD = "password123";
+/** XP vocab tuần này (SUM vocab_activity.xp) — giá trị bảng weekly. */
 export const TU_XP = 42;
+/** profiles.xp — CỐ TÝ ≠ TU_XP: tách nguồn weekly (cộng activity) và
+ * all_time (đọc profiles) — view regression đọc nhầm nguồn sẽ sai số.
+ * 5000 > mọi user QA dư (1248) → không rơi khỏi top-50 limit của view. */
+export const TU_PROFILE_XP = 5000;
 export const TU_WORD = "qa-tu-word";
 
 /** XP tổng của user theo DB — spec dùng đối chiếu all_time hiển thị. */
@@ -76,7 +82,7 @@ export async function ensureTopUsersFixture(): Promise<void> {
     `;
     await tx`
       insert into profiles (id, display_name, xp, streak_count)
-      values (${user.id}, ${TU_NAME}, ${TU_XP}, 2)
+      values (${user.id}, ${TU_NAME}, ${TU_PROFILE_XP}, 2)
     `;
     // 3 learn-complete × 4xp — lần-đầu-trong-ngày rule không cần vì seed thẳng
     for (let i = 0; i < 3; i++) {
