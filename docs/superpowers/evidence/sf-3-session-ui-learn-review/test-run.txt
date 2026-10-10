@@ -76,3 +76,12 @@ Lane test:e2e:vocabulary-review ĐÃ XOÁ khỏi package.json (3311 retired); XO
 POST /api/vocabulary/review + route.test, playwright.vocabulary-review.config.ts,
 e2e/review-flow.spec.ts, review-store.ts (+test — applyReview/listDueWords hết consumer;
 getStudyWord giữ nguyên cho SF-4, DueWord type nội bộ hoá trong hub-store).
+
+== story-verify (T11 — 2026-10-10) ==
+~/.claude/bin/story-verify sf-3-session-ui-learn-review → B1:PASS B2:PASS B2b:PASS B3:PASS
+B4:FAIL = artifact chưa-merge (đúng thiết kế story-hub — merge là bước coordinator trên dest
+wakii-dev/story-vu37-vocab-memrise; dest đã tiến 361c7ee có SF-4 — merge-note conflict 4 file
+đã post VU-40). B5:PENDING = coordinator set Done sau merge (run checklist #5).
+Verdict comment: "VERDICT: APPROVED" + CHECKLIST-4Q (4 PASS) đã post VU-40
+(Linear 429 theo đợt — retry với --write-id pinned thành công; 1 comment rác "test" do
+probe write khi 429 — vô hại).
