@@ -35,7 +35,9 @@
     "test:e2e:vocabulary-learn": "playwright test --config playwright.vocabulary-learn.config.ts",
     "test:e2e:vocabulary-dashboard": "playwright test --config playwright.vocabulary-dashboard.config.ts",
     "test:e2e:vocabulary-learn-session": "playwright test --config playwright.vocabulary-learn-session.config.ts",
-    "test:e2e:vocabulary-review-upgrade": "playwright test --config playwright.vocabulary-review-upgrade.config.ts"
+    "test:e2e:vocabulary-review-upgrade": "playwright test --config playwright.vocabulary-review-upgrade.config.ts",
+    "test:e2e:top-users-vocab": "playwright test --config playwright.top-users-vocab.config.ts",
+    "test:e2e:vocab-convergence": "npm run test:e2e:vocabulary && npm run test:e2e:vocabulary-quiz && npm run test:e2e:vocabulary-lookup && npm run test:e2e:vocabulary-hub && npm run test:e2e:vocabulary-learn && npm run test:e2e:vocabulary-hub-quiz && npm run test:e2e:vocabulary-learn-session && npm run test:e2e:vocabulary-review-upgrade && npm run test:e2e:vocabulary-dashboard && npm run test:e2e:top-users-vocab"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
