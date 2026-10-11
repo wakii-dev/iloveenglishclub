@@ -58,8 +58,9 @@ async function seedFixtures(): Promise<void> {
     pageWords.map((word) => [word, "từ trang học tầng"]),
   )}`;
 
-  // Words fixture chính — phủ đủ tổ hợp filter (cefr/source/audio/book/orphan)
-  const [alpha, beta, gamma, delta] = await c`
+  // Words fixture chính — phủ đủ tổ hợp filter (cefr/source/audio/book/orphan);
+  // beta/gamma assert qua UI — chỉ alpha + delta cần id (book_words links)
+  const [alpha, , , delta] = await c`
     insert into words (word, ipa, meaning_vi, example, audio_url, cefr, source, pos, synonyms)
     values
       ('qa-cms-alpha', 'ˈæp.əl', 'quả táo qa-cms', 'I eat an apple.', null, 'B1', null, null, null),
