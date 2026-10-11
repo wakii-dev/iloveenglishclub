@@ -31,6 +31,10 @@ const WORD = (name: string) => `qa-cms-${TOK}-${name}`;
 const SLUG = (name: string) => `qa-cms-${TOK}-${name}`;
 const BOOK_SLUG = `qa-cms-book-${TOK}`;
 const BOOK_LABEL = `QA CMS Book ${TOK}`;
+// book RIÊNG cho backfill — chỉ 5 từ bf (book promote có thể chứa từ được
+// promote KHÔNG blob → pending=1 tầm thường, plan không deterministic)
+const BF_BOOK_SLUG = `qa-cms-bfbook-${TOK}`;
+const BF_BOOK_LABEL = `QA CMS BF Book ${TOK}`;
 const BLOB = (name: string) => `https://qa-blob.test/audio/oxford/${SLUG(name)}-uk.mp3`;
 
 function db(): postgres.Sql {
@@ -95,12 +99,13 @@ async function seedWord(
 }
 
 let bookId = 0;
+let bfBookId = 0;
 
 test.beforeAll(async () => {
   const c = db();
   // self-clean leftover run cũ (book riêng — không quét prefix chung chống
   // đụng run song song SF-2) + words/entries qua helper dùng chung SF-1
-  await c`DELETE FROM books WHERE slug = ${BOOK_SLUG}`; // cascade book_words
+  await c`DELETE FROM books WHERE slug IN (${BOOK_SLUG}, ${BF_BOOK_SLUG})`; // cascade book_words
   execSync("node e2e/helpers/cleanup-vocab-cms.ts --apply", {
     cwd: process.cwd(),
     stdio: "pipe",
@@ -113,6 +118,12 @@ test.beforeAll(async () => {
             ${BOOK_SLUG}, ${BOOK_LABEL}, ${BOOK_LABEL}, 'A1', '#3366cc', 9000)
     RETURNING id`;
   bookId = bk!.id;
+  const [bfb] = await c<{ id: number }[]>`
+    INSERT INTO books (id, slug, title_en, title_vi, cefr_label, color, sort_order)
+    VALUES ((SELECT coalesce(max(id), 900000) + 1 FROM books WHERE id >= 900000),
+            ${BF_BOOK_SLUG}, ${BF_BOOK_LABEL}, ${BF_BOOK_LABEL}, 'A1', '#3366cc', 9001)
+    RETURNING id`;
+  bfBookId = bfb!.id;
 
   // entry curation (status parsed) + 1 pending (word null — pretty slug)
   await seedCrawlEntry(c, {
@@ -162,7 +173,7 @@ test.beforeAll(async () => {
     const wordId = await seedWord(c, WORD(`bf ${i}`), `kiểm thử backfill ${i}`);
     await c`
       INSERT INTO book_words (book_id, word_id, "order")
-      VALUES (${bookId}, ${wordId}, ${i})
+      VALUES (${bfBookId}, ${wordId}, ${i})
       ON CONFLICT (book_id, word_id) DO NOTHING`;
   }
   // control word NGOÀI scope (không gắn book — audio phải giữ NULL)
@@ -172,7 +183,7 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   const c = db();
-  await c`DELETE FROM books WHERE slug = ${BOOK_SLUG}`;
+  await c`DELETE FROM books WHERE slug IN (${BOOK_SLUG}, ${BF_BOOK_SLUG})`;
   await c.end();
   execSync("node e2e/helpers/cleanup-vocab-cms.ts --apply", {
     cwd: process.cwd(),
@@ -318,8 +329,9 @@ test("promote 2 entry → toast created=2; GET API + DB row đúng fields (SF-2 
 
   await expect(page.getByText("Đã tạo 2 từ mới")).toBeVisible();
   // report trong dialog
-  await expect(page.getByText("Kết quả promote")).toBeVisible();
-  await expect(page.getByText("Từ mới: 2")).toBeVisible();
+  const report2 = page.getByTestId("promote-report");
+  await expect(report2.getByText("Kết quả promote")).toBeVisible();
+  await expect(report2.getByText("Từ mới: 2")).toBeVisible();
 
   // GET API — 2 từ mới đúng fields (spec §4: promote ipa uk→us, cefr, pos,
   // source oxford-ld, audio blob best-effort, example sense 1, meaning VI)
@@ -327,19 +339,19 @@ test("promote 2 entry → toast created=2; GET API + DB row đúng fields (SF-2 
   expect(alpha.total).toBe(1);
   expect(alpha.items[0]).toMatchObject({
     word: WORD("alpha"),
-    meaningVi: `kiểm thử alpha ${TOK}`,
+    meaning_vi: `kiểm thử alpha ${TOK}`,
     ipa: "/ˈælfə/",
     cefr: "A2",
     source: "oxford-ld",
     pos: "noun",
-    audioUrl: BLOB("alpha"),
+    audio_url: BLOB("alpha"),
     example: "This is an alpha test.",
   });
   const bravo = await vocabApi(page, WORD("bravo"));
   expect(bravo.total).toBe(1);
   expect(bravo.items[0]).toMatchObject({
     word: WORD("bravo"),
-    meaningVi: `kiểm thử bravo ${TOK}`,
+    meaning_vi: `kiểm thử bravo ${TOK}`,
     cefr: "A1",
     source: "oxford-ld",
     pos: "adjective",
@@ -393,9 +405,10 @@ test("meaning gate: thiếu 1 nghĩa → promote disabled; entry trùng → skip
   await expect(page.getByTestId("promote-open")).toBeEnabled();
 
   await promoteViaDialog(page);
-  await expect(page.getByText("Kết quả promote")).toBeVisible();
-  await expect(page.getByText("Từ mới: 1")).toBeVisible();
-  await expect(page.getByText("Trùng (bỏ qua): 1")).toBeVisible();
+  const report = page.getByTestId("promote-report");
+  await expect(report.getByText("Kết quả promote")).toBeVisible();
+  await expect(report.getByText("Từ mới: 1")).toBeVisible();
+  await expect(report.getByText("Trùng (bỏ qua): 1")).toBeVisible();
   await expect(
     page.getByText(/Entry trùng đã có từ trong catalog/),
   ).toBeVisible(); // hint merge — batch KHÔNG chết
@@ -406,7 +419,7 @@ test("meaning gate: thiếu 1 nghĩa → promote disabled; entry trùng → skip
     word: WORD("charlie"),
     cefr: "B2",
     pos: "verb",
-    audioUrl: BLOB("charlie"),
+    audio_url: BLOB("charlie"),
   });
 });
 
@@ -434,9 +447,9 @@ test("backfill scope book: dry-run plan khớp seed → apply 5 → dry-run lạ
 }) => {
   await loginCuration(page);
 
-  // scope = book fixture
+  // scope = book fixture RIÊNG cho backfill (chỉ 5 từ bf — deterministic)
   await page.getByLabel("Sách (scope bắt buộc)").click();
-  await page.getByRole("option", { name: BOOK_LABEL }).click();
+  await page.getByRole("option", { name: BF_BOOK_LABEL }).click();
   await page.getByTestId("backfill-dry-run").click();
 
   // plan khớp seed: 5 word thiếu audio đều có entry blob → matched 5
@@ -452,7 +465,7 @@ test("backfill scope book: dry-run plan khớp seed → apply 5 → dry-run lạ
   // DB — 5 từ được gán audio_url = blob fixture; control ngoài scope giữ NULL
   const c = db();
   const rows = await c<{ word: string; audio_url: string | null }[]>`
-    SELECT word, audio_url FROM words WHERE word LIKE ${`qa-cms-${TOK}-bf-%`} ORDER BY word`;
+    SELECT word, audio_url FROM words WHERE word LIKE ${`qa-cms-${TOK}-bf%`} ORDER BY word`;
   const [outside] = await c<{ audio_url: string | null }[]>`
     SELECT audio_url FROM words WHERE word = ${WORD("outside")}`;
   await c.end();
