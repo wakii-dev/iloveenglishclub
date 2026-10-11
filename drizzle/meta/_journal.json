@@ -50,6 +50,13 @@
       "when": 1791555072676,
       "tag": "0006_warm_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791641005669,
+      "tag": "0007_cms_word_fields",
+      "breakpoints": true
     }
   ]
 }

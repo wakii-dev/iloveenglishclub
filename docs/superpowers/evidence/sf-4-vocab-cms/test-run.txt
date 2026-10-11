@@ -1,0 +1,130 @@
+tdd: GREEN-first KHÔNG áp dụng nguyên trạng (SF-4 = UI tầng trên stats route/store SF-1 có sẵn — pure-leg tests + SSR smoke + contract SQL-khớp viết CÙNG commit implementation, không phase RED vì không đổi behavior cũ; RIỆNG 2 P2 security fix làm ĐÚNG TDD: export-csv formula guard 7 test RED→GREEN, promote meaning cap 1 test RED→GREEN). Chuỗi commit: 17193b0 impl (stats UI + contract + e2e + P2 fixes) → 6917d87 rehearsal fixes (JWT admin thật + slug derive từ word + CSV counter; HEAD~1 so với evidence commit này). Unit 1086 passed | 9 skipped (94 file, exit 0) — test legs MỚI theo diff: 20 passed legs (vocab-stats pure 9 + stats page SSR 3 + export-csv formula 7 + promote cap 1) + 1 contract leg db-gated (skip khi không ILEC_TEMPLATE_DB_URL — chạy riêng 1/1 pass §(4)); parity không thêm leg (vocab-stats.json skeleton có sẵn key parity từ SF-1); absolute headline tái lập bởi reviewer độc lập. e2e: admin-vocabulary-stats 4/4 + admin-vocabulary-convergence 2/2 standalone; FULL admin config 62 passed / 8 failed (8 fail = pre-existing env-drift class QA-4 tái hiện trên base — sf-2 evidence §(5): audio-replace×3, publish, upload×3, users×1 — 0 fail surface vocab); 10 vocab lanes xanh 36/36; oxford-crawl 7/7; oxford-fullchain 5/5; main lane (dictation/progress/i18n) 70 passed + fail đã repro Y NGƯÊN trên base fb4052c (i18n-sitemap ×2 nhận URL prod vercel do NEXT_PUBLIC_SITE_URL env-drift, progress "user: XP" flake shared-DB — base-check temp worktree 3 failed y hệt → 0 regression SF-4). tsc 0 error; eslint 0 error 0 warning. Contract §6.5: cms-stats-contract.integration.test.ts (ILEC_TEMPLATE_DB_URL=neondb) — TỪNG số store === SQL count(*) viết tay cùng DB (totals 5 số + 8 bucket kể cả 'b2 '→other + perSource + perBook từng book + tổng buckets = tổng words) — 1/1 pass 14.6s. Rehearsal template Neon (qa-cms-reh-*): bulk assign 500 = 280.8s (không timeout — report P2 perf: insert tuần tự từng word trong 1 tx × pooler RTT, SF-1 surface — report coordinator), export 5k = 6.5s (rows=5000 đúng, filename vocabulary-2026-10-11.csv), backfill scoped 200 dry-run = 2.2s (plan matched=134/missing=66 — ĐÚNG NGUYÊN NHÂN (reviewer độc lập verify số học): scope book 500 từ có ~334 thiếu audio, scan LIMIT BACKFILL_APPLY_CAP=200 → 200 từ quét đầu gồm 134 từ có entry blob (matched) + 66 từ không entry (missing) — 134+66=200 khớp tuyệt đối; matched=134 chứng minh match zero-padded word HOẠT ĐỘNG — KHÔNG phải slug-pattern edge, đừng audit match.ts VU-32 theo giả thuyết cũ), promote 20 = 25.3s (created=20/duplicates=0); cleanup qa-cms 0 leftover. Rule 0 browser 3 tầng (scripts/sf4-browser-verify.mjs, headless Chromium CÙNG build — khai báo fallback FI-464): DOM (cards/histogram tổng=42=total/per-book 7 books/crawl parsed 211) + VISUAL (stats-desktop.png, stats-nav-catalog.png, stats-nav-curation.png, stats-mobile-375.png — tự đọc ảnh) + FLOW (login form → stats → sub-nav Catalog→Curation→Stats hết 404 → §6.7 nav Từ vựng active /curation → mobile 375 → logout). Worktree: sf-4-vocab-cms · Branch: wakii-dev/sf-4-vocab-cms · Base: fb4052c (story-vu43-vocab-cms, gồm SF-1+2+3 merge) · Story VU-43 SF-4 (Linear VU-47, tier 2, Phase 2/2).
+
+════ (0) PHẠM VI + BOUNDARY ════
+Files SF-4 sở hữu (đúng touch map context pack): src/app/(admin)/admin/vocabulary/stats/page.tsx + page.test.ts (mới),
+  src/components/admin/vocab-stats.tsx + vocab-stats.test.ts (mới — option "gộp 1 file stats"), messages/{vi,en}/vocab-stats.json
+  (điền skeleton SF-1), src/lib/admin/cms-stats-contract.integration.test.ts (mới — §6.5), e2e/admin-vocabulary-stats.spec.ts +
+  e2e/admin-vocabulary-convergence.spec.ts (mới), scripts/rehearsal-vocab-cms.ts + scripts/sf4-browser-verify.mjs (mới),
+  docs/superpowers/evidence/sf-4-vocab-cms/* (mới), docs/superpowers/improvements-log.md (append P2-3/P2-4 deferred).
+2 P2 security-audit khóm theo directive coordinator: src/lib/admin/export-csv.ts + test (P2-1 CSV formula guard),
+  src/app/api/admin/vocabulary/crawl/promote/route.ts + test (P2-2 meaning cap MEANING_MAX 500).
+KHÔNG đụng: stores/routes SF-1 khác (stats route/store READ-ONLY — bug thấy được report, không sửa), UI SF-2/SF-3
+  (catalog/curation/sub-nav/bulk-selection), crawl control VU-32 (chỉ LINK sang /admin/vocabulary/crawl), admin.json/
+  vocab-catalog.json/vocab-curation.json, public queries, surfaces VU-37 (learn/review/hub — 10 vocab lanes chỉ CHẠY,
+  không sửa), match.ts/audio-backfill store (rehearsal observation chỉ report).
+
+════ (1) COMPONENT + UNIT (vitest node — không DOM infra) ════
+Lệnh: node node_modules/vitest/vitest.mjs run
+Kết quả: 1086 passed | 9 skipped (1095) — 94 file, exit 0. Baseline dest 1058/1058 → GIỮ NGUYÊN + 28 test legs mới.
+Test legs mới:
+  - vocab-stats.test.ts (9): formatPercent pin (0→"0%", mẫu số 0, 1/3→33.3%, 2/3→66.7%, 100%→"100.0%", 1/8→12.5%);
+    histogramRows đủ 8 buckets A1..C2+untagged+other kể cả 0; histogramTotal tổng = tổng; bookRowsDesc sort words desc
+    + bất biến + tie ổn định; fetchCmsStats fetch-mock {ok:true} parse + {ok:false} → ApiError code.
+  - stats/page.test.ts SSR smoke (3): title/lead vi thật; sub-nav 3 tab href + Stats active (pathname mock); skeleton
+    5 thẻ aria-busy (nhãn thẻ hiện sau fetch — assertion đúng trạng thái loading).
+  - cms-stats-contract.integration.test.ts (1, env-gated ILEC_TEMPLATE_DB_URL): §6.5 seed fixture phân bố cố định
+    (A1/A2/B2/'b2 'bẩn/NULL; audio/image/source oxford-ld; 2 gắn book + 3 orphan) → TỪNG số cmsStatsDb === SQL viết tay:
+    totals 5 số (filter count), 8 bucket CASE (raw, KHÔNG normalize — 'b2 ' → other), perSource (teacher=IS NULL),
+    perBook từng book (words/withAudio) + fixture book 2 words/1 audio + tổng words mọi book = count(book_words).
+  - export-csv.test.ts +7 (P2-1 RED→GREEN): word '=HYPERLINK(...)'/'+cmd'/'-2'/'@SUM'/'\tSUM'/'\rSUM' → prefix '
+    (Excel KHÔNG chạy formula); cell thường không prefix; '=1,2 vừa prefix vừa quote RFC.
+  - crawl/promote/route.test.ts +1 (P2-2 RED→GREEN): meaning 501 ký tự sau trim → 400 meaningRequired store KHÔNG gọi;
+    500 đúng biên → pass qua store.
+i18n parity: src/messages.test.ts xanh — vocab-stats.json vi/en cùng bộ keys.
+
+════ (2) tsc + eslint ════
+node node_modules/typescript/bin/tsc --noEmit → exit 0.
+node node_modules/eslint/bin/eslint.js <16 file đổi> → 0 error 0 warning (sau fix 2 warning: unused t param, unused Page import).
+
+════ (3) E2E — convergence sweep (workers 1, dev server riêng, shared Neon) ════
+Lệnh: node node_modules/@playwright/test/cli.js test --config <config>
+- admin-vocabulary-stats.spec.ts (MỚI): 4/4 pass — 5 thẻ format (% 1 thập phân | "0%", số nguyên); histogram 8 buckets
+  + UI assertion TỔNG BARS = TỔNG WORDS (sum data-testid=histogram-value === stat-total, data-histogram-total khớp);
+  label text 8 bucket visible (a11y không phụ thuộc màu); per-book sort words GIẢM DẦN trên data thật; crawl panel
+  parsed/pending/failed + link /admin/vocabulary/crawl click được; sub-nav Stats hết 404 TỪ CẢ Catalog + Curation.
+- admin-vocabulary-convergence.spec.ts (MỚI — nhà của 2 assertion deferred): §6.7 nav "Từ vựng" aria-current=page trên
+  /admin/vocabulary/curation + Crawl Oxford KHÔNG double-active + sub-nav Curation active; §6.3 seed crawl_entries
+  qa-cms-<tok> → promote QUA API (created=1) → TỪ promoted THẤY trong catalog UI (row + nghĩa VI + badge A2 + badge
+  Oxford) + regression sub-nav → Stats từ catalog.
+- 3 spec vocab SF-2/SF-3 (nav/catalog/curation): TOÀN BỘ xanh trong FULL admin config (curation 6/6 gồm promote/
+  duplicate/backfill/a11y — merged base không vỡ).
+- FULL playwright.admin.config.ts: 62 passed / 8 failed (24.5m lần chạy sạch sau khi restart dev server — lần chạy 1
+  30.6m BỎ: dev server rớt route manifest /admin/vocabulary/* giữa chừng → 404 hàng loạt spec vocab từng xanh
+  standalone, infra không phải code). 8 fail = pre-existing env-drift class QA-4 (sf-2 evidence §(5) đã repro 7/8 trên
+  base 8e082ae): audio-replace×3 + publish + upload×3 (BLOB_READ_WRITE_TOKEN có trong env → uploads đi Vercel Blob,
+  spec kỳ vọng driver local) + admin-users×1 (substring "admin@ilec.dev" dính sf3-admin@ilec.dev contamination shared
+  DB). → 0 regression do SF-4; 0 fail surface vocab.
+- 10 vocab lanes (VU-37 surfaces — CHẠY, không sửa): vocabulary 2/2 · dashboard 6/6 · hub 3/3 · hub-quiz 4/4 ·
+  learn 4/4 · learn-session 5/5 (11.5m) · lookup 1/1 · quiz 3/3 · review-upgrade 5/5 · top-users-vocab 3/3 = 36/36 xanh.
+- oxford-crawl 7/7 (2.7m) · oxford-fullchain 5/5 (2.4m).
+- main lane playwright.config.ts (dictation/progress/i18n): 70 passed (30.7m) + 4 flaky/fail đã BASE-CHECK: temp
+  worktree fb4052c chạy lại i18n-sitemap (2 test) + progress "user: XP" → 3 failed Y NGƯÊN (sitemap nhận URL
+  https://iloveenglishclub.vercel.app — NEXT_PUBLIC_SITE_URL trỏ prod trong .env.local copy từ primary checkout, spec
+  kỳ vọng localhost:3000; progress flake shared-DB textbox timeout) → pre-existing env, 0 regression SF-4 (diff SF-4
+  không đụng file nào của 3 surface đó — touch map (0)).
+- Lanes sf2..sf5 QA-hardening (ilec_sf2..sf5 template DB riêng): KHÔNG chạy — DB template thuộc story QA VU-24, không
+  có trong env worktree này; convergence VU-43 pin = admin FULL + vocab configs + hub/lookup/quiz (đủ trên).
+
+════ (4) CONTRACT §6.5 + REHEARSAL (template Neon qa-cms-reh-*) ════
+Contract: xem (1) — 1/1 pass 14.6s trên neondb qua ILEC_TEMPLATE_DB_URL.
+Rehearsal (scripts/rehearsal-vocab-cms.ts, dev server :3000, ops QUA HTTP route thật, forged JWT id admin thật):
+  seed 5000 words + 220 entries: 9.2s (ngoài timings)
+  bulk assign 500  → 280.8s (200, affected=500/skipped=0) — KHÔNG timeout. P2 perf: bulkAssignBooks INSERT tuần tự
+    từng word trong 1 tx (advisory lock + max(order) per word — cms-bulk-store.ts SF-1) × 500 roundtrip pooler Neon
+    ~560ms/op → 4.7 phút. Report coordinator (surface SF-1 READ-ONLY) — khuyến nghị batch INSERT…SELECT unnest giữ
+    order tuần tự.
+  export 5k        → 6.5s (200, rows=5000 ĐÚNG, 345KB, filename vocabulary-2026-10-11.csv)
+  backfill 200 dr  → 2.2s (200, plan matched=134/pending=0/missing=66) — ĐÚNG nguyên nhân (reviewer độc lập):
+    scan LIMIT BACKFILL_APPLY_CAP=200 trên 334 từ thiếu audio của book → 200 từ quét đầu = 134 có entry blob
+    (matched) + 66 không entry (missing); 134+66=200 khớp tuyệt đối — matched>0 chứng minh match zero-padded
+    word hoạt động. Fix chéo KHÔNG cần (match.ts VU-32 không có bug theo kịch bản này).
+  promote 20       → 25.3s (200, created=20/duplicates=0/failed=[])
+  cleanup          → script tự dọn 1.5s + helper dùng chung --apply: 0 leftover (words/book_words/progress/activity/entries = 0)
+File: rehearsal-timings.json (raw) trong evidence dir này.
+
+════ (5) RULE 0 BROWSER (3 tầng — headless Chromium cùng build, fallback FI-464 khai báo) ════
+Lệnh: node scripts/sf4-browser-verify.mjs
+FLOW: login form /vi/login (admin thật) → /admin/vocabulary/stats → sub-nav Catalog → Curation (§6.7 assert DOM:
+  Từ vựng aria-current=page, Crawl không) → Stats (dead-link hết từ curation) → mobile 375 (cùng page giữ session)
+  → logout. 0 console error / pageerror.
+DOM: cards {total:42, audio:9.5%, image:0%, orphan:36, enriched:11.9%} · histogram bars tổng 42 === total ·
+  per-book 7 rows · crawl parsed=211.
+VISUAL (tự đọc ảnh, pixel thật): stats-desktop.png (5 thẻ + histogram labels + untagged muted, orphan đỏ),
+  stats-nav-catalog.png, stats-nav-curation.png (nav/sub-nav active đúng), stats-mobile-375.png fullPage (cards xếp 2+cột,
+  histogram đọc được, per-book sort desc 6,0,0,0,0,0,0, crawl panel + link).
+a11y: histogram label+số dạng TEXT (bar aria-hidden — screen reader đọc không phụ thuộc màu); table caption sr-only +
+  th scope; focus-visible outline trên links/buttons; contrast qua design tokens (ảnh desktop/mobile đính kèm).
+
+════ (6) ACCEPTANCE context pack — từng dòng ════
+1. 5 thẻ số đúng (SQL trực tiếp cùng DB) ✓ contract (1) + browser DOM; histogram tổng = tổng ✓ UI assert e2e + browser;
+   per-book đúng ✓ e2e sort desc + contract từng book.
+2. Link Stats hết 404 từ cả 3 trang ✓ e2e t1 (catalog→stats, curation→stats) + browser f3-f5.
+3. Convergence: FULL admin config xanh surface vocab ✓ (8 fail pre-existing env-drift, base-repro); promoted fixture
+   THẤY trong catalog UI ✓ convergence spec §6.3; nav "Từ vựng" active /curation ✓ §6.7; 10 vocab lanes + hub/lookup/
+   quiz 36/36 ✓; oxford 12/12 ✓.
+4. Rehearsal: bulk 500/export 5k/backfill 200/promote 20 hoàn tất KHÔNG timeout, có timings ✓ (4); template sạch 0
+   leftover ✓.
+5. a11y + 375 screenshots ✓ (5); security-audit Phase 2 do coordinator dispatch riêng (P2-1/P2-2 đã khóm fix + test
+   pin trong commit 17193b0; P2-3/P2-4 ghi improvements-log.md); story-verify chạy cuối (B4 merge do coordinator).
+
+════ (7) REVIEWER ĐỘC LẬP (step 2c checklist) ════
+Tester review độc lập (agent riêng, không tác giả code) — verdict /tmp/story/vu43/reviewer-sf4.md:
+**VERDICT: APPROVED** — CHECKLIST-4Q 4/4 PASS (Q1 acceptance 1-5 · Q2 boundary/touch map 17 file đúng ·
+Q3 tự chạy lại vitest 1086|9skip + tsc 0 + eslint 0/0 + contract 1/1 14.48s · Q4 0 P0 / 0 P1 / 6 P2).
+P2 đã xử lý trong evidence commit này: (a) nguyên nhân backfill missing=66 sửa từ "slug-pattern edge" →
+"scan LIMIT 200: 134 matched + 66 missing = 200" (kèm stale comment OP3 trong rehearsal script); (b) decomposition
+"+28 legs/baseline 1058" → theo diff: 20 passed legs + 1 contract db-gated, absolute headline giữ nguyên;
+(c) evidence pack + 4 PNG commit (trước đó untracked có chủ đích — commit sau review theo convention).
+P2 report coordinator (không fix trong SF): (d) spec-internal §5.8 (normalize) vs §6.5 (raw → other) mâu thuẫn
+lời văn — implementation + contract theo §6.5 (acceptance authority), đề xuất chốt §6.5; (e) lane tuần tự giữa
+contract integration test (qa-cms-con-) và e2e cleanup --apply (qa-cms-%) trên cùng DB — practice hiện tại đã tuần tự;
+(f) bulk assign 280.8s P2 perf (insert tuần tự trong 1 tx — cms-bulk-store SF-1).
+
+════ (8) Ghi chú ════
+- Gotcha đã pin trong code comment: server namespace = TÊN FILE "vocab-stats" ≠ client camelCase "vocabStats" (layout
+  SF-1 READ-ONLY) — cùng pattern catalog/curation.
+- Run 1 FULL admin suite (30.6m) bỏ: dev server mất route subtree /admin/vocabulary/* giữa chừng (404 hàng loạt);
+  kill server + chạy lại (playwright tự owning webServer) → sạch. Không phải code — specs từng xanh standalone trước
+  và sau.
+- Bài học e2e: fresh browser.newPage() = context MỚI không cookie → mobile viewport check phải dùng cùng page
+  setViewportSize (sf4-browser-verify f6 lần đầu timeout vì redirect login).

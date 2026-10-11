@@ -17,3 +17,9 @@
 1. **Retirement exit criteria phải grep cả e2e/**: SF-3 retire ReviewFlashcards chỉ grep src (=0) — hub-library.spec + learn-flow.spec vẫn assert UI cũ, sống sót ĐỎ qua 2 merge tới SF-5 convergence (5 test stale). Đề xuất: checklist retirement trong bracket plan thêm "grep -r <artifact> src/ e2e/ messages/".
 2. **Chọn port e2e mới phải grep `E2E_PORT ??` unique toàn repo** — context pack SF-5 gợi ý 3320 nhưng lane oxford-crawl đã chiếm (review P1 bắt). Đề xuất: checklist "lane/config mới" trong kit.
 3. **`git commit --amend` sau khi evidence ghi hash → gate B1 FAIL** (hash đổi). Fix đã dùng: cập nhật hash list trong evidence + commit mới (không amend lần 2). Đề xuất: note vào story-verify B1 convention "amend = cập nhật evidence hash".
+
+## 2026-10-11 — SF-4 (VU-47) — 2 P2 security-audit Phase 1 DEFERRED (khóm theo directive: chỉ P2-1/P2-2 fix trong SF-4)
+
+1. **P2-3 — backfill route thiếu cap wordIds scope**: `POST /api/admin/vocabulary/audio-backfill` scope `{wordIds[]}` chưa cap độ dài mảng (bulk/promote đã cap 500/200 — `tooMany`). Khuyến nghị: cap `wordIds.length > 500 → tooMany` + test pin, làm cùng batch follow-up với hardening routes.
+2. **P2-4 — image route chưa check magic-byte**: `POST /api/admin/vocabulary/image` validate mime theo Content-Type header (allowlist png/jpeg/webp) — chưa sniff magic-byte nội dung (upload đổi Content-Type vượt qua). Khuyến nghị: đọc 12 byte đầu + so signature PNG/JPEG/WebP trước khi put blob.
+3. Nguồn: `docs/superpowers/reviews/security-audit-story-vu43-phase1.md` (file KHÔNG có trong worktree sf-4 — mô tả lấy từ directive coordinator; khi merge, đối chiếu bản gốc để giữ nguyên thứ tự ưu tiên).
