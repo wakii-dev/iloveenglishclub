@@ -11,9 +11,14 @@ import { VocabularySubNav } from "@/components/admin/vocabulary-sub-nav";
  * + audio backfill. Server shell (role-gate ở admin layout) + VocabularySubNav
  * (tier-0 SF-1 — render-only); danh sách books nạp server-side cho select
  * promote/backfill (admin NGOÀI [locale] — UI tiếng Việt cố định).
+ *
+ * Namespace server = KEY TÊN FILE ("vocab-curation") — request config
+ * (src/i18n/request.ts) build messages theo filename; key camelCase
+ * "vocabCuration" chỉ tồn tại ở NextIntlClientProvider (client — layout map
+ * tay). Sai key → render literal "vocabCuration.title" (e2e bắt được).
  */
 export default async function AdminVocabularyCurationPage() {
-  const t = await getTranslations({ locale: "vi", namespace: "vocabCuration" });
+  const t = await getTranslations({ locale: "vi", namespace: "vocab-curation" });
   const bookRows = await db
     .select({ id: books.id, titleVi: books.titleVi, titleEn: books.titleEn })
     .from(books)

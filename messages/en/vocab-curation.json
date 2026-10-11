@@ -83,6 +83,7 @@
     "missing": "Missing (no entry): {count}",
     "reportApplied": "Assigned audio to {count} words",
     "reportErrors": "{count} words failed",
-    "noneMatched": "No words missing audio match an entry with a blob."
+    "noneMatched": "No words missing audio match an entry with a blob.",
+    "refresh": "Refresh list"
   }
 }

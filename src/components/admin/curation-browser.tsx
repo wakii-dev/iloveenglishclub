@@ -973,7 +973,7 @@ export function CurationBrowser({ books }: { books: CurationBook[] }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label={t("filters.reset")}
+              aria-label={t("backfill.refresh")}
               disabled={busy}
               onClick={() => void loadEntries(filter)}
             >

@@ -199,7 +199,7 @@ async function loginCuration(page: Page): Promise<void> {
 async function searchTok(page: Page): Promise<void> {
   await page.getByLabel("Tìm headword").fill(`qa-cms-${TOK}`);
   await page.getByLabel("Tìm headword").press("Enter");
-  await expect(page.getByText("8 entry khớp")).toBeVisible();
+  await expect(page.getByText("9 entry khớp")).toBeVisible();
 }
 
 async function selectEntry(page: Page, name: string): Promise<void> {
@@ -216,7 +216,7 @@ function headwordCell(page: Page, text: string) {
 async function openMeaningGrid(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Soạn nghĩa VI" }).click();
   await expect(
-    page.getByText(/Soạn nghĩa tiếng Việt \(\d+ entries?\)/),
+    page.getByText(/Soạn nghĩa tiếng Việt \(\d+ entr(y|ies)\)/),
   ).toBeVisible();
 }
 
@@ -239,8 +239,11 @@ async function vocabApi(page: Page, q: string): Promise<{
   items: Record<string, unknown>[];
   total: number;
 }> {
+  // limit/offset TƯỜNG MINH — GET /api/admin/vocabulary (t-1.2 route) dùng
+  // clampInt KHÔNG null-guard: thiếu param → Number(null)=0 → LIMIT 0 →
+  // items rỗng (bug SF-1 legacy, report coordinator — KHÔNG sửa file SF-1)
   const res = await page.request.get(
-    `/api/admin/vocabulary?q=${encodeURIComponent(q)}`,
+    `/api/admin/vocabulary?q=${encodeURIComponent(q)}&limit=50&offset=0`,
   );
   expect(res.ok()).toBe(true);
   const body = (await res.json()) as {
@@ -258,7 +261,7 @@ test("browse: bảng parsed + filter CEFR/OX3000 + search headword + status pend
   await loginCuration(page);
   await searchTok(page);
 
-  // 8 entry parsed khớp tok (alpha, bravo, charlie, dup, bf-1..5)
+  // 9 entry parsed khớp tok (alpha, bravo, charlie, dup, bf-1..5)
   for (const name of ["alpha", "bravo", "charlie", "dupword", "bf 1", "bf 5"]) {
     await expect(headwordCell(page, WORD(name))).toBeVisible();
   }
@@ -278,13 +281,20 @@ test("browse: bảng parsed + filter CEFR/OX3000 + search headword + status pend
   await page.getByLabel("Tìm headword").fill(WORD("charlie"));
   await page.getByLabel("Tìm headword").press("Enter");
   await expect(page.getByText("1 entry khớp")).toBeVisible();
+  await expect(headwordCell(page, WORD("charlie"))).toBeVisible(); // chặn stale text bước trước
 
   // status pending → entry word null hiển thị pretty slug "qa cms <tok> pend"
+  // (lake 63.7k pending thật — tìm theo tok để view deterministic). q match
+  // word HOẶC pretty slug (SF-1 store) — pend word NULL nên phải search form
+  // PRETTY (space), form dash không khớp pretty slug.
   await page.getByRole("button", { name: "Đặt lại" }).click();
   await page.getByLabel("Trạng thái").click();
   await page.getByRole("option", { name: "Đang chờ" }).click();
-  await expect(page.getByText("1 entry khớp")).toBeVisible();
+  await page.getByLabel("Tìm headword").fill(`qa cms ${TOK} pend`);
+  await page.getByLabel("Tìm headword").press("Enter");
+  // cell trước count — chặn stale "1 entry khớp" của bước charlie còn treo
   await expect(headwordCell(page, `qa cms ${TOK} pend`)).toBeVisible();
+  await expect(page.getByText("1 entry khớp")).toBeVisible();
 
   // pagination server-side: 8 rows ≤ 50 → 1 trang, prev/next disabled
   await page.getByRole("button", { name: "Đặt lại" }).click();
