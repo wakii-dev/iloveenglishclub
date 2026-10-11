@@ -1,0 +1,23 @@
+[WebServer] npm warn Unknown user config "python". This will stop working in the next major version of npm.
+
+[WebServer] npm warn Unknown user config "user". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown user config "unsafe-perm". This will stop working in the next major version of npm.
+
+◇ injected env (8) from .env.local
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+◇ injected env (0) from .env.local
+
+Running 6 tests using 1 worker
+
+◇ injected env (0) from .env.local
+
+◇ injected env (0) from .env.local
+
+[1/6] e2e/admin-vocabulary-curation.spec.ts:269:5 › browse: bảng parsed + filter CEFR/OX3000 + search headword + status pending pretty slug
+[2/6] e2e/admin-vocabulary-curation.spec.ts:318:5 › promote 2 entry → toast created=2; GET API + DB row đúng fields (SF-2 song song — KHÔNG assert catalog UI)
+[3/6] e2e/admin-vocabulary-curation.spec.ts:378:5 › meaning gate: thiếu 1 nghĩa → promote disabled; entry trùng → skip + batch không chết + hint merge
+[4/6] e2e/admin-vocabulary-curation.spec.ts:426:5 › promote toàn duplicate → created=0 vẫn toast thành công (batch không chết)
+[5/6] e2e/admin-vocabulary-curation.spec.ts:445:5 › backfill scope book: dry-run plan khớp seed → apply 5 → dry-run lại matched=0; word ngoài scope giữ NULL
+[6/6] e2e/admin-vocabulary-curation.spec.ts:487:5 › a11y: grid input label gắn headword, dialog focus-trap + Esc, keyboard checkbox, contrast screenshots
+  6 passed (2.5m)

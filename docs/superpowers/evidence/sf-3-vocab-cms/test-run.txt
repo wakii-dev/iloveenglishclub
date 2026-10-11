@@ -1,0 +1,102 @@
+tdd: GREEN-first KHÔNG áp dụng nguyên trạng (SF-3 = UI tầng trên API SF-1 có sẵn — unit test legs viết CÙNG commit implementation, không phase RED vì không đổi behavior cũ); chuỗi commit: 06a2b29 impl → 25530ed review-round-1 fixes (2 P0 + 2 P1 + P2) → b2e4b0d e2e rounds 2-8 → 6ef092b e2e green fixes (HEAD~1 so với evidence commit này). Unit 1037/1037 pass + 8 skip (86 file, gồm 14 test legs mới curation-browser + i18n parity); e2e admin-vocabulary-curation 6/6 pass (2.5m, exit 0); tsc 0 error; eslint 0 error 0 warning; DB verify sau suite: 0 fixture leftovers (words/entries/books qa-cms-%).
+
+Worktree: sf-3-vocab-cms · Branch: wakii-dev/sf-3-vocab-cms · Base: 8e082ae (story-vu43-vocab-cms, gồm SF-1 merge) · Story VU-43 SF-3 (Linear VU-46, tier 1)
+
+════ (0) PHẠM VI + BOUNDARY ════
+Files SF-3 sở hữu (đúng touch map): src/app/(admin)/admin/vocabulary/curation/page.tsx (mới),
+  src/components/admin/curation-browser.tsx + .test.ts (mới), messages/{vi,en}/vocab-curation.json
+  (điền skeleton SF-1), e2e/admin-vocabulary-curation.spec.ts (mới), evidence dir này.
+KHÔNG đụng: file SF-1 (routes/stores/bulk-selection/vocabulary-sub-nav/vocab-cms-common.json/
+  cleanup helper/playwright.admin.config.ts), admin-nav.tsx + vocabulary-catalog (SF-2 song song),
+  crawl runner/status machine (VU-32), admin.json/vocab-catalog.json. crawl_entries CHỈ ĐỌC —
+  KHÔNG UPDATE status. KHÔNG LLM (meaning VI teacher-in-loop grid). git diff 8e082ae..HEAD =
+  6 file touch map + evidence.
+
+════ (1) COMPONENT + UNIT (vitest, node env — không DOM infra, pattern bulk-selection.test.ts) ════
+Lệnh: node node_modules/vitest/vitest.mjs run
+Kết quả: 1037 passed | 8 skipped (1045) — baseline SF-1 1023 + 14 test legs mới.
+Test legs (curation-browser.test.ts, fetch-stub không msw):
+  - headwordOf COALESCE word-trim/pretty-slug + prettySlugFallback (strip _N + dash→space, mirror
+    prettySlug server — crawl-entries-store import db cấm vào client bundle)
+  - buildEntriesQuery: default parsed+limit 50+offset, cefr csv, ox3000 1/0/omit, trim, offset âm→0
+  - missingMeanings: trim rỗng = thiếu (route chặn meaningRequired)
+  - aggregatePromoteReports: cộng created/duplicates, nối failed
+  - promoteChunked 450 ids → 3 request 200/200/50, meanings ĐÚNG subset từng chunk, aggregate
+    {created 249, duplicates 200, failed[meaningRequired]}; chunk transport-500 → entries chunk đó
+    vào failed error=generic, chunk sau VẪN CHẠY (không stop-mid — spec §5.2); PROMOTE_CHUNK_CAP=200
+  - fetchEntries: URL query + parse items/total + {ok:false} → ApiError
+  - backfill: dry-run payload {scope:{bookId}, dryRun:true} → plan counts; apply payload dryRun:false
+    +limit 200 → report counts
+i18n parity: src/messages.test.ts xanh — vocab-curation.json vi/en cùng bộ keys.
+
+════ (2) E2E — playwright.admin.config (test-ownership §8), DB Neon shared, fixture qa-cms-<tok>-* ════
+Lệnh: node node_modules/@playwright/test/cli.js test e2e/admin-vocabulary-curation.spec.ts \
+        --config=playwright.admin.config.ts --reporter=line
+Kết quả: 6 passed (2.5m) exit 0 — log đầy đủ: e2e-run.log (cùng thư mục này).
+Chuỗi run: run7 1/6 → run8 3/6 → run9 3/6 → run10 5/6 → run11 6/6 GREEN (mỗi fail là spec/test
+  bug riêng, fix + re-run; KHÔNG retry mù).
+Fixture unique-per-run: TOK base36 theo Date.now() — 4 entry curation (alpha A2/noun/ox3000/blob/
+  example, bravo A1, charlie B2/verb/blob, dup B1 + word trùng predicate §4) + 1 entry pending
+  (word NULL) + 5 cặp entry/word backfill (bf-1..5 blob) + book promote fixture + book backfill
+  fixture RIÊNG (chỉ 5 từ bf — book promote chứa từ promote-không-blob → pending=1 tầm thường).
+  Cleanup: e2e/helpers/cleanup-vocab-cms.ts --apply trước + sau (helper dùng chung SF-1 KHÔNG đổi);
+  afterAll verify cứng 0 leftovers; DB check độc lập sau suite: words=0 entries=0 books=0.
+Phủ acceptance (§6.3/§6.4 theo ownership — KHÔNG assert catalog UI, SF-2 song song):
+  1. Browse: 9 entry parsed khớp token (4 curation + 5 bf); filter CEFR A2 + OX3000 → đúng 1 alpha;
+     search headword đầy đủ → 1; status pending → entry word-null hiển thị pretty slug (search
+     pretty-form space — lake 63,726 pending thật, fixture id lớn không vào page đầu); pagination
+     1/1 + prev/next disabled (server-side 50/page — SF-1 store test riêng).
+  2. Promote 2 (alpha+bravo): grid 2 input nghĩa VI → dialog book → toast "Đã tạo 2 từ mới" +
+     report "Từ mới: 2" → GET /api/admin/vocabulary (limit/offset tường minh) trả đúng fields
+     (word/meaning_vi/ipa uk→us/cefr/source=oxford-ld/pos/audio_url blob/example sense-1) + DB
+     book_words link đúng book; badge "đã có từ" cập nhật sau refetch (scope đúng ROW alpha).
+  3. Meaning gate: thiếu 1 nghĩa → "Còn thiếu 1 nghĩa" + nút promote DISABLED; đủ → "Đã đủ nghĩa";
+     entry dupword badge "đã có từ" (duplicate predicate); promote charlie+dupword → report
+     created=1 + duplicates=1 + hint merge visible — BATCH KHÔNG CHẾT; GET API xác nhận.
+  4. Duplicate-only: promote dupword lần nữa → toast "Không có từ mới — 1 entry trùng đã bỏ qua"
+     (created=0 vẫn success) + GET API total=1 (không tạo row mới).
+  5. Backfill scope book: dry-run plan {matched 5, pending 0, missing 0} khớp seed → apply →
+     "Đã gán audio cho 5 từ" → SQL verify 5 words.audio_url = blob fixture + control word NGOÀI
+     scope audio_url giữ NULL → dry-run lại matched=0 (marker audio_url IS NULL tự nhiên).
+  6. A11y: checkbox aria-label theo headword + keyboard Space toggle; grid input label htmlFor gắn
+     headword; promote dialog focus-trap (activeElement trong [role=dialog]) + Esc đóng; screenshots
+     bảng + meaning-grid + promote-dialog (thư mục này).
+Chromium: QA-7 — `npx next dev` webpack; QA-2 — KHÔNG reuse server chéo worktree (đã gặp thật:
+  attempt đầu 6/6 ERR_CONNECTION_REFUSED do reuse server sf-2 chết giữa chừng).
+
+════ (3) LƯU Ý KỸ THUẬT PHÁT HIỆN KHI DEBUG (evidence cho coordinator) ════
+a. GET /api/admin/vocabulary (route t-1.2 legacy — FILE SF-1/SF-5 READ-ONLY theo boundary) dùng
+   clampInt KHÔNG null-guard: thiếu limit param → Number(null)=0 → SQL LIMIT 0 → items:[] (total
+   đúng). Tái hiện + log SQL (probe đã revert). Route crawl/entries (SF-1 mới) có bản ĐÃ FIX +
+   comment đúng pattern. e2e work-around: gửi &limit=50&offset=0 tường minh. KHÔNG sửa — report
+   coordinator quyết (2 lựa chọn: fix 1 dòng theo pattern crawl/entries, hoặc catalog UI SF-2
+   luôn gửi params — hiện VocabularyManager đã luôn gửi nên chưa nổ).
+b. Server component namespace next-intl: admin NGOÀI [locale] — request config build messages theo
+   TÊN FILE ("vocab-curation"), key camelCase "vocabCuration" chỉ tồn tại ở NextIntlClientProvider.
+   getTranslations server phải dùng "vocab-curation" — sai → render literal "vocabCuration.title".
+c. GET items trả snake_case (meaning_vi/audio_url/image_url/synonyms) — camelCase chỉ là field
+   internal store; consumer UI mới đọc đúng contract này.
+
+════ (4) MIGRATION 0007 — DISCLOSURE (lệch kế hoạch SF-1, quyết định có ghi nhận) ════
+SF-1 evidence ghi "main DB CHƯA apply 0007 — coordinator áp khi merge/deploy". Nhưng e2e SF-3
+  (VÀ SF-2 — listVocabulary v2 select words.pos) KHÔNG chạy được trên Neon shared khi thiếu 0007
+  (words.pos không tồn tại → promote insert lỗi; index cefr/pos/ox3000 thiếu).
+Đã làm: dry-run 0007 trong transaction ROLLBACK trên Neon (OK) → `node node_modules/drizzle-kit/
+  bin.cjs migrate` — apply 0006 (VU-37 leaderboard view, ĐÃ merge PR#8 nhưng chưa migrate) + 0007
+  theo thứ tự journal, ghi nhận đầy đủ vào drizzle.__drizzle_migrations. Verify: words có
+  pos/image_url/synonyms; pg_indexes có crawl_entries_cefr_idx/pos_idx/ox3000_idx.
+Nếu coordinator muốn rollback: DROP 3 index + 3 cột (additive-only, không mất data).
+
+════ (5) BASELINE + TOOLCHAIN ════
+vitest: node node_modules/vitest/vitest.mjs run → 1037 passed | 8 skipped (exit 0).
+tsc: node node_modules/typescript/bin/tsc --noEmit → 0 error.
+eslint: node node_modules/eslint/bin/eslint.js (5 file đổi) → 0 error 0 warning.
+Node v24.10.0, npm 11.6.1 (npm install tạo lockfile churn npm-11 vs CI npm-10.9.9 — ĐÃ revert
+  package-lock.json về HEAD, không commit).
+
+════ (6) ĐÃ CHẤP NHẬN THEO PIN (không phải bug) ════
+- Sub-nav link /admin/vocabulary (catalog) + /admin/vocabulary/stats 404 trong worktree này —
+  SF-2/SF-4 song song, dead-link pin Phase 1 (spec §8).
+- admin-nav CHƯA có item "Từ vựng" — SF-2 sở hữu admin-nav.tsx (nav e2e SF-2 + convergence SF-4).
+- hasWord badge link /admin/vocabulary?q= — 404 chấp nhận như trên.
+- BulkActionBar/ConfirmDialog tier-0 hardcode vi — file SF-1 pinned, đúng design language.
