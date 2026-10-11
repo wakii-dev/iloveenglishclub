@@ -1,4 +1,4 @@
-tdd: GREEN-first thêm mới (migration additive + stores/routes mới — unit tests viết cùng commit, không có phase RED vì không sửa behavior cũ) — 14 file test mới + 2 file test mở rộng; 1019/1019 unit exit 0; RLS 26/26; integration template 4/4. Code commit: 3db0693 (HEAD~1 so với evidence commit này — chuỗi: 0f2b530 base → 3db0693 SF-1)
+tdd: GREEN-first thêm mới (migration additive + stores/routes mới — unit tests viết cùng commit, không có phase RED vì không sửa behavior cũ) — 14 file test mới + 2 file test mở rộng; 1019/1019 unit exit 0; RLS 26/26; integration template 4/4. Code commit: 3db0693 → review fix c58243b (P0+P2, +4 test → 1023/1023) → review verdict docs d8c2dd5 (HEAD~1 so với evidence refresh này — chuỗi: 0f2b530 base → 3db0693 SF-1 → 1bbea82 evidence → c58243b fix → d8c2dd5 verdict)
 
 Worktree: sf-1-vocab-cms · Branch: wakii-dev/sf-1-vocab-cms · Base: 0f2b530 (master, gồm VU-37 merge #8) · Story VU-43 SF-1 (Linear VU-44, tier 0)
 
@@ -86,6 +86,25 @@ next build: ✓ toàn route — 8 route mới register: bulk · export · stats 
 9. Image upload ✓ (route contract: >2MB imageTooLarge, txt imageMime, png/jpeg/webp {ok,url})
 10. Primitives + parity ✓ (bulk-selection.test 7/7 · sub-nav exact-pathname · messages.test
     parity vi/en 3/3 · layout nạp đủ 4 namespace — build sạch)
+
+════ (5) CODE REVIEW ROUND + FIX (post-evidence đầu — refresh) ════
+Round 1 (reviewer độc lập trên 0f2b530..1bbea82): VERDICT CHANGES_REQUESTED — 1 P0 (SSRF:
+  audio-backfill allowDownload fetch trần trên provenance URL crawl-parse — phải tái dùng
+  downloadMp3 VU-32: allowlist Oxford + AbortSignal.timeout 15s + size cap 2MB + re-check host
+  sau redirect) + 4 P2 (lock-order bookIds, 500-generic bulk/export, marker-guard is-null
+  lúc ghi, imageMime rationale). CHECKLIST-4Q 3/4 (HTTP timeout FAIL).
+Fix commit c58243b: route deps.download = downloadMp3; test repro meta-test (169.254.169.254
+  chặn TRƯỚC fetch — fetchSpy not called; host Oxford fetch 1 lần) + lock-order test ['7','9']
+  cho input [9,7,9] + 2 test 500-generic. Suite sau fix: 1023/1023 pass (87 files) · tsc 0 ·
+  eslint clean · (reviewer tự chạy lại độc lập — không tin báo cáo).
+Round 2: VERDICT APPROVED — CHECKLIST-4Q 4/4 PASS, 5/5 findings RESOLVED, không regression.
+  Full report: docs/superpowers/reviews/code-reviewer-sf-1-vocab-cms.md (commit d8c2dd5) +
+  /tmp/story/vu43/reviewer-sf1.md. DONE comment VU-44 comment-333168e0 (2026-10-11).
+Lệnh chạy lại sau fix: node node_modules/vitest/vitest.mjs run → Test Files 85 passed |
+  2 skipped · Tests 1023 passed | 8 skipped · tsc --noEmit → 0 lỗi.
+Input security-audit Phase 1 (spec §8): finding SSRF round 1 (đÃ ĐÓNG) + note report.applied
+  = attempted khi race (guard is-null; reviewer đánh giá chấp nhận được — nice-to-have
+  .returning id đếm chính xác sau này).
 
 ════ FLAGS CHO COORDINATOR ════
 - Template mới ilec_vu43_sf1 đã tạo + migrated + seeded (7 books) — SF-2/3/4 fork từ dest@sf-1
