@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
   try {
     form = await req.formData();
   } catch {
+    // multipart hỏng (không parse được) = không có file image hợp lệ trong
+    // request — §4 không có mã riêng cho body hỏng, dùng imageMime (message
+    // hiển thị "ảnh chỉ nhận PNG/JPEG/WebP" vẫn dẫn đúng hành vi sửa của user)
     return NextResponse.json({ ok: false, error: "imageMime" }, { status: 400 });
   }
 

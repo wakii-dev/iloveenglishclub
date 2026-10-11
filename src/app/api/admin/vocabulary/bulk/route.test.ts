@@ -112,4 +112,11 @@ describe("POST /api/admin/vocabulary/bulk", () => {
     await POST(req({ action: "delete", wordIds: [1, 2] }));
     expect(storeMock.bulkDeleteApply).toHaveBeenCalledWith([1, 2]);
   });
+
+  it("store throw (DB lỗi lạ) → 500 {ok:false,error:'generic'} JSON (không 500 HTML)", async () => {
+    storeMock.bulkDeleteApply.mockRejectedValue(new Error("boom"));
+    const res = await POST(req({ action: "delete", wordIds: [1] }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "generic" });
+  });
 });

@@ -59,35 +59,41 @@ export async function POST(req: NextRequest) {
   }
   const action = body.action;
 
-  if (action === "assign-books") {
-    const bookIds = idsFromBody(body.bookIds);
-    if (bookIds === null || bookIds.length === 0) {
-      return NextResponse.json({ ok: false, error: "invalidBookIds" }, { status: 400 });
+  try {
+    if (action === "assign-books") {
+      const bookIds = idsFromBody(body.bookIds);
+      if (bookIds === null || bookIds.length === 0) {
+        return NextResponse.json({ ok: false, error: "invalidBookIds" }, { status: 400 });
+      }
+      const result = await bulkAssignBooks(wordIds, bookIds);
+      if (!result.ok) {
+        return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
+      }
+      return NextResponse.json(result);
     }
-    const result = await bulkAssignBooks(wordIds, bookIds);
-    if (!result.ok) {
-      return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
-    }
-    return NextResponse.json(result);
-  }
 
-  if (action === "tag-cefr") {
-    const cefr = validateCefrInput(body.cefr);
-    if (cefr === null || typeof cefr === "object") {
-      return NextResponse.json({ ok: false, error: "invalidCefr" }, { status: 400 });
-    }
-    const report = await bulkTagCefr(wordIds, cefr);
-    return NextResponse.json({ ok: true, report });
-  }
-
-  if (action === "delete") {
-    if (body.dryRun === true) {
-      const report = await bulkDeleteDryRun(wordIds);
+    if (action === "tag-cefr") {
+      const cefr = validateCefrInput(body.cefr);
+      if (cefr === null || typeof cefr === "object") {
+        return NextResponse.json({ ok: false, error: "invalidCefr" }, { status: 400 });
+      }
+      const report = await bulkTagCefr(wordIds, cefr);
       return NextResponse.json({ ok: true, report });
     }
-    const report = await bulkDeleteApply(wordIds);
-    return NextResponse.json({ ok: true, report });
-  }
 
-  return NextResponse.json({ ok: false, error: "invalidAction" }, { status: 400 });
+    if (action === "delete") {
+      if (body.dryRun === true) {
+        const report = await bulkDeleteDryRun(wordIds);
+        return NextResponse.json({ ok: true, report });
+      }
+      const report = await bulkDeleteApply(wordIds);
+      return NextResponse.json({ ok: true, report });
+    }
+
+    return NextResponse.json({ ok: false, error: "invalidAction" }, { status: 400 });
+  } catch (error) {
+    // store throw (DB lỗi lạ) → JSON generic nhất quán (không 500 HTML mặc định)
+    console.error("[vocabulary:bulk] failed:", error);
+    return NextResponse.json({ ok: false, error: "generic" }, { status: 500 });
+  }
 }

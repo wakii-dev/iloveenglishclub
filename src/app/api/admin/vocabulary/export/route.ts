@@ -57,21 +57,27 @@ export async function GET(req: NextRequest) {
 
   // Chặn >10k TRƯỚC khi fetch — count query rẻ hơn load full (Neon shared-DB,
   // tránh LIMIT lớn flake)
-  const counted = await listVocabulary({ ...filters, limit: 1, offset: 0 });
-  if (counted.total > EXPORT_MAX_ROWS) {
-    return NextResponse.json({ ok: false, error: "tooMany" }, { status: 400 });
-  }
+  try {
+    const counted = await listVocabulary({ ...filters, limit: 1, offset: 0 });
+    if (counted.total > EXPORT_MAX_ROWS) {
+      return NextResponse.json({ ok: false, error: "tooMany" }, { status: 400 });
+    }
 
-  const { items } = await listVocabulary({
-    ...filters,
-    limit: Math.max(counted.total, 1),
-    offset: 0,
-  });
-  const csv = buildVocabularyCsv(items);
-  return new NextResponse(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${exportCsvFilename()}"`,
-    },
-  });
+    const { items } = await listVocabulary({
+      ...filters,
+      limit: Math.max(counted.total, 1),
+      offset: 0,
+    });
+    const csv = buildVocabularyCsv(items);
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${exportCsvFilename()}"`,
+      },
+    });
+  } catch (error) {
+    // store throw (DB lỗi lạ) → JSON generic nhất quán (không 500 HTML mặc định)
+    console.error("[vocabulary:export] failed:", error);
+    return NextResponse.json({ ok: false, error: "generic" }, { status: 500 });
+  }
 }

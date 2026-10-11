@@ -99,6 +99,36 @@ describe("POST /api/admin/vocabulary/audio-backfill", () => {
     expect(typeof call?.[1]?.deps?.put).toBe("function");
   });
 
+  it("deps.download CHỐNG SSRF: host ngoài allowlist Oxford bị chặn TRƯỚC fetch (review P0)", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    try {
+      await POST(
+        req({ scope: { bookId: 7 }, dryRun: false, allowDownload: true }),
+      );
+      const deps = storeMock.applyAudioBackfill.mock.calls[0]?.[1]?.deps;
+      // provenance URL crawl-parse (data-src-mp3, không validate lúc parse) —
+      // SSRF target phải bị allowlist chặn KHÔNG chạm fetch
+      await expect(deps.download("http://169.254.169.254/latest/meta-data/")).rejects.toThrow(
+        /allowlist/,
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+      // host Oxford hợp lệ → fetch (stub) chạy, trả buffer
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        url: "https://audio.oxfordlearnersdictionaries.com/mp3/x.mp3",
+        arrayBuffer: async () => new ArrayBuffer(10),
+      });
+      const buf = await deps.download(
+        "https://audio.oxfordlearnersdictionaries.com/mp3/x.mp3",
+      );
+      expect(buf).toBeInstanceOf(Buffer);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("lỗi lib → 500 generic", async () => {
     storeMock.planAudioBackfill.mockRejectedValue(new Error("boom"));
     const res = await POST(req({ scope: { bookId: 1 }, dryRun: true }));

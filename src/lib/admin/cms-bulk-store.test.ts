@@ -56,13 +56,22 @@ function txMock() {
       dbState.txCalls.push("tx-delete");
       return chainOf();
     },
-    // execute(sql`select pg_advisory_xact_lock(${bookId})`) — ghi chuỗi SQL để
-    // pin THỨ TỰ: lock phải trước select max(order)
+    // execute(sql`select pg_advisory_xact_lock(${bookId})`) — ghi chuỗi SQL +
+    // giá trị param (drizzle bọc number thành boxed Number chunk) để pin THỨ
+    // TỰ: lock phải trước select max(order), book nhỏ lock trước
     execute: (query: { queryChunks?: unknown[] }) => {
       const text = (chunk: unknown): string => {
         if (typeof chunk === "string") return chunk;
-        const value = (chunk as { value?: unknown[] }).value;
-        return Array.isArray(value) ? value.map(text).join("") : "";
+        if (typeof chunk === "number" || typeof chunk === "boolean") {
+          return String(chunk); // param primitive (template interpolation)
+        }
+        const value = (chunk as { value?: unknown }).value;
+        if (typeof value === "string") return value; // StringChunk
+        if (Array.isArray(value)) return value.map(text).join("");
+        if (value !== undefined && typeof value !== "object") return String(value);
+        const chunks = (chunk as { queryChunks?: unknown[] }).queryChunks;
+        if (Array.isArray(chunks)) return chunks.map(text).join("");
+        return "";
       };
       const sig = (query.queryChunks ?? []).map(text).join("");
       dbState.txCalls.push(`tx-execute:${sig}`);
@@ -138,6 +147,16 @@ describe("bulkAssignBooks (spec §5.2–5.3)", () => {
     await bulkAssignBooks([1, 2], [7]);
     // 1 book = 1 select max duy nhất (order++ phía client-side sau insert)
     expect(dbState.txCalls.filter((c) => c === "tx-select")).toHaveLength(1);
+  });
+
+  it("bookIds xử lý theo THỨ TỰ ID TĂNG DẦN + dedupe — chống lock-order deadlock (40P01) khi 2 request ngược thứ tự", async () => {
+    dbState.queue = [[{ max: 0 }], [{ wordId: 1 }], [{ max: 0 }], [{ wordId: 2 }]];
+    const result = await bulkAssignBooks([1, 2], [9, 7, 9]);
+    expect(result.ok).toBe(true);
+    const lockOrder = dbState.txCalls
+      .filter((c) => c.startsWith("tx-execute:select pg_advisory_xact_lock"))
+      .map((c) => c.match(/pg_advisory_xact_lock\((\d+)\)/)?.[1]);
+    expect(lockOrder).toEqual(["7", "9"]); // sort tăng dần, 9 trùng chỉ 1 lần
   });
 
   it("FK 23503 → bookNotFound (request fail; revalidate vì book trước có thể đã mutate)", async () => {

@@ -149,8 +149,10 @@ export async function applyAudioBackfill(
       sql`update ${words} set audio_url = v.url from (values ${sql.join(
         plan.matched.map((m) => sql`(${m.wordId}::int, ${m.blobUrl}::text)`),
         sql`, `,
-      )}) as v(id, url) where ${words.id} = v.id`,
+      )}) as v(id, url) where ${words.id} = v.id and ${words.audioUrl} is null`,
     );
+    // guard "is null" lúc GHI: word được gán audio tay giữa plan và update
+    // không bị đè — marker audio_url IS NULL giữ nguyên cả lúc ghi (review P2)
     report.applied = plan.matched.length;
   }
 

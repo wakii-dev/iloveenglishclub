@@ -71,7 +71,11 @@ export async function bulkAssignBooks(
   bookIds: number[],
 ): Promise<AssignBooksResult> {
   const report: AssignBooksReport = { affected: 0, skipped: 0, errors: [] };
-  for (const bookId of bookIds) {
+  // lock book theo THỨ TỰ ID TĂNG DẦN — 2 request song song gán cùng tập book
+  // theo thứ tự NGƯỢC nhau sẽ deadlock (PG abort 1 tx 40P01) nếu giữ thứ tự
+  // input; dedupe phòng bookIds trùng (review P2 SF-1)
+  const orderedBooks = [...new Set(bookIds)].sort((a, b) => a - b);
+  for (const bookId of orderedBooks) {
     try {
       await db.transaction(async (tx) => {
         // pg_advisory_xact_lock tự nhả khi transaction kết thúc (kể cả lỗi);

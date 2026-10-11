@@ -100,4 +100,11 @@ describe("GET /api/admin/vocabulary/export", () => {
       "word,ipa,meaning_vi,example,cefr,source,pos,synonyms,audio_url,image_url",
     );
   });
+
+  it("store throw (DB lỗi lạ) → 500 {ok:false,error:'generic'} JSON (không 500 HTML)", async () => {
+    storeMock.listVocabulary.mockRejectedValue(new Error("boom"));
+    const res = await GET(req(""));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "generic" });
+  });
 });

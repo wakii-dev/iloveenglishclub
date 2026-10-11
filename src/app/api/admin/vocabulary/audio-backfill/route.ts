@@ -5,6 +5,7 @@ import {
   planAudioBackfill,
   type BackfillScope,
 } from "@/lib/admin/audio-backfill";
+import { downloadMp3 } from "@/lib/oxford/audio";
 import { putAudio } from "@/lib/storage-server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
@@ -80,14 +81,15 @@ export async function POST(req: NextRequest) {
     const report = await applyAudioBackfill(scope, {
       limit,
       allowDownload,
-      // deps thật (prod): fetch audio gốc + put storage dual-driver (local dev
-      // → public/uploads, prod → Blob CDN) — test inject mock
+      // deps thật (prod): download QUA downloadMp3 (VU-32) — provenance URL
+      // crawl parse từ data-src-mp3 KHÔNG validate host lúc parse, nên allowlist
+      // Oxford + AbortSignal 15s + size cap 2MB + re-check host sau redirect là
+      // phòng ngự SSRF bắt buộc (review P0 SF-1); lỗi allowlist/timeout/cap rơi
+      // vào per-word catch → report.errors, không chết batch. put storage
+      // dual-driver (local dev → public/uploads, prod → Blob CDN) — test inject
+      // mock qua applyAudioBackfill deps.
       deps: {
-        download: async (url) => {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`download ${res.status}`);
-          return Buffer.from(await res.arrayBuffer());
-        },
+        download: (url) => downloadMp3(url),
         put: (path, data, contentType) => putAudio(path, data, contentType),
       },
     });
