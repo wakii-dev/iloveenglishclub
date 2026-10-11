@@ -46,12 +46,20 @@ const PR = (n: number) => `${PREFIX}-p${String(n).padStart(5, "0")}`;
 const BOOK_SLUG = `${PREFIX}-book`;
 
 async function adminCookie(): Promise<string> {
+  // JWT forged cần id CỦA USER THẬT (assertAdmin tra profiles theo
+  // session.user.id — id invented → 403 not-admin; cùng cơ chế e2e
+  // admin-lib forgeSessionToken dùng userIdOf).
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? "admin@ilec.dev";
+  const [admin] = await sql<{ id: string }[]>`
+    SELECT u.id FROM users u JOIN profiles p ON p.id = u.id
+    WHERE u.email = ${adminEmail} AND p.role = 'admin' LIMIT 1`;
+  if (!admin) throw new Error(`admin ${adminEmail} không tồn tại — chạy global-setup e2e trước`);
   const token = await encode({
     token: {
-      sub: "qa-cms-rehearsal-admin",
-      id: "qa-cms-rehearsal-admin",
+      sub: admin.id,
+      id: admin.id,
       role: "admin",
-      email: "rehearsal@qa-cms.test",
+      email: adminEmail,
       name: "QA CMS Rehearsal",
       locale: "vi",
     },
@@ -124,12 +132,14 @@ async function main(): Promise<void> {
     ).map((r) => r.id);
     if (wordIds.length !== WORDS_TOTAL) throw new Error(`seed words ${wordIds.length} ≠ ${WORDS_TOTAL}`);
 
-    // BF_MATCHED entry có blob (backfill plan matched) khớp word 1..200
+    // BF_MATCHED entry có blob (backfill plan matched) khớp word 1..200 —
+    // slug PHẢI derive được từ word (slugPatterns — pattern match.ts): slug
+    // = word (không phải -eN) nếu không candidate fetch không thấy → missing
     for (let chunk = 0; chunk < BF_MATCHED / 100; chunk++) {
       const rows = Array.from({ length: 100 }, (_, i) => {
         const n = chunk * 100 + i + 1;
         return {
-          slug: E(n),
+          slug: W(n),
           word: W(n),
           cefr: "B1",
           audio_uk_blob: `https://qa-blob.test/audio/oxford/${E(n)}-uk.mp3`,
@@ -183,7 +193,8 @@ async function main(): Promise<void> {
           { headers: { cookie } },
         );
         const text = await res.text();
-        const dataRows = text.split("\r\n").length - 1 - 1; // trừ header + dòng rỗng cuối
+        const parts = text.split("\r\n");
+        const dataRows = parts.length - 1 - (parts.at(-1) === "" ? 1 : 0); // trừ header (+ dòng rỗng cuối nếu có)
         return {
           status: res.status,
           detail: { rows: dataRows, bytes: text.length, filename: res.headers.get("content-disposition") },

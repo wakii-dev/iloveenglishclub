@@ -1,0 +1,52 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "at": "2026-10-11T10:45:38.789Z",
+  "results": [
+    {
+      "op": "bulk assign 500",
+      "ms": 280825,
+      "status": 200,
+      "detail": {
+        "ok": true,
+        "report": {
+          "affected": 500,
+          "skipped": 0,
+          "errors": []
+        }
+      }
+    },
+    {
+      "op": "export 5k",
+      "ms": 6519,
+      "status": 200,
+      "detail": {
+        "rows": 5000,
+        "bytes": 345125,
+        "filename": "attachment; filename=\"vocabulary-2026-10-11.csv\""
+      }
+    },
+    {
+      "op": "backfill scoped 200 dry-run",
+      "ms": 2218,
+      "status": 200,
+      "detail": {
+        "matched": 134,
+        "pending": 0,
+        "missing": 66
+      }
+    },
+    {
+      "op": "promote 20",
+      "ms": 25294,
+      "status": 200,
+      "detail": {
+        "ok": true,
+        "report": {
+          "created": 20,
+          "duplicates": 0,
+          "failed": []
+        }
+      }
+    }
+  ]
+}
