@@ -464,6 +464,9 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
         );
       }
       toast.error(errorText(codeOf(error)));
+      // P1 review r2: nhánh lỗi phải nhả busy — kẹt true = mọi nút submit
+      // disabled vĩnh viễn (compensation re-run không chạy được)
+      setBulkBusy(false);
       selection.clear();
       await refetch();
       return;
@@ -514,6 +517,8 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
         toast.success(t("report.tagged", { affected: applied.affected }));
       }
       toast.error(errorText(codeOf(error)));
+      // P1 review r2: nhả busy trên nhánh lỗi (như assign-books)
+      setBulkBusy(false);
       selection.clear();
       await refetch();
       return;
@@ -591,6 +596,8 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
         );
       }
       toast.error(errorText(codeOf(error)));
+      // P1 review r2: nhả busy trên nhánh lỗi (như assign-books)
+      setBulkBusy(false);
       setDeletePlan(null);
       selection.clear();
       await refetch();
