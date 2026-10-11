@@ -70,6 +70,26 @@ describe("POST /api/admin/vocabulary/crawl/promote", () => {
     expect(storeMock.promoteCrawlEntries).not.toHaveBeenCalled();
   });
 
+  it("meaning vượt MEANING_MAX 500 (sau trim) → 400 meaningRequired, store KHÔNG gọi; 500 đúng biên → pass (SF-4 P2-2 security-audit)", async () => {
+    const over = await POST(
+      req({
+        entryIds: [1, 2],
+        bookId: 7,
+        meanings: { "1": "nghĩa", "2": `  ${"x".repeat(501)}` },
+      }),
+    );
+    expect(over.status).toBe(400);
+    expect(await over.json()).toEqual({ ok: false, error: "meaningRequired" });
+    expect(storeMock.promoteCrawlEntries).not.toHaveBeenCalled();
+
+    // 500 sau trim = đúng biên MEANING_MAX — validate phải nhường qua store
+    const edge = await POST(
+      req({ entryIds: [3], bookId: 7, meanings: { "3": "x".repeat(500) } }),
+    );
+    expect(edge.status).toBe(200);
+    expect(storeMock.promoteCrawlEntries).toHaveBeenCalledTimes(1);
+  });
+
   it("cap 200 → tooMany; entryIds/bookId sai shape → 400; shape hợp lệ → report passthrough", async () => {
     const many = Array.from({ length: 201 }, (_, i) => i + 1);
     const over = await POST(

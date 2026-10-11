@@ -70,3 +70,28 @@ describe("exportCsvFilename", () => {
     );
   });
 });
+
+describe("formula-injection guard (SF-4 — security-audit P2-1)", () => {
+  // Cell khớp /^[=+\-@\t\r]/ → prefix `'` để Excel/LibreOffice mở file KHÔNG
+  // thực thi formula (OWASP CSV injection). Bảng pin 5 ký tự đầu nguy hiểm.
+  it.each([
+    ["=HYPERLINK(\"https://evil.test\",\"pwn\")", "'=HYPERLINK"],
+    ["+cmd|'/c calc'!A0", "'+cmd"],
+    ["-2+3|cmd", "'-2"],
+    ["@SUM(1)", "'@SUM"],
+    ["\tSUM(A1)", "'\tSUM"],
+    ["\rSUM(A1)", "'\rSUM"],
+  ])("word %j được prefix ' — không chạy formula khi mở Excel", (word, expected) => {
+    const csv = buildVocabularyCsv([row({ word })]);
+    expect(csv).toContain(expected);
+  });
+
+  it("prefix ' không phá cell bình thường + vẫn escape RFC khi có comma", () => {
+    // 'apple (khớp prefix nhưng vô hại) — KHÔNG bị prefix (chỉ ký tự nguy hiểm)
+    // word = cột ĐẦU dòng — đứng sau CRLF header, không phải sau comma
+    expect(buildVocabularyCsv([row({ word: "apple" })])).toContain("\r\napple,");
+    // Cell vừa nguy hiểm vừa chứa comma: prefix ' rồi vẫn bọc quote
+    const csv = buildVocabularyCsv([row({ word: "=1,2" })]);
+    expect(csv).toContain("\"'=1,2\"");
+  });
+});

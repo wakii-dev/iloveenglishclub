@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { PROMOTE_CAP, promoteCrawlEntries } from "@/lib/admin/promote-store";
+import { MEANING_MAX } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
 export const runtime = "nodejs";
@@ -26,7 +27,11 @@ function idsFromBody(value: unknown): number[] | null {
   return ids;
 }
 
-/** meanings có mặt + non-empty (sau trim) cho TẤT CẢ entryIds — 1 thiếu fail all. */
+/**
+ * meanings có mặt + non-empty (sau trim) + ≤ MEANING_MAX cho TẤT CẢ entryIds
+ * — 1 thiếu/quá dài fail all. Cap 500 chặn payload khổng lồ trượt qua validate
+ * (security-audit VU-43 Phase 1 P2-2); cùng MEANING_MAX với createVocabularyWord.
+ */
 function meaningsComplete(
   meanings: unknown,
   entryIds: number[],
@@ -37,7 +42,9 @@ function meaningsComplete(
   const map = meanings as Record<string, unknown>;
   return entryIds.every((id) => {
     const meaning = map[String(id)];
-    return typeof meaning === "string" && meaning.trim().length > 0;
+    if (typeof meaning !== "string") return false;
+    const trimmed = meaning.trim();
+    return trimmed.length > 0 && trimmed.length <= MEANING_MAX;
   });
 }
 

@@ -1,1 +1,32 @@
-{}
+{
+  "title": "Vocabulary stats",
+  "lead": "Overview of all words — audio/image coverage, CEFR distribution, per-book and crawl/enrich.",
+  "cards": {
+    "total": "Total words",
+    "audio": "Audio coverage",
+    "image": "Image coverage",
+    "orphan": "Orphan words",
+    "enriched": "Oxford coverage"
+  },
+  "histogram": {
+    "title": "CEFR distribution",
+    "untagged": "Untagged",
+    "other": "Other",
+    "hint": "Bars always sum to the total word count."
+  },
+  "perBook": {
+    "title": "Per book",
+    "book": "Book",
+    "words": "Words",
+    "audio": "Audio coverage",
+    "empty": "No books yet."
+  },
+  "crawl": {
+    "title": "Oxford crawl",
+    "parsed": "Parsed",
+    "pending": "Pending",
+    "failed": "Failed",
+    "link": "Open Oxford crawl"
+  },
+  "error": "Could not load stats."
+}

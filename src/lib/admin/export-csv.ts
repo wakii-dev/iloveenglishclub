@@ -34,12 +34,21 @@ export type ExportCsvRow = {
 
 export const EXPORT_MAX_ROWS = 10000;
 
+/**
+ * Cell bắt đầu ký tự nguy hiểm (= + - @ tab CR) → prefix `'` — Excel/
+ * LibreOffice KHÔNG thực thi formula khi mở file (OWASP CSV injection,
+ * security-audit VU-43 Phase 1 P2-1). Data xuất từ words (teacher nhập) —
+ * không tin cell nào.
+ */
+const CSV_FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
 /** Escape RFC4180: chứa quote/comma/newline → bọc quote, quote nội → "". */
 function csvCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  const safe = CSV_FORMULA_PREFIX.test(value) ? `'${value}` : value;
+  if (/[",\n\r]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`;
   }
-  return value;
+  return safe;
 }
 
 function csvCellNullable(value: string | null | undefined): string {
