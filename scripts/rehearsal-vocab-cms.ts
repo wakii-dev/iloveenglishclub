@@ -203,7 +203,9 @@ async function main(): Promise<void> {
     );
 
     // ------------------------------------------------------------------
-    // OP 3 — backfill scoped dry-run (plan matched=200/pending=0/missing=4800)
+    // OP 3 — backfill scoped dry-run (limit mặc định BACKFILL_APPLY_CAP=200
+    // → quét đúng 200 từ thiếu audio của book; matched = số từ có entry blob
+    // TRONG 200 được quét — fixture 200/500 từ có entry nên matched < 200)
     // ------------------------------------------------------------------
     results.push(
       await timed("backfill scoped 200 dry-run", async () => {
