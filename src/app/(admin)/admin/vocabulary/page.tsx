@@ -16,7 +16,11 @@ export const metadata = {
  * CrawlDashboard — design language admin). Sub-nav tier-0 SF-1 chỉ render.
  */
 export default async function AdminVocabularyCatalogPage() {
-  const t = await getTranslations({ locale: "vi", namespace: "vocabCatalog" });
+  // SERVER namespace = tên FILE (`vocab-catalog` — loader getRequestConfig đọc
+  // messages/{locale}/*.json theo basename); CLIENT components nhận camelCase
+  // `vocabCatalog` từ NextIntlClientProvider của admin layout (SF-1 pin) —
+  // 2 tên 1 file, đừng thống nhất bằng cách sửa layout (READ-ONLY SF-1).
+  const t = await getTranslations({ locale: "vi", namespace: "vocab-catalog" });
   const books = await getAdminBooks();
 
   return (

@@ -38,7 +38,12 @@ function loadJson(locale: string, file: string): Record<string, unknown> {
   ) as Record<string, unknown>;
 }
 
-const CATALOG = loadJson("vi", "vocab-catalog.json");
+const CATALOG = loadJson("vi", "vocab-catalog.json") as {
+  filters: Record<string, string>;
+  columns: Record<string, string>;
+  add: Record<string, string>;
+  bulk: Record<string, string>;
+};
 const CMS_COMMON = loadJson("vi", "vocab-cms-common.json");
 const ADMIN = loadJson("vi", "admin.json");
 
@@ -52,9 +57,11 @@ function lookup(root: unknown, dotted: string): string | undefined {
 }
 
 function makeT(namespace: string) {
+  // SERVER getTranslations dùng namespace tên FILE (`vocab-catalog` — loader
+  // theo basename); CLIENT dùng camelCase `vocabCatalog` (layout provider).
   const root = namespace.startsWith("vocabCmsCommon")
     ? CMS_COMMON
-    : namespace.startsWith("vocabCatalog")
+    : namespace.startsWith("vocabCatalog") || namespace === "vocab-catalog"
       ? CATALOG
       : ADMIN;
   const prefix = namespace.includes(".")
@@ -88,7 +95,7 @@ const AdminVocabularyCatalogPage = (await import("./page")).default;
 async function renderPage(): Promise<string> {
   // page là async server component — await resolve JSX rồi mới SSR
   // (renderToString không chờ được component treo).
-  const element = await AdminVocabularyCatalogPage({});
+  const element = await AdminVocabularyCatalogPage();
   return renderToString(element);
 }
 
