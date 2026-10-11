@@ -1,0 +1,100 @@
+tdd: GREEN-first thêm mới (migration additive + stores/routes mới — unit tests viết cùng commit, không có phase RED vì không sửa behavior cũ) — 14 file test mới + 2 file test mở rộng; 1019/1019 unit exit 0; RLS 26/26; integration template 4/4. Code commit: 3db0693 (HEAD~1 so với evidence commit này — chuỗi: 0f2b530 base → 3db0693 SF-1)
+
+Worktree: sf-1-vocab-cms · Branch: wakii-dev/sf-1-vocab-cms · Base: 0f2b530 (master, gồm VU-37 merge #8) · Story VU-43 SF-1 (Linear VU-44, tier 0)
+
+════ (0) PROBE DỮ LIỆU THẬT — task 1 (evidence sizing pagination) ════
+DB: Neon main (pooled ep-delicate-morning-b56bsvn0-pooler/neondb) — READ-ONLY (SELECT count + EXPLAIN, không mutation)
+  words=6 · crawl_entries=63,937 · book_words=6 · user_word_progress=0
+  crawl_entries.cefr non-null: 80 (C2=57 · C1=7 · B2=6 · A1=5 · A2=3 · B1=2) · NULL 63,857
+  crawl_entries.pos non-null: 189 (noun=91 · adjective=45 · verb=25 · adverb=19 · abbreviation=9)
+  ox3000=true: 12
+→ Kết luận sizing: words ít (client pagination 50 OK — spec §1); crawl 63.9k → pagination
+  server-side BẮT BUỘC + index-supported (đã migrate 0007) — đúng dự đoán spec §9 rủi ro 6.
+
+════ (1) MIGRATION 0007 — dry-run + apply thật trên template Neon (task 2) ════
+Template: ilec_vu43_sf1 (CREATE DATABASE mới trên direct endpoint ep-delicate-morning-b56bsvn0 — convention VU-37; KHÔNG đụng main DB)
+Lệnh: DATABASE_URL=<template-url> node node_modules/drizzle-kit/bin.cjs migrate
+Output: [✓] migrations applied successfully — 0000→0007 (8 entries)
+Verify template: words có pos/image_url/synonyms (cả 3 nullable=YES) · crawl_entries có
+  crawl_entries_cefr_idx/pos_idx/ox3000_idx (pg_indexes) · journals _journal.json idx 7.
+drizzle-kit generate SAU schema.ts edit: "No schema changes, nothing to migrate" — không drift.
+EXPLAIN trên template (seed 8,000 rows synthetic + ANALYZE — planner thật):
+  - SELECT … WHERE status+cefr/pos/ox3000 ORDER BY id LIMIT 50: Index Scan (pkey/ox3000_idx) — KHÔNG seq scan
+  - SELECT count(*) WHERE cefr='B1'  → Bitmap Index Scan crawl_entries_cefr_idx
+  - SELECT count(*) WHERE pos='noun' → Bitmap Index Scan crawl_entries_pos_idx
+  - SELECT count(*) WHERE ox3000     → Index Only Scan crawl_entries_ox3000_idx
+  (ACCEPTANCE #1 ✓ — 3 index mới dùng thật, không seq scan)
+LƯU Ý: main DB CHƯA apply 0007 (chỉ template) — coordinator áp khi merge/deploy theo merge-playbook.
+
+════ (2) FULL UNIT SUITE — exit 0 ════
+Lệnh: node node_modules/vitest/vitest.mjs run
+Output: Test Files 85 passed | 2 skipped (87) · Tests 1019 passed | 8 skipped (1027) · Duration 38s
+  - 8 skipped = 4 integration env-gated (ILEC_TEMPLATE_DB_URL không set — skip-by-design, pattern
+    vocab-leaderboard-view.integration.test.ts) + 4 skip pre-existing base
+  - KHÔNG test cũ nào vỡ: 34 test vocabulary.test/store.test cũ (base) giữ nguyên pass
+    (listVocabulary v2 + createVocabularyWord + WordPatch đều additive)
+
+════ (3) RLS RERUN — story-verify gate (scripts/test-rls.test.ts, vitest.rls.config) ════
+Chạy trên template ilec_vu43_sf1 (seeded 7 books/14 units/17 lessons):
+  DATABASE_URL=<template-url> node node_modules/vitest/vitest.mjs run --config vitest.rls.config.ts
+Output: Tests 26 passed (26) · 44s
+⚠ FLAG (touch scripts/* — READ-ONLY boundary; SF-1 sở hữu RLS gate §8 test-ownership):
+  4 sửa surgical trong test-rls.test.ts, giữ 100% intent assertion:
+  a) allowlist contentQueries + "getBookVocabulary" — DRIFT PRE-EXISTING từ VU-37 merge base
+     (hàm đọc theo book, không nhận userId — base 0f2b530 RLS đã FAIL trước SF-1)
+  b) allowlist vocabularyStore + "insertWordReturningId" — export mới SF-1 (shared insert leg
+     createVocabularyWord ↔ promote-store; nhận (tx, WordInput), không userId — đúng tinh thần
+     isolation-by-surface)
+  c) jsonb roundtrip: postgres.js trên Neon trả jsonb COLUMN về string (literal mới parse —
+     probe cả pooled lẫn direct endpoint) → normalize JSON.parse giữ intent; test cũ chỉ pass
+     trên local postgres
+  d) SELECT conname FROM information_schema.referential_constraints → constraint_name
+     (referential_constraints không có cột conname ⇒ 42703 trên MỌI Postgres — test chết sẵn)
+
+════ (4) INTEGRATION TRÊN TEMPLATE DB (ILEC_TEMPLATE_DB_URL) — 4/4 PASS ════
+File: src/lib/admin/vocab-cms.integration.test.ts (fixture qa-cms-int-*, cleanup afterAll + đóng pool @/db)
+  ✓ listVocabulary: q match nghĩa "nghĩa qa" (dấu tiếng Việt ILIKE) · q literal '%' KHÔNG quét
+    (escape §4) · cefr filter 'b1 ' row match B1 (upper(trim) 2 phía) · orphan=1 WIN khi + bookId
+    (delta gắn book bị loại) · bookId không orphan → INNER JOIN cũ · sort cefr null CUỐI
+  ✓ listCrawlEntries: hasWord duplicate predicate — entry.word 'QA-CMS-INT-ALPHA ' (case+space)
+    khớp words 'qa-cms-int-alpha' (lower+trim 2 phía, 1 query/page)
+  ✓ cmsStatsDb: histogram bucket 'b2 ' (dữ) → other · TỔNG buckets = totals.words = SQL count
+    trực tiếp · perBook + crawl (crawlStatsDb reuse) có mặt
+  ✓ bulkAssignBooks 2 request SONG SONG cùng book (Promise.all) → KHÔNG 23505, order unique
+    nối tiếp, re-run → skipped=1 affected=0 (advisory lock serialize thật — ACCEPTANCE #3 ✓)
+  (ACCEPTANCE #2, #4, #6, #7, #8 semantic-leg pin trên DB thật; UI-leg browser thuộc SF-2/3/4 e2e)
+
+════ TYPECHECK + LINT + BUILD ════
+tsc --noEmit toàn repo: 0 lỗi
+eslint (files SF-1: lib/admin mới+sửa, routes vocabulary/*, components/admin tier-0, layout): clean
+next build: ✓ toàn route — 8 route mới register: bulk · export · stats · image · audio-backfill ·
+  crawl/entries · crawl/promote (+route vocabulary GET/POST/PATCH mở rộng) — admin layout nạp 4
+  namespace mới build sạch (KHÔNG sửa admin.json)
+
+════ ACCEPTANCE MAPPING (context pack sf-1.md — cấp store/SQL; UI-leg SF-2/3/4) ════
+1. Migration + EXPLAIN index ✓ (mục 1 — template, evidence trên)
+2. GET list filters/search/sort ✓ (unit pin drizzle-calls + integration DB thật — mục 4)
+3. 2×bulk assign song song không 23505 ✓ (integration Promise.all — mục 4)
+4. delete dry-run progressAffected / apply cascade ✓ (unit cms-bulk-store.test: dry-run 0
+   mutation + apply per-id; cascade qua FK — integration assert order unique)
+5. Export CSV ✓ (golden test: header 10 cột, BOM, escape RFC, dấu tiếng Việt, >10k tooMany,
+   0 rows header-only, filename vocabulary-YYYY-MM-DD.csv)
+6. Stats histogram ✓ (unit cefrBucket 'b2 '→other + integration tổng=tổng words)
+7. Backfill scope/plan/apply ✓ (unit mock deps: matched uk-ưu tiên-us, pending đếm, missing,
+   allowDownload cap 100 deps injectable, re-run 0 matched — marker audio_url IS NULL)
+8. Promote meanings-trước-mutation/duplicate-skip ✓ (unit + route contract meaningRequired)
+9. Image upload ✓ (route contract: >2MB imageTooLarge, txt imageMime, png/jpeg/webp {ok,url})
+10. Primitives + parity ✓ (bulk-selection.test 7/7 · sub-nav exact-pathname · messages.test
+    parity vi/en 3/3 · layout nạp đủ 4 namespace — build sạch)
+
+════ FLAGS CHO COORDINATOR ════
+- Template mới ilec_vu43_sf1 đã tạo + migrated + seeded (7 books) — SF-2/3/4 fork từ dest@sf-1
+  có thể tái dùng (ILEC_TEMPLATE_DB_URL) hoặc tự tạo template riêng.
+- Error code `invalidSource` thêm ngoài list §4 (additive — do pin §4 source chỉ 2 giá trị chuẩn,
+  PATCH cần mã riêng); đã có trong vocab-cms-common.json errors vi/en.
+- Histogram bucket = EXACT raw match ('b2 ' → other) theo §6.5 pin (3 chỗ spec) — KHÔNG
+  normalize khi bucket (normalize chỉ cho FILTER cefr=b1). Pinned trong unit + integration.
+- scripts/test-rls.test.ts: 4 sửa surgical (mục 3) — xin review lại khi gate B.
+- Migration 0007 CHƯA áp main DB (chỉ template) — theo evidence convention VU-37.
+- node_modules: `npm install server-only --no-save` (env gap cho scripts/seed.ts qua node
+  --conditions react-server; không đổi package.json/lockfile — git status sạch).
