@@ -209,6 +209,26 @@ export class CatalogApiError extends Error {
   }
 }
 
+/**
+ * P1 review SF-2 round 1: storage FS-driver (local dev KHÔNG có BLOB token)
+ * trả url TƯƠNG ĐỐI (`/images/words/…` — storage-server.ts:44) trong khi PATCH
+ * validateImageUrlInput chỉ nhận http(s) TUYỆT ĐỐI → absolutize trước khi set
+ * state/lưu (blob driver đã tuyệt đối — passthrough). origin truyền vào để
+ * pure (unit test không đụng window).
+ */
+export function absolutizeStorageUrl(
+  url: string | null | undefined,
+  origin: string,
+): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//.test(url)) return url;
+  try {
+    return new URL(url, origin).toString();
+  } catch {
+    return url;
+  }
+}
+
 function isAbort(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
@@ -413,8 +433,8 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
       return;
     }
     setBulkBusy(true);
+    const reports: AssignBooksReport[] = [];
     try {
-      const reports: AssignBooksReport[] = [];
       for (const chunk of chunkIds(selectedWordIds, CATALOG_BULK_CHUNK)) {
         const result = await postJson<{ report: AssignBooksReport }>(
           "/api/admin/vocabulary/bulk",
@@ -426,23 +446,41 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
         );
         reports.push(result.report);
       }
-      const agg = aggregateAssignReports(reports);
-      if (agg.errors.length > 0) {
-        console.error("[vocabulary-catalog] assign-books errors:", agg.errors);
-        toast.error(t("report.errors", { count: agg.errors.length }));
+    } catch (error) {
+      // P2 review r1: lỗi giữa các chunk — chunk ĐÃ áp vẫn báo cáo (không mất
+      // partial-success); re-run an toàn (assign onConflictDoNothing = skip)
+      const applied = aggregateAssignReports(reports);
+      if (reports.length > 0) {
+        console.error(
+          "[vocabulary-catalog] assign-books partial trước lỗi:",
+          applied,
+          error,
+        );
+        toast.success(
+          t("report.assigned", {
+            affected: applied.affected,
+            skipped: applied.skipped,
+          }),
+        );
       }
-      toast.success(
-        t("report.assigned", { affected: agg.affected, skipped: agg.skipped }),
-      );
-      setAssignOpen(false);
-      setAssignBookIds([]);
+      toast.error(errorText(codeOf(error)));
       selection.clear();
       await refetch();
-    } catch (error) {
-      toast.error(errorText(codeOf(error)));
-    } finally {
-      setBulkBusy(false);
+      return;
     }
+    const agg = aggregateAssignReports(reports);
+    if (agg.errors.length > 0) {
+      console.error("[vocabulary-catalog] assign-books errors:", agg.errors);
+      toast.error(t("report.errors", { count: agg.errors.length }));
+    }
+    toast.success(
+      t("report.assigned", { affected: agg.affected, skipped: agg.skipped }),
+    );
+    setAssignOpen(false);
+    setAssignBookIds([]);
+    selection.clear();
+    await refetch();
+    setBulkBusy(false);
   }
 
   // --- bulk tag CEFR (OVERWRITE) ---
@@ -455,8 +493,8 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
       return;
     }
     setBulkBusy(true);
+    const reports: TagCefrReport[] = [];
     try {
-      const reports: TagCefrReport[] = [];
       for (const chunk of chunkIds(selectedWordIds, CATALOG_BULK_CHUNK)) {
         const result = await postJson<{ report: TagCefrReport }>(
           "/api/admin/vocabulary/bulk",
@@ -464,33 +502,50 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
         );
         reports.push(result.report);
       }
-      const agg = aggregateTagReports(reports);
-      if (agg.errors.length > 0) {
-        console.error("[vocabulary-catalog] tag-cefr errors:", agg.errors);
-        toast.error(t("report.errors", { count: agg.errors.length }));
+    } catch (error) {
+      // P2 review r1 — partial-success + idempotent re-run (OVERWRITE lặp an toàn)
+      const applied = aggregateTagReports(reports);
+      if (reports.length > 0) {
+        console.error(
+          "[vocabulary-catalog] tag-cefr partial trước lỗi:",
+          applied,
+          error,
+        );
+        toast.success(t("report.tagged", { affected: applied.affected }));
       }
-      toast.success(t("report.tagged", { affected: agg.affected }));
-      setTagOpen(false);
-      setTagLevel("");
+      toast.error(errorText(codeOf(error)));
       selection.clear();
       await refetch();
-    } catch (error) {
-      toast.error(errorText(codeOf(error)));
-    } finally {
-      setBulkBusy(false);
+      return;
     }
+    const agg = aggregateTagReports(reports);
+    if (agg.errors.length > 0) {
+      console.error("[vocabulary-catalog] tag-cefr errors:", agg.errors);
+      toast.error(t("report.errors", { count: agg.errors.length }));
+    }
+    toast.success(t("report.tagged", { affected: agg.affected }));
+    setTagOpen(false);
+    setTagLevel("");
+    selection.clear();
+    await refetch();
+    setBulkBusy(false);
   }
 
   // --- bulk xoá 2-phase: dry-run đếm progress TRƯỚC, confirm rồi apply ---
   const [deleteChecking, setDeleteChecking] = useState(false);
   const [deletePlan, setDeletePlan] = useState<DeleteDryRunReport | null>(null);
+  // P2 review r1: chụp ids VỚI plan — teacher đổi selection trong lúc dry-run
+  // chạy không làm lệch số preview ≠ số xoá thật
+  const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   async function prepareDelete() {
     setDeleteChecking(true);
+    const ids = selectedWordIds;
+    setDeleteIds(ids);
+    const reports: DeleteDryRunReport[] = [];
     try {
-      const reports: DeleteDryRunReport[] = [];
-      for (const chunk of chunkIds(selectedWordIds, CATALOG_BULK_CHUNK)) {
+      for (const chunk of chunkIds(ids, CATALOG_BULK_CHUNK)) {
         const result = await postJson<{ report: DeleteDryRunReport }>(
           "/api/admin/vocabulary/bulk",
           { action: "delete", wordIds: chunk, dryRun: true },
@@ -509,39 +564,95 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
   async function applyDelete() {
     if (!deletePlan) return;
     setBulkBusy(true);
+    const reports: DeleteApplyReport[] = [];
     try {
-      const reports: DeleteApplyReport[] = [];
-      for (const chunk of chunkIds(selectedWordIds, CATALOG_BULK_CHUNK)) {
+      for (const chunk of chunkIds(deleteIds, CATALOG_BULK_CHUNK)) {
         const result = await postJson<{ report: DeleteApplyReport }>(
           "/api/admin/vocabulary/bulk",
           { action: "delete", wordIds: chunk },
         );
         reports.push(result.report);
       }
-      const agg = aggregateDeleteApplies(reports);
-      if (agg.errors.length > 0) {
-        console.error("[vocabulary-catalog] delete errors:", agg.errors);
-        toast.error(t("report.errors", { count: agg.errors.length }));
+    } catch (error) {
+      // P2 review r1 — partial-success: từ đã xoá mất rồi (không hoàn tác),
+      // báo rõ số đã áp; re-run dry-run lại là an toàn
+      const applied = aggregateDeleteApplies(reports);
+      if (reports.length > 0) {
+        console.error(
+          "[vocabulary-catalog] delete partial trước lỗi:",
+          applied,
+          error,
+        );
+        toast.success(
+          t("report.deleted", {
+            affected: applied.affected,
+            progressAffected: applied.progressAffected,
+          }),
+        );
       }
-      toast.success(
-        t("report.deleted", {
-          affected: agg.affected,
-          progressAffected: agg.progressAffected,
-        }),
-      );
+      toast.error(errorText(codeOf(error)));
       setDeletePlan(null);
       selection.clear();
       await refetch();
-    } catch (error) {
-      toast.error(errorText(codeOf(error)));
-    } finally {
-      setBulkBusy(false);
+      return;
     }
+    const agg = aggregateDeleteApplies(reports);
+    if (agg.errors.length > 0) {
+      console.error("[vocabulary-catalog] delete errors:", agg.errors);
+      toast.error(t("report.errors", { count: agg.errors.length }));
+    }
+    toast.success(
+      t("report.deleted", {
+        affected: agg.affected,
+        progressAffected: agg.progressAffected,
+      }),
+    );
+    setDeletePlan(null);
+    selection.clear();
+    await refetch();
+    setBulkBusy(false);
   }
 
   // --- dialog thêm từ ---
   const [adding, setAdding] = useState(false);
   const [addCefr, setAddCefr] = useState<CefrLevel | "">("");
+  // P2 review r1 (spec §2.1: image optional cả lúc tạo) — word chưa có id →
+  // route /image đặt path tmp-{ts}.{ext}, PATCH-less: url gửi thẳng POST create
+  const [addImageUrl, setAddImageUrl] = useState<string | null>(null);
+  const [uploadingAddImage, setUploadingAddImage] = useState(false);
+
+  async function uploadAddImage(file: File) {
+    setUploadingAddImage(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      let res: Response;
+      try {
+        res = await fetch("/api/admin/vocabulary/image", {
+          method: "POST",
+          body: form,
+        });
+      } catch {
+        throw new CatalogApiError("network");
+      }
+      const body = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        url?: string;
+      } | null;
+      if (!res.ok || body?.ok !== true) {
+        throw new CatalogApiError(
+          typeof body?.error === "string" ? body.error : "generic",
+        );
+      }
+      setAddImageUrl(absolutizeStorageUrl(body.url ?? null, window.location.origin));
+      toast.success(t("toast.imageUploaded"));
+    } catch (error) {
+      toast.error(errorText(codeOf(error)));
+    } finally {
+      setUploadingAddImage(false);
+    }
+  }
 
   async function addWord(form: HTMLFormElement) {
     const fd = new FormData(form);
@@ -557,6 +668,8 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
           cefr: addCefr || null,
           pos: fd.get("pos"),
           synonyms: fd.get("synonyms"),
+          // image optional (spec §2.1) — chỉ gửi khi teacher đã upload
+          ...(addImageUrl ? { image_url: addImageUrl } : {}),
           // KHÔNG bookIds — orphan hợp lệ (note trong dialog)
         },
       );
@@ -565,6 +678,7 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
       else toast.success(t("toast.created", { word }));
       form.reset();
       setAddCefr("");
+      setAddImageUrl(null);
       setAdding(false);
       await refetch();
     } catch (error) {
@@ -623,7 +737,7 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
           typeof body?.error === "string" ? body.error : "generic",
         );
       }
-      setImageUrl(body.url ?? null);
+      setImageUrl(absolutizeStorageUrl(body.url ?? null, window.location.origin));
       setImageTouched(true);
       toast.success(t("toast.imageUploaded"));
     } catch (error) {
@@ -790,7 +904,11 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
           </Button>
           <Button
             className="rounded-[14px]"
-            onClick={() => setAdding((v) => !v)}
+            onClick={() => {
+              setAddImageUrl(null);
+              setAddCefr("");
+              setAdding((v) => !v);
+            }}
           >
             <Plus aria-hidden className="size-4" />
             {t("add.button")}
@@ -1409,6 +1527,61 @@ export function VocabularyCatalog({ books }: { books: CatalogBook[] }) {
                   name="synonyms"
                   maxLength={500}
                 />
+              </div>
+            </div>
+
+            {/* Image optional lúc tạo (spec §2.1) — route /image không cần
+                wordId → path tmp-{ts}.{ext}; preview trước submit */}
+            <div className="space-y-1.5">
+              <Label htmlFor="catalog-add-image">{t("edit.fieldImage")}</Label>
+              <div className="flex items-center gap-3">
+                {addImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={addImageUrl}
+                    alt={t("edit.imagePreview")}
+                    className="size-16 rounded-[8px] border border-border object-cover"
+                  />
+                ) : (
+                  <span
+                    role="img"
+                    aria-label={t("row.noImage")}
+                    className="inline-flex size-16 items-center justify-center rounded-[8px] border border-dashed border-border text-muted-foreground/60"
+                  >
+                    <ImageOff aria-hidden className="size-5" />
+                  </span>
+                )}
+                <label
+                  htmlFor="catalog-add-image"
+                  className="cursor-pointer rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-primary transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
+                >
+                  {uploadingAddImage
+                    ? t("edit.imageUploading")
+                    : t("edit.imageUpload")}
+                  <input
+                    id="catalog-add-image"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="sr-only"
+                    disabled={uploadingAddImage}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void uploadAddImage(file);
+                    }}
+                  />
+                </label>
+                {addImageUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-[12px]"
+                    onClick={() => setAddImageUrl(null)}
+                  >
+                    {t("edit.imageRemove")}
+                  </Button>
+                ) : null}
               </div>
             </div>
             <DialogFooter className="gap-2">

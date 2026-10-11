@@ -12,6 +12,7 @@ import {
   CATALOG_PAGE_SIZE,
   CatalogApiError,
   DEFAULT_FILTERS,
+  absolutizeStorageUrl,
   aggregateAssignReports,
   aggregateDeleteApplies,
   aggregateDeleteDryRuns,
@@ -151,6 +152,28 @@ describe("aggregate report bulk (chunk >500 chạy hết — không stop-mid)", 
     const ids = Array.from({ length: 1201 }, (_, i) => i + 1);
     const chunks = chunkIds(ids, CATALOG_BULK_CHUNK);
     expect(chunks.map((c) => c.length)).toEqual([500, 500, 201]);
+  });
+});
+
+describe("absolutizeStorageUrl (P1 review r1 — FS-driver url tương đối)", () => {
+  const ORIGIN = "http://localhost:3000";
+
+  it("url tương đối của driver FS (/images/…) → tuyệt đối http(s) — PATCH validator nhận", () => {
+    expect(absolutizeStorageUrl("/images/words/tmp-1.png", ORIGIN)).toBe(
+      "http://localhost:3000/images/words/tmp-1.png",
+    );
+  });
+
+  it("url blob tuyệt đối đã đúng — passthrough nguyên văn", () => {
+    const cdn =
+      "https://spolemfdqytf66uz.public.blob.vercel-storage.com/images/words/8915-1.png";
+    expect(absolutizeStorageUrl(cdn, ORIGIN)).toBe(cdn);
+  });
+
+  it("null/rỗng → null (không gửi image_url)", () => {
+    expect(absolutizeStorageUrl(null, ORIGIN)).toBeNull();
+    expect(absolutizeStorageUrl(undefined, ORIGIN)).toBeNull();
+    expect(absolutizeStorageUrl("", ORIGIN)).toBeNull();
   });
 });
 
