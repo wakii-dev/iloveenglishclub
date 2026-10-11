@@ -47,4 +47,41 @@ error-code mapping, orphan-WIN, OVERWRITE/COALESCE, duplicate predicate đều �
   chỉ image route + allowDownload. scripts/test-rls.test.ts 4 fix: correct + intent-preserving.
 - Deterministic: tsc 0 · vitest 1019 pass · eslint 0/0.
 
-## Round 2 — verdict post-fix (xem section dưới sau re-review)
+## Round 2 — VERDICT: APPROVED (fix commit c58243b, diff 1bbea82..c58243b)
+
+Reviewer tự chạy lại deterministic độc lập: tsc exit 0 · vitest 1023/1023 (85 files) · eslint 0/0 trên 10 file đổi.
+
+### Xác nhận từng finding round 1 — 5/5 RESOLVED
+1. **P0 SSRF — RESOLVED**: route `download: (url) => downloadMp3(url)` — đủ 4 lớp (allowlist
+   Oxford + AbortSignal.timeout 15s + cap 2MB + re-check host sau redirect, oxford/audio.ts:26-64);
+   lỗi allowlist/cap rơi per-word catch → report.errors. Test repro meta-test đạt chuẩn:
+   169.254.169.254 rejects /allowlist/ + fetchSpy KHÔNG gọi; host Oxford → fetch 1 lần.
+2. **P2 lock-order — RESOLVED**: dedupe + sort tăng dần; test pin ['7','9'] cho input [9,7,9]
+   (đỏ trên code cũ). promote-store lock 1 book/request → không cần đổi, nhất quán.
+3. **P2 500-generic — RESOLVED**: bulk + export route wrap generic JSON + 2 test.
+4. **P2 marker-guard — RESOLVED**: `and audio_url is null` + word đua tự loại khỏi leg
+   allowDownload (re-scan theo marker) — đúng semantics, không đè.
+5. **P2 imageMime — RESOLVED (comment rationale)** — chấp nhận.
+
+### Câu hỏi `applied` = attempted khi có guard is null
+**Chấp nhận được, không chặn** — spec §4 pin shape plan (không pin report apply); acceptance §6.4
+fixture deterministic (applied == actual); hướng lỗi là over-report trong race hiếm trên surface
+admin. Nice-to-have sau này: 1 dòng `.returning id` + đếm rows. → GHI vào audit log.
+
+### Regression check
+Không có regression mới. 2 note cân nhắc không flag: (a) dedupe đổi semantics `skipped` cho input
+trùng book (client bug, spec không pin); (b) reviews file trong diff là OUTBOX artifact.
+
+### CHECKLIST-4Q (round 2, trên c58243b) — 4/4 PASS
+1. Network/external call giữa DB Begin/Commit? **PASS** (không đổi).
+2. HTTP client có timeout cụ thể? **PASS** (round 1 FAIL → downloadMp3 AbortSignal.timeout(15s) +
+   test pin).
+3. Error best-effort để lại dấu vết? **PASS** — report.errors[] + console.error (+2 path generic).
+4. Partial-failure có compensation? **PASS** — per-book/per-id continue, promote single-tx
+   rollback, backfill per-word catch.
+
+### Kết luận
+> VERDICT: APPROVED — P0 SSRF đóng đúng bằng downloadMp3 + test repro, 4 P2 resolved,
+> deterministic độc lập xanh, CHECKLIST-4Q 4/4 PASS. SF-1 đủ điều kiện merge về đích
+> story-vu43-vocab-cms; đưa note `applied`=attempted + finding SSRF round 1 vào input
+> security-audit checkpoint Phase 1 (spec §8).
