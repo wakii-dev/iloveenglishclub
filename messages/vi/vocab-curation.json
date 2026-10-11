@@ -29,8 +29,7 @@
     "hasWordHint": "Từ đã có trong catalog — promote sẽ bỏ qua entry này, mở catalog để merge",
     "hasAudio": "Có audio blob",
     "noAudio": "Chưa có audio",
-    "ox3000": "OX3000",
-    "noPos": "—"
+    "ox3000": "OX3000"
   },
   "pagination": {
     "prev": "Trang trước",
@@ -83,7 +82,6 @@
     "pending": "Pending (chưa có blob): {count}",
     "missing": "Missing (không có entry): {count}",
     "reportApplied": "Đã gán audio cho {count} từ",
-    "reportDownloaded": ", tải mới {count} blob",
     "reportErrors": "{count} từ lỗi",
     "noneMatched": "Không có từ nào thiếu audio khớp entry có blob."
   }

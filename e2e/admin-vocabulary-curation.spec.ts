@@ -25,7 +25,9 @@ dotenv.config({ path: ".env.local" });
 test.setTimeout(180_000); // dev-server compile lạnh (webpack) + shared Neon
 
 const TOK = Date.now().toString(36);
-const WORD = (name: string) => `qa-cms ${TOK} ${name}`;
+// Prefix DASH `qa-cms-` bắt buộc — khớp cleanup pattern 'qa-cms-%' của helper
+// dùng chung SF-1 (prefix space "qa-cms " KHÔNG match LIKE → leak shared Neon)
+const WORD = (name: string) => `qa-cms-${TOK}-${name}`;
 const SLUG = (name: string) => `qa-cms-${TOK}-${name}`;
 const BOOK_SLUG = `qa-cms-book-${TOK}`;
 const BOOK_LABEL = `QA CMS Book ${TOK}`;
@@ -144,6 +146,10 @@ test.beforeAll(async () => {
     cefr: "B1",
     pos: "noun",
   });
+  // word trùng theo duplicate predicate §4 (lower+trim 2 phía) — badge
+  // "đã có từ" + promote skip duplicates=1 (P0 review round 1: thiếu seed
+  // này → test 3 báo created=2 thay vì created=1+duplicates=1)
+  await seedWord(c, WORD("dupword"), `trùng sẵn ${TOK}`);
   await seedCrawlEntry(c, { slug: SLUG("pend"), status: "pending" });
   // backfill: 5 entry blob + 5 word thiếu audio trong book fixture
   for (let i = 1; i <= 5; i++) {
@@ -191,7 +197,7 @@ async function loginCuration(page: Page): Promise<void> {
 }
 
 async function searchTok(page: Page): Promise<void> {
-  await page.getByLabel("Tìm headword").fill(`qa-cms ${TOK}`);
+  await page.getByLabel("Tìm headword").fill(`qa-cms-${TOK}`);
   await page.getByLabel("Tìm headword").press("Enter");
   await expect(page.getByText("8 entry khớp")).toBeVisible();
 }
@@ -338,10 +344,12 @@ test("promote 2 entry → toast created=2; GET API + DB row đúng fields (SF-2 
   await c.end();
   expect(link!.n).toBe(2);
 
-  // badge "đã có từ" cập nhật sau refetch
+  // badge "đã có từ" cập nhật sau refetch (scope row alpha — không match giả)
   await page.getByRole("button", { name: "Đóng" }).click();
   await expect(
-    page.getByTestId("has-word-badge").filter({ hasText: "đã có từ" }).first(),
+    page
+      .locator("tr", { has: headwordCell(page, WORD("alpha")) })
+      .getByTestId("has-word-badge"),
   ).toBeVisible({ timeout: 30_000 });
 });
 
@@ -354,9 +362,12 @@ test("meaning gate: thiếu 1 nghĩa → promote disabled; entry trùng → skip
   await selectEntry(page, "dupword");
   await openMeaningGrid(page);
 
-  // badge "đã có từ" trên entry dupword (duplicate predicate §4)
+  // badge "đã có từ" trên ĐÚNG row dupword (duplicate predicate §4 —
+  // scope theo row chặn match giả badge của entry khác)
   await expect(
-    page.getByTestId("has-word-badge").first(),
+    page
+      .locator("tr", { has: headwordCell(page, WORD("dupword")) })
+      .getByTestId("has-word-badge"),
   ).toBeVisible();
 
   await fillMeaning(page, "charlie", `kiểm thử charlie ${TOK}`);
@@ -431,7 +442,7 @@ test("backfill scope book: dry-run plan khớp seed → apply 5 → dry-run lạ
   // DB — 5 từ được gán audio_url = blob fixture; control ngoài scope giữ NULL
   const c = db();
   const rows = await c<{ word: string; audio_url: string | null }[]>`
-    SELECT word, audio_url FROM words WHERE word LIKE ${`qa-cms ${TOK} bf %`} ORDER BY word`;
+    SELECT word, audio_url FROM words WHERE word LIKE ${`qa-cms-${TOK}-bf-%`} ORDER BY word`;
   const [outside] = await c<{ audio_url: string | null }[]>`
     SELECT audio_url FROM words WHERE word = ${WORD("outside")}`;
   await c.end();
@@ -473,7 +484,7 @@ test("a11y: grid input label gắn headword, dialog focus-trap + Esc, keyboard c
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   const insideDialog = await page.evaluate(() =>
-    document.activeElement?.closest('[role="dialog"]') !== null,
+    (document.activeElement?.closest('[role="dialog"]') ?? null) !== null,
   );
   expect(insideDialog).toBe(true);
   await page.keyboard.press("Escape");

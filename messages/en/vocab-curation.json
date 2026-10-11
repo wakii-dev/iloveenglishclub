@@ -29,8 +29,7 @@
     "hasWordHint": "Word already exists in the catalog — promote will skip it, open the catalog to merge",
     "hasAudio": "Has audio blob",
     "noAudio": "No audio yet",
-    "ox3000": "OX3000",
-    "noPos": "—"
+    "ox3000": "OX3000"
   },
   "pagination": {
     "prev": "Previous page",
@@ -83,7 +82,6 @@
     "pending": "Pending (no blob yet): {count}",
     "missing": "Missing (no entry): {count}",
     "reportApplied": "Assigned audio to {count} words",
-    "reportDownloaded": ", downloaded {count} new blobs",
     "reportErrors": "{count} words failed",
     "noneMatched": "No words missing audio match an entry with a blob."
   }

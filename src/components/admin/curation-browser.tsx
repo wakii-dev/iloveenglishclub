@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Loader2, RefreshCw, Volume2, VolumeX } from "lucide-react";
@@ -302,12 +302,17 @@ export function CurationBrowser({ books }: { books: CurationBook[] }) {
     null,
   );
 
+  // sequence guard — fetch filter cũ về SAU filter mới không được đè bảng
+  // (chip click refetch ngay, 2 fetch overlap khi click nhanh)
+  const loadSeq = useRef(0);
   const loadEntries = useCallback(
     async (next: EntriesFilter) => {
+      const seq = ++loadSeq.current;
       setBusy(true);
       setLoadError(false);
       try {
         const data = await fetchEntries(next);
+        if (seq !== loadSeq.current) return; // stale — bỏ set
         setItems(data.items);
         setTotal(data.total);
         setEntriesById((prev) => {
@@ -316,10 +321,11 @@ export function CurationBrowser({ books }: { books: CurationBook[] }) {
           return map;
         });
       } catch {
+        if (seq !== loadSeq.current) return;
         setLoadError(true);
         setItems([]);
       } finally {
-        setBusy(false);
+        if (seq === loadSeq.current) setBusy(false);
       }
     },
     [],
@@ -914,7 +920,13 @@ export function CurationBrowser({ books }: { books: CurationBook[] }) {
           <div className="flex flex-wrap items-end gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="backfill-book">{t("backfill.book")}</Label>
-              <Select value={backfillBookId} onValueChange={setBackfillBookId}>
+              <Select
+                value={backfillBookId}
+                onValueChange={(value) => {
+                  setBackfillBookId(value);
+                  setBackfillPlan(null); // plan book cũ stale khi đổi scope (review P1)
+                }}
+              >
                 <SelectTrigger id="backfill-book" className="w-64">
                   <SelectValue placeholder={t("backfill.bookPlaceholder")} />
                 </SelectTrigger>
@@ -945,7 +957,7 @@ export function CurationBrowser({ books }: { books: CurationBook[] }) {
             </Button>
             <Button
               className="rounded-[14px]"
-              disabled={backfillBusy !== null}
+              disabled={backfillBusy !== null || !backfillPlan}
               onClick={() => void runBackfillApply()}
               data-testid="backfill-apply"
             >
