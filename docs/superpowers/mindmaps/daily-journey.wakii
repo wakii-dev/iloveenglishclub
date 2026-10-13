@@ -1,0 +1,60 @@
+{
+  "wakiiMindmap": 1,
+  "meta": {
+    "story": "VU-48",
+    "generator": "story-workflow CREATE",
+    "generatedAt": "2026-10-13T00:00:00.000Z",
+    "dest": "story-vu48-daily-journey",
+    "worktreeModel": "story-hub"
+  },
+  "nodes": [
+    {
+      "id": "epic",
+      "kind": "epic",
+      "title": "Hành trình học mỗi ngày — goal engine + /today + quest/badge + streak shield (VU-48)"
+    },
+    {
+      "id": "sf-1",
+      "kind": "sf",
+      "title": "Nền tảng: migration + pure libs + listen_ms write-path",
+      "tier": 0,
+      "summary": "Phase 1/2 (checkpoint sau tier 2: /today live). Demo: migration additive chạy Neon (listen_ms + backfill đúng rule per-part-per-day, daily_goal_minutes, shield_credits, 4 bảng freezes/grants/quest_completions/user_badges); computeStreak nhận frozen-set với identity test (rỗng ≡ cũ) + freeze bridge; shield-planner/dual-goal/quests SHA-256 deterministic/badges eval thuần vitest xanh hết; attempt dictation thật làm daily_activity.listen_ms tăng đúng coalesce(duration) lần đầu part trong ngày.",
+      "design": "none"
+    },
+    {
+      "id": "sf-2",
+      "kind": "sf",
+      "title": "Today engine server: snapshot + resolvers + unify counter + goal API",
+      "tier": 1,
+      "summary": "Demo: getTodaySnapshot trả đúng số liệu thật seeded (phút nghe, từ ôn-luyện practicedToday, planted, due, streak live, 3 quest hôm nay) với tx RETURNING-gated (monthly grant 2-tab an toàn, quest auto-record idempotent, badge award 1 lần); getNextDictationTarget chỉ bài published chưa done kế tiếp cross-unit; ring /vocabulary + POST goalDone đổi sang practicedToday với label mới và e2e 3319 xanh sau ripple; PATCH /api/today/goal persist + taxonomy đúng.",
+      "design": "none"
+    },
+    {
+      "id": "sf-3",
+      "kind": "sf",
+      "title": "Trang /today UI + nav + reminder + i18n + e2e (design-first)",
+      "tier": 2,
+      "summary": "Demo end-to-end: đăng nhập /vi/today (+/en) thấy hero goal kép đúng số liệu thật, gợi ý bài dictation kế tiếp + due vocab + level kế (deep-link đúng chỗ), quest auto-done + toast 1 lần (không claim), badge strip, streak + shield credit hiển thị; nav 'Hôm nay' có dot khi chưa đạt goal kép, tắt ngay sau hoạt động vocab qua event; guest redirect login; e2e 3321 (fixture runtime search quest-hash) xanh.",
+      "design": "mock-prototype"
+    },
+    {
+      "id": "sf-4",
+      "kind": "sf",
+      "title": "Streak shield wiring + /me + convergence QA + security checkpoint",
+      "tier": 3,
+      "summary": "Phase 2/2 — final. Demo: user lỡ 1 ngày có credit → học lại hôm nay streak KHÔNG đứt (freeze row + credit −1, browser seeded user A/B); 2 write-path rewire qua recomputeStreakTx mà hành vi cũ identity; /me có badge + shield hint (heatmap semantics nguyên); /today hiện 'được bảo vệ'; mọi test:e2e:* + vitest + rls + build xanh liên tiếp; security-audit checkpoint cuối sạch P0/P1; runbook + PR dest mở MERGEABLE.",
+      "design": "none"
+    }
+  ],
+  "edges": [
+    { "from": "epic", "to": "sf-1", "rel": "contains" },
+    { "from": "epic", "to": "sf-2", "rel": "contains" },
+    { "from": "epic", "to": "sf-3", "rel": "contains" },
+    { "from": "epic", "to": "sf-4", "rel": "contains" },
+    { "from": "sf-2", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-3", "to": "sf-2", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-1", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-2", "rel": "depends-on" },
+    { "from": "sf-4", "to": "sf-3", "rel": "depends-on" }
+  ]
+}
