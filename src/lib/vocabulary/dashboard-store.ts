@@ -25,6 +25,7 @@ import {
   dailyActivity,
   lessons,
   profiles,
+  streakFreezes,
   units,
   userLessonProgress,
   userWordProgress,
@@ -100,13 +101,19 @@ export async function getDashboardSummary(
       .orderBy(desc(dailyActivity.date))
       .limit(STREAK_LOOKBACK_DAYS);
     const dates = activityDates.map((r) => r.date);
+    // SF-4 (VU-52): streak LIVE freeze-aware như today-store — CHỈ ĐỌC
+    // streak_freezes (display), KHÔNG consume (consume là recomputeStreakTx)
+    const freezeRows = await db
+      .select({ date: streakFreezes.date })
+      .from(streakFreezes)
+      .where(eq(streakFreezes.userId, userId));
     const stats = await getHubStats(userId);
 
     return {
       practicedToday: practicedRow?.practiced ?? 0,
       dailyGoalWords: profile?.dailyGoalWords ?? DEFAULT_GOAL,
       totalXp: profile?.xp ?? 0,
-      streak: computeStreak(dates, today),
+      streak: computeStreak(dates, today, new Set(freezeRows.map((r) => r.date))),
       activeToday: dates.includes(today),
       dueToday: stats.dueToday,
     };
