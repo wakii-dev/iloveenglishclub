@@ -44,6 +44,7 @@
       "notStarted": "Chưa bắt đầu",
       "complete": "Hoàn thành 🎉"
     },
-    "minutes": "{minutes} phút"
+    "minutes": "{minutes} phút",
+    "shieldHint": "{credits} khiên còn lại"
   }
 }

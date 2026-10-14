@@ -44,6 +44,7 @@
       "notStarted": "Not started",
       "complete": "Completed 🎉"
     },
-    "minutes": "{minutes} min"
+    "minutes": "{minutes} min",
+    "shieldHint": "{credits} shields left"
   }
 }

@@ -1,10 +1,14 @@
-import { Flame } from "lucide-react";
+import { eq } from "drizzle-orm";
+import { Flame, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { auth } from "@/auth";
+import { db } from "@/db";
+import { profiles, userBadges } from "@/db/schema";
 import { Link } from "@/i18n/navigation";
 import { Heatmap } from "@/components/gamification/heatmap";
 import { StatsCards } from "@/components/gamification/stats-cards";
+import { TodayBadgeStrip } from "@/components/today/today-badges";
 import { getBookProgress, getMyStats } from "@/lib/gamification/queries";
 import { localize } from "@/lib/content/localize";
 import { vnToday } from "@/lib/gamification/streak";
@@ -33,10 +37,22 @@ export default async function MePage({
   }
   const t = await getTranslations("gamification");
 
-  const [stats, bookRows] = await Promise.all([
+  const [stats, bookRows, badgeRows, [shieldRow]] = await Promise.all([
     getMyStats(userId),
     getBookProgress(userId),
+    // SF-4 (VU-52): badge đã nhận (ledger user_badges — SF-1) + shield
+    // credits — reads inline additive, getMyStats semantics GIỮ NGUYÊN
+    db
+      .select({ badgeId: userBadges.badgeId })
+      .from(userBadges)
+      .where(eq(userBadges.userId, userId)),
+    db
+      .select({ shieldCredits: profiles.shieldCredits })
+      .from(profiles)
+      .where(eq(profiles.id, userId)),
   ]);
+  const badgeIds = badgeRows.map((r) => r.badgeId);
+  const shieldCredits = shieldRow?.shieldCredits ?? 0;
 
   const accuracyPct = Math.round(stats.averageAccuracy * 100);
   const listenMinutes = Math.round(stats.listenMinutes * 10) / 10;
@@ -61,13 +77,21 @@ export default async function MePage({
             {
               label: t("me.stats.streak"),
               value: (
-                <span className="inline-flex items-center gap-1">
-                  <Flame
-                    aria-hidden
-                    className="size-5"
-                    style={{ color: "#f97316" }}
-                  />
-                  {stats.streak}
+                <span className="inline-flex flex-col items-start">
+                  <span className="inline-flex items-center gap-1">
+                    <Flame
+                      aria-hidden
+                      className="size-5"
+                      style={{ color: "#f97316" }}
+                    />
+                    {stats.streak}
+                  </span>
+                  {shieldCredits > 0 && (
+                    <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-bold text-gold">
+                      <Shield aria-hidden className="size-3" />
+                      {t("me.shieldHint", { credits: shieldCredits })}
+                    </span>
+                  )}
                 </span>
               ),
             },
@@ -108,6 +132,12 @@ export default async function MePage({
           />
         )}
       </section>
+
+      {/* SF-4 (VU-52): badge strip REUSE nguyên khối TodayBadgeStrip (SF-3) —
+          owned ids từ ledger user_badges, locked mốc kế tiếp trong component */}
+      <div className="mt-[18px]">
+        <TodayBadgeStrip owned={badgeIds} />
+      </div>
 
       <section
         aria-labelledby="books-heading"

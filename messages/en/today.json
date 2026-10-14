@@ -141,7 +141,9 @@
     "days": "{count} days",
     "shieldTitle": "Streak shield",
     "shieldCredits": "Credits: {credits}/{cap}",
-    "shieldDesc": "You earn 1 shield credit each month (up to {cap}). Shields keep your streak alive on missed days — coming to this page soon."
+    "shieldDesc": "You earn 1 shield credit each month (up to {cap}). Shields are spent automatically to keep your streak on missed days.",
+    "shieldActiveTitle": "Shielding your streak",
+    "shieldActiveDesc": "A shield covered {date} — your streak stays intact."
   },
   "toast": {
     "questDone": "Quest completed: {title}",

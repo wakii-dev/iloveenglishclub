@@ -141,7 +141,9 @@
     "days": "{count} ngày",
     "shieldTitle": "Khiên streak",
     "shieldCredits": "Credit: {credits}/{cap}",
-    "shieldDesc": "Mỗi tháng bạn nhận 1 credit khiên (tối đa {cap}). Khiên giúp giữ chuỗi khi bạn lỡ học — sắp có mặt trên trang này."
+    "shieldDesc": "Mỗi tháng bạn nhận 1 credit khiên (tối đa {cap}). Khiên tự dùng để giữ chuỗi khi bạn lỡ học.",
+    "shieldActiveTitle": "Đang bảo vệ chuỗi",
+    "shieldActiveDesc": "Khiên đã che ngày {date} — chuỗi của bạn không đứt."
   },
   "toast": {
     "questDone": "Nhiệm vụ hoàn thành: {title}",

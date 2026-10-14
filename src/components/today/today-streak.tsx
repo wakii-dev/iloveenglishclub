@@ -1,23 +1,27 @@
-import { Flame, Shield } from "lucide-react";
+import { Flame, Shield, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 /**
  * Streak + shield card (daily-journey SF-3, VU-51 — hand-off §6 + spec
  * §2.1): streak số LIVE từ snapshot (computeStreak freeze-aware — KHÔNG
- * cache profiles). Shield READ-ONLY credits/cap + mô tả cơ chế trung tính —
- * Phase 1 CHƯA có freeze rows consume (SF-4) nên KHÔNG hiển thị "được bảo
- * vệ" (boundary context pack).
+ * cache profiles). SF-4 (VU-52): freeze rows consume thật nên card hiển thị
+ * state "được bảo vệ" khi snapshot còn freeze (recomputeStreakTx CHỈ tạo
+ * freeze cho gap trong lookback — freeze đang tồn tại = đang bridge chuỗi;
+ * hiển thị ngày freeze GẦN NHẤT). Read-only — consume KHÔNG xảy ra ở render.
  */
 export function TodayStreakCard({
   streak,
   shieldCredits,
   shieldCap,
+  shieldFreezes,
 }: {
   streak: number;
   shieldCredits: number;
   shieldCap: number;
+  shieldFreezes: string[];
 }) {
   const t = useTranslations("today");
+  const protectedDay = [...shieldFreezes].sort().at(-1);
 
   return (
     <section
@@ -36,24 +40,48 @@ export function TodayStreakCard({
           {t("streak.days", { count: streak })}
         </span>
       </p>
-      <div className="mt-3 rounded-[14px] border-2 border-dashed border-gold-soft-line bg-gold-soft/50 p-3">
-        <p className="flex items-center gap-1.5 text-[13px] font-extrabold text-gold">
-          <Shield aria-hidden className="size-4" />
-          {t("streak.shieldTitle")}
-          <span
-            data-testid="today-shield-credits"
-            className="ml-auto tabular-nums"
-          >
-            {t("streak.shieldCredits", {
-              credits: shieldCredits,
-              cap: shieldCap,
-            })}
-          </span>
-        </p>
-        <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-muted-foreground">
-          {t("streak.shieldDesc", { cap: shieldCap })}
-        </p>
-      </div>
+      {protectedDay ? (
+        <div
+          data-testid="today-shield-active"
+          className="mt-3 rounded-[14px] border-2 border-gold-soft-line bg-gold-soft/50 p-3"
+        >
+          <p className="flex items-center gap-1.5 text-[13px] font-extrabold text-gold">
+            <ShieldCheck aria-hidden className="size-4" />
+            {t("streak.shieldActiveTitle")}
+            <span
+              data-testid="today-shield-credits"
+              className="ml-auto tabular-nums"
+            >
+              {t("streak.shieldCredits", {
+                credits: shieldCredits,
+                cap: shieldCap,
+              })}
+            </span>
+          </p>
+          <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-muted-foreground">
+            {t("streak.shieldActiveDesc", { date: protectedDay })}
+          </p>
+        </div>
+      ) : (
+        <div className="mt-3 rounded-[14px] border-2 border-dashed border-gold-soft-line bg-gold-soft/50 p-3">
+          <p className="flex items-center gap-1.5 text-[13px] font-extrabold text-gold">
+            <Shield aria-hidden className="size-4" />
+            {t("streak.shieldTitle")}
+            <span
+              data-testid="today-shield-credits"
+              className="ml-auto tabular-nums"
+            >
+              {t("streak.shieldCredits", {
+                credits: shieldCredits,
+                cap: shieldCap,
+              })}
+            </span>
+          </p>
+          <p className="mt-1.5 text-[11.5px] font-semibold leading-snug text-muted-foreground">
+            {t("streak.shieldDesc", { cap: shieldCap })}
+          </p>
+        </div>
+      )}
     </section>
   );
 }

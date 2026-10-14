@@ -132,7 +132,7 @@ describe("getDashboardSummary", () => {
         },
       ], // profiles
       over.dates ?? [{ date: today() }, { date: addDays(today(), -1) }], // daily_activity 400 ngày
-      (over.freezes ?? []).map((date: string) => ({ date })), // streak_freezes — SF-4 read-only
+      ((over.freezes as string[] | undefined) ?? []).map((date) => ({ date })), // streak_freezes — SF-4 read-only
       [{ total: 2, dueToday: over.due ?? 12, mastered: 1 }], // getHubStats
     ];
   }

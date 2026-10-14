@@ -84,6 +84,7 @@ export default async function TodayPage({
             streak={snapshot.streak}
             shieldCredits={snapshot.shield.credits}
             shieldCap={snapshot.shield.cap}
+            shieldFreezes={snapshot.shield.freezes}
           />
         </div>
       </div>
