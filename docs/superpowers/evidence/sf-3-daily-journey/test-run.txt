@@ -26,3 +26,4 @@ build: npx next build sạch (/today ● 4.59 kB trong output) · tsc --noEmit s
 == bổ sung: nghe 1 part → ring phút (acceptance #2 — verify sau review) ==
 part level-3/u1/l1 seed 61s (restore 3500): BEFORE ring 0/10 → nghe THẬT qua player → DB listen_ms 61000 → AFTER ring "Đã nghe 1 trên 10" (floor đúng) → re-attempt cùng part VẪN 61000 (không cộng kép) · quest q-listen-goal 0/10→1/10 · streak 0→1 · dictation next reading-priority chuyển đúng §3.4 · screenshots flow-09..11
 evidence commits: 62907ab (screens + verify docs) — hash anchor B1
+evidence commits: 908872c (hash anchor B1 — chain)
