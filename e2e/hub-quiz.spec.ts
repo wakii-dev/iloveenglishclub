@@ -54,13 +54,35 @@ async function answerCurrent(page: Page): Promise<boolean> {
   await expect(page.getByText("Grading…")).toBeHidden();
   if (await results.isVisible()) return true;
 
+  // Chốt câu TRƯỚC khi trả lời — advance-verify sau Continue: click có thể
+  // bị nuốt mid-RSC (flake sweep: vòng 40 không tiến, results không bao giờ)
+  const before = await page
+    .getByText(/Question \d+\/\d+/)
+    .innerText()
+    .catch(() => "");
+  const advance = async (): Promise<void> => {
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(async () => {
+      if (await results.isVisible().catch(() => false)) return;
+      const now = await page
+        .getByText(/Question \d+\//)
+        .innerText()
+        .catch(() => "");
+      expect(now).not.toBe(before);
+      await page
+        .getByRole("button", { name: "Continue" })
+        .click({ timeout: 2_500 })
+        .catch(() => {});
+    }).toPass({ timeout: 30_000 });
+  };
   if (await fillInput.isVisible()) {
     await fillInput.fill("qa-typed-answer");
-    await page.getByRole("button", { name: "Continue" }).click();
+    await advance();
     return false;
   }
   if (await mcGroup.isVisible()) {
     await mcGroup.getByRole("button").first().click();
+    await advance();
     return false;
   }
   // ghép nghĩa: 5 combobox (placeholder "…" là option index 0)
@@ -69,7 +91,7 @@ async function answerCurrent(page: Page): Promise<boolean> {
   for (let i = 0; i < 5; i++) {
     await selects.nth(i).selectOption({ index: 1 });
   }
-  await page.getByRole("button", { name: "Continue" }).click();
+  await advance();
   return false;
 }
 
