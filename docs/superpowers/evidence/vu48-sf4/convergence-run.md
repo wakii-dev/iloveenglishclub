@@ -1,14 +1,14 @@
-# VU-48 SF-4 convergence run — 2026-10-15 02:57:15
+# VU-48 SF-4 convergence run — 2026-10-15 03:26:44
 DB: ilec_dj_sf4 (local clone, migration 0007) · MỌI test:e2e:* + vitest + rls + typecheck + build — liên tiếp 1 lượt
 
-— [02:57:15] sf3 ...
+— [03:26:45] sf3 ...
   **FAIL sf3** — log /tmp/sweep-sf4/sf3.log (tail):
-    > 288 |     await expect(xpChip.getByText(/not saved|chưa lưu/i)).toBeVisible();
-          |                                                           ^
-      289 |     await expect(page.getByRole("banner")).not.toContainText(/20 XP/);
-      290 |
-      291 |     // Banner → login GIỮA chừng (?next quay lại lesson)
-        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/progress.spec.ts:288:59
+    > 290 |     ).toBeVisible();
+          |       ^
+      291 |     await startPart(page);
+      292 |     await doPartCorrect(page, SENT_1);
+      293 |     await doPartCorrect(page, SENT_2);
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/progress.spec.ts:290:7
 
     Error Context: test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/error-context.md
 

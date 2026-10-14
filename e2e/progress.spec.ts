@@ -3,6 +3,7 @@ import {
   attemptCount,
   attemptCountFor,
   bumpProfileXpAboveMax,
+  leaderboardWeeklyXpOf,
   profileOf,
 } from "./db";
 
@@ -322,17 +323,12 @@ test.describe("Progress + Gamification (SF-6)", () => {
       page.getByRole("banner").getByText(/20 XP/),
     ).toBeVisible({ timeout: 30_000 });
 
-    // Leaderboard tuần có tên user. SF-8 (prod-build smoke): /top-users là
-    // ISR revalidate=60 — commit vừa xong chưa thấy ngay trong cache stale
-    // (dev không cache nên cũ pass); poll reload ≤75s cho SWR kịp tái sinh.
+    // Leaderboard tuần chứa XP user. UI /top-users LIMIT 50 — DB clone thật
+    // có 323 users weekly (ngưỡng top-50 38 XP) → user 20 XP không vào bảng
+    // là ĐÚNG hiển thị; acceptance "commit vào leaderboard" assert ở VIEW
+    // (SQL) — đủ mọi DB, không phụ thuộc ngưỡng top-50.
     await expect
-      .poll(async () => {
-        await page.goto("/en/top-users", { waitUntil: "domcontentloaded" });
-        return page
-          .locator("section", { hasText: /this week|tuần này/i })
-          .getByText("E2E Guest")
-          .count();
-      }, { timeout: 75_000, intervals: [5_000] })
-      .toBeGreaterThan(0);
+      .poll(() => leaderboardWeeklyXpOf(email), { timeout: 30_000 })
+      .toBe(20);
   });
 });

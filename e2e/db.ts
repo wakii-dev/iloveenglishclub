@@ -48,6 +48,24 @@ export async function bumpProfileXpAboveMax(email: string): Promise<void> {
   `;
 }
 
+/**
+ * XP của user trong leaderboard VIEW scope weekly (không LIMIT — query
+ * getLeaderboard mới LIMIT 50; DB clone thật có 323 users weekly ≥38 XP →
+ * user test 20 XP rơi ngoài UI hợp lệ). Assert DB-level = acceptance "XP
+ * commit vào leaderboard" không phụ thuộc ngưỡng hiển thị top-50.
+ */
+export async function leaderboardWeeklyXpOf(email: string): Promise<number> {
+  // nguồn của view weekly: sum attempts.xp trong tuần ISO (Mon–Sun, TZ +07)
+  const [row] = await client()`
+    select coalesce(sum(a.xp), 0)::int as xp
+    from attempts a
+    join users u on u.id = a.user_id
+    where u.email = ${email}
+      and (a.created_at at time zone 'Asia/Ho_Chi_Minh')::timestamp
+          >= date_trunc('week', (now() at time zone 'Asia/Ho_Chi_Minh')::timestamp)`;
+  return row?.xp ?? 0;
+}
+
 /** attempt count cho lesson BẤT KỲ (book slug + unit/lesson/sort numbers). */
 export async function attemptCountFor(
   email: string,
