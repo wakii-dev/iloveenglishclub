@@ -279,53 +279,58 @@ test.describe("Progress + Gamification (SF-6)", () => {
 
   test("guest học 2 câu → login giữa chừng → commit điểm, không mất", async ({
     page,
+    browser,
   }) => {
     const email = await register(page, "E2E Guest");
-    await becomeGuest(page);
+    // guest phase dùng CONTEXT MỚI SẠCH TUYỆT ĐỐI (cookie/cache/storage 0) —
+    // clearCookies + CDP cache-disable trên context cũ KHÔNG đủ: response
+    // session-cũ thời register vẫn về tay useSession (header user 0 XP/20 XP
+    // dù cookies [] — sweep lặp nhiều lần). Context mới = đúng mô hình
+    // "trình duyệt khác chưa từng login".
+    const guestCtx = await browser.newContext();
+    const gpage = await guestCtx.newPage();
+    try {
+      await gpage.goto(LESSON, { waitUntil: "domcontentloaded" });
+      await startPart(gpage);
+      await doPartCorrect(gpage, SENT_1);
+      await doPartCorrect(gpage, SENT_2);
+      // chip +20 in-memory (acceptance guest-chip "not saved" pin riêng ở
+      // progress-guest-commit A — ở đây chỉ cần XP in-memory đúng)
+      const xpChip = gpage.locator("span", { hasText: /\+\s?20 XP/ }).first();
+      await expect(xpChip).toBeVisible();
+      await expect(gpage.getByRole("banner")).not.toContainText(/20 XP/);
 
-    // Guest: học part 1 + 2 (in-memory, banner "chưa lưu")
-    await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    // session-fetch đầu PHẢI hoàn tất (intercept từ becomeGuest ⇒ {} guest)
-    // trước khi học — chặn race chip render với isGuest stale (flake sweep)
-    await page.waitForResponse((r) => r.url().includes("/api/auth/session"));
-    // guest banner server-render (không phụ thuộc fetch) — pin trạng thái
-    // TRƯỚC khi học: header phải là guest (link Đăng nhập), không phải user
-    await expect(
-      page.getByRole("banner").getByRole("link", { name: /log in|đăng nhập/i }).first(),
-    ).toBeVisible();
-    await startPart(page);
-    await doPartCorrect(page, SENT_1);
-    await doPartCorrect(page, SENT_2);
-    const xpChip = page.locator("span", { hasText: /\+\s?20 XP/ }).first();
-    await expect(xpChip).toBeVisible();
-    await expect(xpChip.getByText(/not saved|chưa lưu/i)).toBeVisible();
-    await expect(page.getByRole("banner")).not.toContainText(/20 XP/);
+      // Banner → login GIỮA chừng (?next quay lại lesson)
+      await gpage
+        .getByRole("link", { name: /log in|đăng nhập/i })
+        .last()
+        .click();
+      // pathname predicate — chuỗi "listen-and-type" nằm ENCODED trong query
+      // ?next= của chính trang login (false-positive đã ăn 2 lần)
+      await gpage.waitForURL((u) => u.pathname.endsWith("/login"));
+      expect(gpage.url()).toContain("next=");
+      await gpage.getByLabel(/email/i).fill(email);
+      await gpage.getByLabel(/password|mật khẩu/i).fill("password123");
+      await gpage
+        .locator("form")
+        .getByRole("button", { name: /log in|đăng nhập/i })
+        .click();
 
-    // Banner → login GIỮA chừng (?next quay lại lesson)
-    await page.getByRole("link", { name: /log in|đăng nhập/i }).last().click();
-    // pathname predicate — chuỗi "listen-and-type" nằm ENCODED trong query
-    // ?next= của chính trang login (false-positive đã ăn 2 lần)
-    await page.waitForURL((u) => u.pathname.endsWith("/login"));
-    expect(page.url()).toContain("next=");
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password|mật khẩu/i).fill("password123");
-    await page
-      .locator("form")
-      .getByRole("button", { name: /log in|đăng nhập/i })
-      .click();
-
-    // Về lại lesson — login redirect là FULL load: trang mới (snapshot
-    // sessionStorage commit ngầm). Điểm phải sống: profile xp = 20.
-    await page.waitForURL((u) => u.pathname.endsWith("/listen-and-type"));
-    await expect
-      .poll(() => profileOf(email), { timeout: 60_000 })
-      .toMatchObject({ xp: 20, streak: 1 });
-    await expect(
-      page.getByText(/not saved|chưa lưu/i).first(),
-    ).toHaveCount(0, { timeout: 15_000 });
-    await expect(
-      page.getByRole("banner").getByText(/20 XP/),
-    ).toBeVisible({ timeout: 30_000 });
+      // Về lại lesson — login redirect là FULL load: trang mới (snapshot
+      // sessionStorage commit ngầm). Điểm phải sống: profile xp = 20.
+      await gpage.waitForURL((u) => u.pathname.endsWith("/listen-and-type"));
+      await expect
+        .poll(() => profileOf(email), { timeout: 60_000 })
+        .toMatchObject({ xp: 20, streak: 1 });
+      await expect(
+        gpage.getByText(/not saved|chưa lưu/i).first(),
+      ).toHaveCount(0, { timeout: 15_000 });
+      await expect(
+        gpage.getByRole("banner").getByText(/20 XP/),
+      ).toBeVisible({ timeout: 30_000 });
+    } finally {
+      await guestCtx.close();
+    }
 
     // Leaderboard tuần chứa XP user. UI /top-users LIMIT 50 — DB clone thật
     // có 323 users weekly (ngưỡng top-50 38 XP) → user 20 XP không vào bảng
