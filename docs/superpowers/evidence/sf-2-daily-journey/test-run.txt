@@ -82,3 +82,5 @@ KHÔNG phải regression SF-2 (SF-2 không đụng schema.ts/migration). Memory
 "3 fail trên master" cũ — nhánh story có 5 (VU-37/VU-43 merge vào sau).
 1 fail phụ (getBooks 8 books) do pollution data demo — đã fix bằng
 auto-cleanup trong demo script, re-run sạch.
+
+evidence commits: e0589c6 (test-run + screens) → ca732d8 (slug rename sf-2-daily-journey theo convention gate)
