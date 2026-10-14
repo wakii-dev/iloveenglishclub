@@ -59,7 +59,7 @@ test.describe("Dictation start-gate", () => {
     page,
   }) => {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page); // retry pre-hydration — skip cần phase playing
     // skip nhanh 4 part để tới complete
     for (let i = 1; i <= 4; i++) {
       await page
