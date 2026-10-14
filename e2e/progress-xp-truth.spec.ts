@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { startPart } from "./start-gate";
 import { profileOf } from "./db";
 
 /**
@@ -36,8 +37,7 @@ test.describe("XP modifiers truth (SF-3)", () => {
     await page.waitForURL(/\/en$/);
 
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
 
     // Bật relaxed (nút hiển thị "Strict" khi đang tắt)
     await page.getByRole("button", { name: /^strict$/i }).click();

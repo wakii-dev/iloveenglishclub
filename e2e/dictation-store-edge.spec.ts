@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { startPart } from "./start-gate";
 import { attemptCountFor, profileOf } from "./db";
 
 /**
@@ -51,8 +52,7 @@ test.describe("Dictation store edge (reload / double-submit / frozen / max-len)"
   async function start(page: Page): Promise<void> {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
   }
 
   test("Reload giữa chừng (guest): state in-memory chết → quay lại start-gate (không resume)", async ({
@@ -83,8 +83,7 @@ test.describe("Dictation store edge (reload / double-submit / frozen / max-len)"
     await page.reload({ waitUntil: "domcontentloaded" }); // hard reload — store chết
     // Banner login chỉ render trong dictation pane (start-gate không có) —
     // Start trước rồi click banner link CÓ ?next= (khác link header /en/login)
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
     await page.locator("a[href*='next=']").first().click();
     await page.waitForURL(/\/en\/login/);
     await page.locator("#email").fill(email);

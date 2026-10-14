@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { startPart } from "./start-gate";
 
 /**
  * Task 10 — A11y keyboard/aria TRÊN FLOW THẬT (context pack slice #9):
@@ -18,8 +19,7 @@ test.describe("Dictation a11y (keyboard + aria trên flow thật)", () => {
   async function start(page: import("@playwright/test").Page): Promise<void> {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
   }
 
   test("Shortcuts panel: mở qua keyboard, role dialog, đủ 5 hàng phím, Esc/click-outside đóng", async ({

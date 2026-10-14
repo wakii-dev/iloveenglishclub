@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { startPart } from "./start-gate";
 
 /**
  * Task 4 — Audio controls (context pack slice #3): speed cycle + playbackRate
@@ -19,8 +20,7 @@ test.describe("Dictation audio controls", () => {
   async function start(page: Page): Promise<Page> {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
     return page;
   }
 

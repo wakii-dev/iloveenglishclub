@@ -11,7 +11,9 @@ import { expect, test } from "@playwright/test";
  * template seed (level-3/u2/l3 draft, level-3/u1/l1 published).
  */
 
-const SITE = "http://localhost:3000";
+// neo NEXT_PUBLIC_SITE_URL như app (sitemap/robots derive cùng env —
+// localhost:3000 chỉ là fallback khi env trống)
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 const DRAFT_LESSON_SUFFIX = "/books/level-3/units/2/lessons/3/listen-and-type";
 const PUBLISHED_LESSON_PATH = "/books/level-3/units/1/lessons/1/listen-and-type";

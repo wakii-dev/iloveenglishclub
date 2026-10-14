@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { startPart } from "./start-gate";
 
 /**
  * Task 5 — Start-gate (context pack slice #4): phase idle → start-gate →
@@ -38,8 +39,7 @@ test.describe("Dictation start-gate", () => {
     page,
   }) => {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible(); // dictation pane
+    await startPart(page); // dictation pane
 
     // play() thành công sau đúng 1 gesture (sticky activation) — không cần
     // thao tác thứ 2; autoplay policy chặn thì paused vẫn true → bắt tại đây

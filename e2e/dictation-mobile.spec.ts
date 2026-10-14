@@ -1,4 +1,5 @@
 import { expect, test, devices } from "@playwright/test";
+import { startPart } from "./start-gate";
 
 /**
  * Task 8 — Mobile EMULATED iPhone 12 (context pack slice #7): tap targets,
@@ -25,8 +26,7 @@ test.describe("Dictation mobile (iPhone 12 emulated)", () => {
   async function start(page: import("@playwright/test").Page): Promise<void> {
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
   }
 
   test("Gesture start trên mobile → playing; layout không tràn ngang; input không bị che", async ({
