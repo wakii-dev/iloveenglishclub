@@ -13,7 +13,8 @@ import dotenv from "dotenv";
  *      stage7 = 6..10 (iv250)
  *  - continue = level-5 Level 2 · Từ 11–20 · planted 0/10 · CTA "10 từ mới"
  *      (level 1 = từ 1..10 planted hết, từ 11-13 reps=0 đầu tiên)
- *  - plantedToday = 3 (vocab_activity learn-complete today) / goal 5
+ *  - practicedToday = 3 (3 từ distinct learn-complete — daily-journey §3.5
+ *    practiced ⊇ planted) / goal 5
  *  - streak = 2 (daily_activity hôm nay + hôm qua); dueToday = 1 (từ 1 -1h)
  *  - XP = 1248; lộ trình 2 sách: level-5 10/25 Đang học, level-6 0/10 Chưa
  *
@@ -145,7 +146,7 @@ export async function seedDashboardProgress(email: string): Promise<void> {
       `;
     }
 
-    // planted hôm nay = 3 (learn-complete) — ring 3/5
+    // practiced hôm nay = 3 (3 từ distinct learn-complete) — ring 3/5
     for (let n = 1; n <= 3; n++) {
       await tx`
         insert into vocab_activity

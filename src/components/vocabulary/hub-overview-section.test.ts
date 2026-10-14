@@ -17,7 +17,7 @@ const localeState = vi.hoisted(() => ({ locale: "en" as "en" | "vi" }));
 
 const storeState = vi.hoisted(() => ({
   summary: {
-    plantedToday: 3,
+    practicedToday: 3,
     dailyGoalWords: 5,
     totalXp: 1248,
     streak: 7,
@@ -202,7 +202,7 @@ const BOOK_PROGRESS = (
 beforeEach(() => {
   localeState.locale = "en";
   storeState.summary = {
-    plantedToday: 3,
+    practicedToday: 3,
     dailyGoalWords: 5,
     totalXp: 1248,
     streak: 7,

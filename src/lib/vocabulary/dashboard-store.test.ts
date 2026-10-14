@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 /**
  * Dashboard aggregate store (vocab-memrise SF-4, VU-41) — mock @/db chainable
  * (pattern vocab-xp-store.test.ts). Contract context pack sf-4.md:
- *  - plantedToday = count vocab_activity kind='learn-complete' NGÀY VN (vnToday)
+ *  - practicedToday (daily-journey §3.5) = COUNT DISTINCT word ĐÚNG hôm nay
+ *    kind IN ('learn-complete','session-step') NGÀY VN (vnToday)
  *  - streak/activeToday derive từ daily_activity (source of truth) + computeStreak
  *  - garden distribution SQL-side theo boundary growth.ts — gardenStageBucket
  *    sweep đối chiếu growthStage() chống drift (KHÔNG sửa lib SF-1)
@@ -122,7 +123,7 @@ describe("stageBoundFilter — bounds SQL khớp growthStage (P0 review A)", () 
 describe("getDashboardSummary", () => {
   function summaryQueue(over: Record<string, unknown> = {}) {
     dbState.queue = [
-      [{ planted: over.planted ?? 3 }], // count learn-complete hôm nay
+      [{ practiced: over.practiced ?? 3 }], // count distinct từ ôn/luyện hôm nay
       [
         {
           dailyGoalWords: over.goal ?? 5,
@@ -135,11 +136,11 @@ describe("getDashboardSummary", () => {
     ];
   }
 
-  it("đếm planted-today + streak presence + due — shape đủ 6 số", async () => {
+  it("đếm practiced-today + streak presence + due — shape đủ 6 số", async () => {
     summaryQueue();
     const s = await getDashboardSummary("u1", new Date());
     expect(s).toEqual({
-      plantedToday: 3,
+      practicedToday: 3,
       dailyGoalWords: 5,
       totalXp: 1248,
       streak: 2,
@@ -158,7 +159,7 @@ describe("getDashboardSummary", () => {
   });
 
   it("không có profile (row rỗng) → mặc định goal 5, xp 0", async () => {
-    dbState.queue = [[{ planted: 0 }], [], [], [{ total: 0, dueToday: 0, mastered: 0 }]];
+    dbState.queue = [[{ practiced: 0 }], [], [], [{ total: 0, dueToday: 0, mastered: 0 }]];
     const s = await getDashboardSummary("u1", new Date());
     expect(s.dailyGoalWords).toBe(5);
     expect(s.totalXp).toBe(0);
@@ -169,7 +170,7 @@ describe("getDashboardSummary", () => {
     dbState.failWith = new Error("db down");
     const s = await getDashboardSummary("u1", new Date());
     expect(s).toEqual({
-      plantedToday: 0,
+      practicedToday: 0,
       dailyGoalWords: 5,
       totalXp: 0,
       streak: 0,
