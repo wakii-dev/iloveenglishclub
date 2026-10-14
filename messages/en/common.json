@@ -1,6 +1,11 @@
 {
   "appName": "I Love English Club",
-  "nav": { "home": "Home", "levels": "Levels", "vocabulary": "Vocabulary" },
+  "nav": {
+    "home": "Home",
+    "levels": "Levels",
+    "vocabulary": "Vocabulary",
+    "today": "Today"
+  },
   "header": {
     "login": "Log in",
     "register": "Sign up",
@@ -21,5 +26,8 @@
     "rights": "All rights reserved.",
     "steps": "Listen · Type · Check · Read aloud"
   },
-  "locale": { "en": "English", "vi": "Tiếng Việt" }
+  "locale": {
+    "en": "English",
+    "vi": "Tiếng Việt"
+  }
 }

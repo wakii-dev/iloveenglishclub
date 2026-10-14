@@ -1,6 +1,7 @@
 import { Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { TodayNavDot } from "@/components/today/today-nav-dot";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeToggle } from "./theme-toggle";
 import { UserMenu } from "./user-menu";
@@ -47,6 +48,15 @@ export function Header() {
             className="rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-primary"
           >
             {t("nav.vocabulary")}
+          </Link>
+          {/* daily-journey SF-3: entry "Hôm nay" + dot nhắc khi chưa đạt goal
+              kép (dot client-island — guest không dot) */}
+          <Link
+            href="/today"
+            className="flex items-center gap-1.5 rounded-[12px] px-3 py-1.5 text-[13px] font-bold text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-primary"
+          >
+            {t("nav.today")}
+            <TodayNavDot />
           </Link>
         </nav>
 

@@ -1,6 +1,11 @@
 {
   "appName": "I Love English Club",
-  "nav": { "home": "Trang chủ", "levels": "Cấp độ", "vocabulary": "Từ vựng" },
+  "nav": {
+    "home": "Trang chủ",
+    "levels": "Cấp độ",
+    "vocabulary": "Từ vựng",
+    "today": "Hôm nay"
+  },
   "header": {
     "login": "Đăng nhập",
     "register": "Đăng ký",
@@ -21,5 +26,8 @@
     "rights": "Mọi quyền được bảo lưu.",
     "steps": "Nghe · Gõ · Kiểm tra · Đọc to"
   },
-  "locale": { "en": "English", "vi": "Tiếng Việt" }
+  "locale": {
+    "en": "English",
+    "vi": "Tiếng Việt"
+  }
 }
