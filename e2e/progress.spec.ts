@@ -48,6 +48,23 @@ async function register(page: Page, displayName: string): Promise<string> {
   return email;
 }
 
+/** Client-nav retry: click lại khi RSC re-render nuốt click (link đã active
+ * nhưng navigation không hoàn tất — mid-RSC-swap class; lesson e2e-authoring:
+ * click timeout NGẮN + .first()). */
+async function clickNavUntil(
+  page: Page,
+  locator: ReturnType<Page["getByRole"]>,
+  urlMatch: (u: URL) => boolean,
+  urlDesc: string,
+): Promise<void> {
+  await expect(async () => {
+    if (!urlMatch(new URL(page.url()))) {
+      await locator.first().click({ timeout: 2_500 }).catch(() => {});
+    }
+    await page.waitForURL(urlMatch, { timeout: 3_000 });
+  }).toPass({ timeout: 90_000 });
+}
+
 /** Click Start + ĐỢI textbox — retry click khi rớt pre-hydration (lesson
  * e2e-authoring: click trước hydration bị nuốt, phase không chuyển). Click
  * timeout NGẮN để retry vòng sau; toPass chỏm 90s chịu compile lạnh. */
@@ -212,18 +229,24 @@ test.describe("Progress + Gamification (SF-6)", () => {
 
     // CLIENT-NAV toàn bộ sang lesson B (L3-U2-L1 "My day") — store singleton
     // sống qua navigation: mount B KHÔNG được submit part của B bằng state A
-    await page
-      .getByRole("link", { name: "Level 3" })
-      .first()
-      .click(); // breadcrumb → /books (danh sách)
-    await page.waitForURL((u) => u.pathname === "/en/books");
-    await page
-      .getByRole("link", { name: /Level 3 A2/ })
-      .first()
-      .click(); // level-card → book page
-    await page.waitForURL((u) => u.pathname === "/en/books/level-3");
-    await page.getByRole("link", { name: /my day/i }).first().click();
-    await page.waitForURL((u) => u.pathname === "/en/books/level-3/units/2");
+    await clickNavUntil(
+      page,
+      page.getByRole("link", { name: "Level 3" }),
+      (u) => u.pathname === "/en/books",
+      "/en/books",
+    ); // breadcrumb → /books (danh sách)
+    await clickNavUntil(
+      page,
+      page.getByRole("link", { name: /Level 3 A2/ }),
+      (u) => u.pathname === "/en/books/level-3",
+      "/en/books/level-3",
+    ); // level-card → book page
+    await clickNavUntil(
+      page,
+      page.getByRole("link", { name: /my day/i }),
+      (u) => u.pathname === "/en/books/level-3/units/2",
+      "/en/books/level-3/units/2",
+    );
     // lesson-row: 2 link "Open" (theo thứ tự lesson) — lesson 1 là đích
     await page.getByRole("link", { name: "Open" }).first().click();
     await page.waitForURL((u) =>
