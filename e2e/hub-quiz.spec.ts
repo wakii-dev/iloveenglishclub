@@ -55,24 +55,25 @@ async function answerCurrent(page: Page): Promise<boolean> {
   if (await results.isVisible()) return true;
 
   // Chốt câu TRƯỚC khi trả lời — advance-verify sau Continue: click có thể
-  // bị nuốt mid-RSC (flake sweep: vòng 40 không tiến, results không bao giờ)
-  const before = await page
-    .getByText(/Question \d+\/\d+/)
-    .innerText()
-    .catch(() => "");
+  // bị nuốt mid-RSC (flake sweep: vòng 40 không tiến, results không bao giờ).
+  // Landmark = innerText container chính (Question label KHÔNG có ở mọi loại
+  // bước — before="" sai verifier); retry Continue dùng catch NGẮN (nút
+  // disabled khi grading — đợi enabled ăn trọn test timeout)
+  const before = await page.locator("main").innerText();
   const advance = async (): Promise<void> => {
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page
+      .getByRole("button", { name: "Continue" })
+      .click({ timeout: 10_000 });
     await expect(async () => {
       if (await results.isVisible().catch(() => false)) return;
-      const now = await page
-        .getByText(/Question \d+\//)
-        .innerText()
-        .catch(() => "");
-      expect(now).not.toBe(before);
-      await page
-        .getByRole("button", { name: "Continue" })
-        .click({ timeout: 2_500 })
-        .catch(() => {});
+      const now = await page.locator("main").innerText();
+      if (now === before) {
+        await page
+          .getByRole("button", { name: "Continue" })
+          .click({ timeout: 1_500 })
+          .catch(() => {});
+        return; // chưa advance — toPass thử vòng sau
+      }
     }).toPass({ timeout: 30_000 });
   };
   if (await fillInput.isVisible()) {
