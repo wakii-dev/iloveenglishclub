@@ -102,11 +102,13 @@ async function doPartCorrect(page: Page, sentence: string): Promise<void> {
  *  SF-1 — test SF-6 chỉ cần trạng thái guest deterministic. */
 async function becomeGuest(page: Page): Promise<void> {
   await page.context().clearCookies();
-  // intercept session endpoint — HTTP cache KHÔNG clear được qua API (cookie
-  // cache key không tính) → response session CŨ thời register trả cho useSession
-  // → chip render isGuest=false dù đã clearCookies (flake sweep). Intercept
-  // buộc fetch đi network: không cookie ⇒ {} ⇒ guest thật.
-  await page.route("**/api/auth/session", (route) => route.continue());
+  // TẮT CACHE (CDP): memory-cache hit /api/auth/session NÉ cả route handler —
+  // sweep: useSession nhận response session CŨ thời register (header user
+  // "0 XP" dù cookies đã clear — debug []). Cache off ⇒ fetch luôn network ⇒
+  // không cookie ⇒ {} ⇒ guest thật; nửa sau-login của test hoạt động bình
+  // thường (không cần unroute).
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
 }
 
 test.describe("Progress + Gamification (SF-6)", () => {
