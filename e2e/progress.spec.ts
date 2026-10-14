@@ -256,9 +256,11 @@ test.describe("Progress + Gamification (SF-6)", () => {
       "/en/books/level-3/units/2",
     );
     // lesson-row: 2 link "Open" (theo thứ tự lesson) — lesson 1 là đích
-    await page.getByRole("link", { name: "Open" }).first().click();
-    await page.waitForURL((u) =>
-      u.pathname.endsWith("/units/2/lessons/1/listen-and-type"),
+    await clickNavUntil(
+      page,
+      page.getByRole("link", { name: "Open" }),
+      (u) => u.pathname.endsWith("/units/2/lessons/1/listen-and-type"),
+      "/units/2/lessons/1/listen-and-type",
     );
 
     // Lesson B render StartGate (không Results stale)

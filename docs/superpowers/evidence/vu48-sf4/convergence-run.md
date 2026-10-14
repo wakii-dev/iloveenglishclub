@@ -1,25 +1,25 @@
-# VU-48 SF-4 convergence run — 2026-10-15 04:48:07
+# VU-48 SF-4 convergence run — 2026-10-15 05:35:47
 DB: ilec_dj_sf4 (local clone, migration 0007) · MỌI test:e2e:* + vitest + rls + typecheck + build — liên tiếp 1 lượt
 
-— [04:48:07] sf3 ...
+— [05:35:48] sf3 ...
   **FAIL sf3** — log /tmp/sweep-sf4/sf3.log (tail):
-    > 291 |     ).toBeVisible();
-          |       ^
-      292 |     await startPart(page);
-      293 |     await doPartCorrect(page, SENT_1);
-      294 |     await doPartCorrect(page, SENT_2);
-        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/progress.spec.ts:291:7
+    > 260 |     await page.waitForURL((u) =>
+          |                ^
+      261 |       u.pathname.endsWith("/units/2/lessons/1/listen-and-type"),
+      262 |     );
+      263 |
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/progress.spec.ts:260:16
 
-    Error Context: test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/error-context.md
+    Error Context: test-results/progress-Progress-Gamifica-d6ecc-→-KHÔNG-ghost-submit-part-B-chromium/error-context.md
 
     attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
-    test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/trace.zip
+    test-results/progress-Progress-Gamifica-d6ecc-→-KHÔNG-ghost-submit-part-B-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/trace.zip
+        npx playwright show-trace test-results/progress-Progress-Gamifica-d6ecc-→-KHÔNG-ghost-submit-part-B-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
   1 failed
-    [chromium] › e2e/progress.spec.ts:276:7 › Progress + Gamification (SF-6) › guest học 2 câu → login giữa chừng → commit điểm, không mất 
-  25 passed (1.9m)
+    [chromium] › e2e/progress.spec.ts:225:7 › Progress + Gamification (SF-6) › P0 regression: học A → nav books → mở B → KHÔNG ghost-submit part B 
+  25 passed (7.7m)
