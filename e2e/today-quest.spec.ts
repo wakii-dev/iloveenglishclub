@@ -34,6 +34,9 @@ test.beforeAll(async () => {
   `;
   userA = { id: "", email: pinned[0]!.a_email };
   userB = { id: "", email: pinned[0]!.b_email };
+  // goals B về 5/5 — phòng khi test PATCH phút (page spec) fail giữa chừng
+  await sql`update profiles set daily_goal_minutes = 5, daily_goal_words = 5
+    where id = (select u.id from users u where u.email = ${userB.email})`;
   await sql.end();
 });
 

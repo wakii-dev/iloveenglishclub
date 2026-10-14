@@ -148,6 +148,36 @@ test.describe("Today page (SF-3)", () => {
     await expect(page.getByTestId("suggestion-due").getByText("2 words due for review")).toBeVisible();
   });
 
+  test("PATCH goal phút 15 qua preset → ring phản ánh, reload giữ (acceptance #4)", async ({
+    page,
+  }) => {
+    await loginUser(page, userB.email);
+    await gotoToday(page);
+    // click-with-retry chống pre-hydration race (lesson e2e-authoring)
+    const preset15 = page.getByRole("button", {
+      name: "Chọn mục tiêu 15 phút nghe mỗi ngày",
+    });
+    await expect(async () => {
+      await preset15.click({ timeout: 2_500 });
+      await expect(
+        page.getByRole("img", { name: "Đã nghe 5 trên 15 phút hôm nay" }),
+      ).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+    // reload giữ
+    await page.reload();
+    await expect(
+      page.getByRole("img", { name: "Đã nghe 5 trên 15 phút hôm nay" }),
+    ).toBeVisible();
+    // preset 15 giờ active (aria-pressed) — trả goal 5 cho suite re-run
+    await expect(preset15).toHaveAttribute("aria-pressed", "true");
+    await page
+      .getByRole("button", { name: "Chọn mục tiêu 5 phút nghe mỗi ngày" })
+      .click();
+    await expect(
+      page.getByRole("img", { name: "Đã nghe 5 trên 5 phút hôm nay" }),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test("a11y smoke: 1 h1 · ring aria · progressbar · quest aria-live", async ({
     page,
   }) => {
