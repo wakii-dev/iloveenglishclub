@@ -48,12 +48,35 @@ async function register(page: Page, displayName: string): Promise<string> {
   return email;
 }
 
-/** Làm 1 part: gõ đúng → Enter check → Enter next. */
+/** Click Start + ĐỢI textbox — retry click khi rớt pre-hydration (lesson
+ * e2e-authoring: click trước hydration bị nuốt, phase không chuyển). Click
+ * timeout NGẮN để retry vòng sau; toPass chỏm 90s chịu compile lạnh. */
+async function startPart(page: Page): Promise<void> {
+  await expect(async () => {
+    if (!(await page.getByRole("textbox").isVisible().catch(() => false))) {
+      await page
+        .getByRole("button", { name: START })
+        .click({ timeout: 2_500 })
+        .catch(() => {});
+    }
+    await expect(page.getByRole("textbox")).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 90_000 });
+}
+
+/** Làm 1 part: gõ đúng → Enter check → Enter next. Enter advance có thể bị
+ * nuốt khi RSC re-render (flake sweep: fill part kế timeout 360s) — retry
+ * Enter khi feedback còn; dừng ngay khi feedback ẩn (đã advance, né Enter
+ * thừa trong phase complete). */
 async function doPartCorrect(page: Page, sentence: string): Promise<void> {
   await page.getByRole("textbox").fill(sentence);
   await page.keyboard.press("Enter"); // check
-  await expect(page.getByText(/exactly right|chính xác/i)).toBeVisible();
-  await page.keyboard.press("Enter"); // next
+  const fb = page.getByText(/exactly right|chính xác/i);
+  await expect(fb).toBeVisible();
+  for (let i = 0; i < 4; i++) {
+    if (!(await fb.isVisible().catch(() => false))) return;
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(800);
+  }
 }
 
 /** Guest thật: clear cookie (signOut UI click có thể miss menu animation —
@@ -79,8 +102,7 @@ test.describe("Progress + Gamification (SF-6)", () => {
     // Part 1: gõ SAI ("friend" + thiếu dấu chấm → strict match 6/8 = 0.75)
     // → Enter đôi nhanh (2 lần liền, cùng text)
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
     await page
       .getByRole("textbox")
       .fill("I play football with my friend every Saturday"); // acc 0.75
@@ -182,7 +204,7 @@ test.describe("Progress + Gamification (SF-6)", () => {
 
     // Học part 1 lesson A (L3-U1-L1) → XP 10
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page);
     await doPartCorrect(page, SENT_1);
     await expect
       .poll(() => profileOf(email), { timeout: 60_000 })
@@ -230,7 +252,7 @@ test.describe("Progress + Gamification (SF-6)", () => {
 
     // Guest: học part 1 + 2 (in-memory, banner "chưa lưu")
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page);
     await doPartCorrect(page, SENT_1);
     await doPartCorrect(page, SENT_2);
     const xpChip = page.locator("span", { hasText: /\+\s?20 XP/ }).first();
