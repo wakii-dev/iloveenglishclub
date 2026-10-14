@@ -20,10 +20,30 @@ function sf3Email(tag: string): string {
   return `sf3-${tag.replace(/[^a-z0-9]/gi, "").toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@test.ilec`;
 }
 
+/** Click Start + ĐỢI textbox — retry khi click rớt pre-hydration. */
+async function startPart(page: Page): Promise<void> {
+  await expect(async () => {
+    if (!(await page.getByRole("textbox").isVisible().catch(() => false))) {
+      await page
+        .getByRole("button", { name: START })
+        .click({ timeout: 2_500 })
+        .catch(() => {});
+    }
+    await expect(page.getByRole("textbox")).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 90_000 });
+}
+
 async function doPartCorrect(page: Page, sentence: string): Promise<void> {
   await page.getByRole("textbox").fill(sentence);
-  await page.keyboard.press("Enter");
-  await expect(page.getByText(/exactly right|chính xác/i)).toBeVisible();
+  const fb = page.getByText(/exactly right|chính xác/i);
+  // retry Enter khi keydown bị nuốt (pre-hydration/RSC re-render — class
+  // flake progress.spec đã harden); CHỈ Enter khi feedback chưa hiện
+  await expect(async () => {
+    if (!(await fb.isVisible().catch(() => false))) {
+      await page.keyboard.press("Enter");
+    }
+    await expect(fb).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 60_000 });
 }
 
 async function register(page: Page, displayName: string): Promise<string> {
@@ -48,8 +68,7 @@ test.describe("Guest mid-lesson commit (SF-3)", () => {
   }) => {
     await page.context().clearCookies();
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
 
     await page.getByRole("button", { name: /^strict$/i }).click();
     await doPartCorrect(page, SENT_1);
@@ -71,7 +90,7 @@ test.describe("Guest mid-lesson commit (SF-3)", () => {
 
     // Guest: 2 part (in-memory +20)
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page);
     await doPartCorrect(page, SENT_1);
     await page.keyboard.press("Enter"); // next
     await doPartCorrect(page, SENT_2);
@@ -95,7 +114,7 @@ test.describe("Guest mid-lesson commit (SF-3)", () => {
     // mới) → snapshot ĐÃ POP nên KHÔNG commit kép → làm part 1 → XP giữ 20.
     await page.goto("/en/books", { waitUntil: "domcontentloaded" });
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page);
     await doPartCorrect(page, SENT_1);
     await expect
       .poll(() => profileOf(email), { timeout: 30_000 })
@@ -107,7 +126,7 @@ test.describe("Guest mid-lesson commit (SF-3)", () => {
   }) => {
     await page.context().clearCookies();
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page);
     await doPartCorrect(page, SENT_1);
     await page.keyboard.press("Enter");
     await doPartCorrect(page, SENT_2);
@@ -119,8 +138,7 @@ test.describe("Guest mid-lesson commit (SF-3)", () => {
     // đều TRỐNG theo thiết kế (pending-commit.ts: sessionStorage = 1 tab)
     const tabB = await page.context().newPage();
     await tabB.goto(LESSON, { waitUntil: "domcontentloaded" });
-    await tabB.getByRole("button", { name: START }).click();
-    await expect(tabB.getByRole("textbox")).toBeVisible();
+    await startPart(tabB);
     await expect(
       tabB.locator("span", { hasText: /\+\s?20 XP/ }),
     ).toHaveCount(0);
