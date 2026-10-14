@@ -280,6 +280,14 @@ test.describe("Progress + Gamification (SF-6)", () => {
 
     // Guest: học part 1 + 2 (in-memory, banner "chưa lưu")
     await page.goto(LESSON, { waitUntil: "domcontentloaded" });
+    // session-fetch đầu PHẢI hoàn tất (intercept từ becomeGuest ⇒ {} guest)
+    // trước khi học — chặn race chip render với isGuest stale (flake sweep)
+    await page.waitForResponse((r) => r.url().includes("/api/auth/session"));
+    // guest banner server-render (không phụ thuộc fetch) — pin trạng thái
+    // TRƯỚC khi học: header phải là guest (link Đăng nhập), không phải user
+    await expect(
+      page.getByRole("banner").getByRole("link", { name: /log in|đăng nhập/i }).first(),
+    ).toBeVisible();
     await startPart(page);
     await doPartCorrect(page, SENT_1);
     await doPartCorrect(page, SENT_2);

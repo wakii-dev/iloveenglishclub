@@ -1,29 +1,25 @@
-# VU-48 SF-4 convergence run — 2026-10-15 02:46:04
+# VU-48 SF-4 convergence run — 2026-10-15 02:57:15
 DB: ilec_dj_sf4 (local clone, migration 0007) · MỌI test:e2e:* + vitest + rls + typecheck + build — liên tiếp 1 lượt
 
-— [02:46:04] sf3 ...
-  PASS sf3 (26 passed)
-— [02:47:50] sf4 ...
-  PASS sf4 (46 passed)
-— [02:51:44] today ...
-  **FAIL today** — log /tmp/sweep-sf4/today.log (tail):
-          |       ^
-      242 |     await expect(page.getByTestId("today-shield-active")).toBeVisible();
-      243 |     await page.screenshot({
-      244 |       path: "docs/superpowers/evidence/vu48-sf4/screenshots/mobile-today-protected.png",
-        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/today-shield.spec.ts:241:7
+— [02:57:15] sf3 ...
+  **FAIL sf3** — log /tmp/sweep-sf4/sf3.log (tail):
+    > 288 |     await expect(xpChip.getByText(/not saved|chưa lưu/i)).toBeVisible();
+          |                                                           ^
+      289 |     await expect(page.getByRole("banner")).not.toContainText(/20 XP/);
+      290 |
+      291 |     // Banner → login GIỮA chừng (?next quay lại lesson)
+        at /Users/hoivu/orca/workspaces/iloveenglishclup/sf-4-daily-journey/e2e/progress.spec.ts:288:59
 
-    Error Context: test-results/today-shield-Today-shield--d2dc0-11y-mobile-—-thay-đổi-SF-4--chromium/error-context.md
+    Error Context: test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/error-context.md
 
     attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
-    test-results/today-shield-Today-shield--d2dc0-11y-mobile-—-thay-đổi-SF-4--chromium/trace.zip
+    test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/trace.zip
     Usage:
 
-        npx playwright show-trace test-results/today-shield-Today-shield--d2dc0-11y-mobile-—-thay-đổi-SF-4--chromium/trace.zip
+        npx playwright show-trace test-results/progress-Progress-Gamifica-d6c04-ừng-→-commit-điểm-không-mất-chromium/trace.zip
 
     ────────────────────────────────────────────────────────────────────────────────────────────────
 
-  2 failed
-    [chromium] › e2e/today-shield.spec.ts:123:7 › Today shield consume (SF-4) › user A: 1 credit + gap hôm-qua → freeze hôm-qua, credits −1, streak bắc cầu (header cache + live khớp) 
-    [chromium] › e2e/today-shield.spec.ts:232:7 › Today shield consume (SF-4) › mobile 375 sweep: /today protected + /me badges (a11y/mobile — thay đổi SF-4) 
-  9 passed (1.4m)
+  1 failed
+    [chromium] › e2e/progress.spec.ts:275:7 › Progress + Gamification (SF-6) › guest học 2 câu → login giữa chừng → commit điểm, không mất 
+  25 passed (1.9m)
