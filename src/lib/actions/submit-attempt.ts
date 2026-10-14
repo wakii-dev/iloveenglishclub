@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import {
@@ -12,7 +12,8 @@ import {
   userLessonProgress,
 } from "@/db/schema";
 import { scoreAttempt } from "@/lib/dictation/diff";
-import { computeStreak, vnToday } from "@/lib/gamification/streak";
+import { recomputeStreakTx } from "@/lib/gamification/streak-store";
+import { vnToday } from "@/lib/gamification/streak";
 
 /**
  * Submit attempt (SF-6 — spec §4, CHỐT CỨNG trust boundary):
@@ -172,16 +173,11 @@ export async function submitAttempt(input: {
               listenMs: sql`${dailyActivity.listenMs} + ${listenAddMs}`,
             },
           });
-        const activityDates = await tx
-          .select({ date: dailyActivity.date })
-          .from(dailyActivity)
-          .where(eq(dailyActivity.userId, userId))
-          .orderBy(desc(dailyActivity.date))
-          .limit(400); // streak >400 ngày v1 chưa tồn tại — cap hợp lý
-        streak = computeStreak(
-          activityDates.map((r) => r.date),
-          today,
-        );
+        // streak recompute + shield consume — recomputeStreakTx (SF-4 VU-52)
+        // là owner duy nhất tạo freeze rows; PRECONDITION profiles FOR UPDATE
+        // ở đầu tx đã thoả. Identity: 0 credit + 0 freeze ⇒ byte-identical
+        // computeStreak thuần như block cũ.
+        streak = await recomputeStreakTx(tx, userId, today);
       }
 
       const [updated] = await tx

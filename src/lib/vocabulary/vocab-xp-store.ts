@@ -16,11 +16,12 @@
  * awardVocabXp tự mở transaction cho dùng độc lập/test. Auth là việc ROUTE
  * (SF-2) — store chỉ nhận userId đã qua session.
  */
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { dailyActivity, profiles, vocabActivity } from "@/db/schema";
 import { pgErrorCode } from "@/lib/actions/admin/pg-errors";
-import { computeStreak, vnToday } from "@/lib/gamification/streak";
+import { recomputeStreakTx } from "@/lib/gamification/streak-store";
+import { vnToday } from "@/lib/gamification/streak";
 import {
   computeXpAward,
   idempotencyKey,
@@ -50,7 +51,6 @@ export type AwardVocabXpResult = {
   error?: "noProfile" | "wordNotFound";
 };
 
-const STREAK_LOOKBACK_DAYS = 400; // streak >400 ngày v1 chưa tồn tại — cap hợp lý (pattern submit-attempt)
 
 /** Core trong transaction có sẵn — SF-2 gọi trong applyStep. */
 export async function awardVocabXpTx(
@@ -153,19 +153,13 @@ export async function awardVocabXpTx(
       set: { vocabSteps: sql`${dailyActivity.vocabSteps} + 1` },
     });
 
-  // streak recompute CHỈ khi ngày chuyển active (đã active → giữ cache)
+  // streak recompute CHỈ khi ngày chuyển active (đã active → giữ cache) —
+  // recomputeStreakTx (SF-4 VU-52) owner duy nhất tạo freeze rows; tx này
+  // đã FOR UPDATE profiles ở bước 1. Identity: 0 credit + 0 freeze ⇒
+  // byte-identical computeStreak thuần như block cũ.
   let streak = profile.streakCount;
   if (!existingToday) {
-    const activityDates = await tx
-      .select({ date: dailyActivity.date })
-      .from(dailyActivity)
-      .where(eq(dailyActivity.userId, userId))
-      .orderBy(desc(dailyActivity.date))
-      .limit(STREAK_LOOKBACK_DAYS);
-    streak = computeStreak(
-      activityDates.map((r) => r.date),
-      today,
-    );
+    streak = await recomputeStreakTx(tx, userId, today);
   }
 
   // 4. cộng xp có điều kiện (0 khi sai/lặp/cap) — single statement atomic

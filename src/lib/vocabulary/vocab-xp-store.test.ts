@@ -73,7 +73,7 @@ const params = (over: Partial<AwardVocabXpParams> = {}): AwardVocabXpParams => (
   ...over,
 });
 
-/** Queue chuẩn theo thứ tự impl — 8 await: lock profiles → flags (user,word) → xpToday → insert activity → daily hôm nay → upsert daily → activity dates → update profiles */
+/** Queue chuẩn theo thứ tự impl — 10 await: lock profiles → flags (user,word) → xpToday → insert activity → daily hôm nay → upsert daily → [recomputeStreakTx:] activity dates → freezes → credits → update profiles */
 function happyQueue(profile = { xp: 100, streakCount: 3 }) {
   dbState.queue = [
     [profile], // profiles FOR UPDATE
@@ -89,6 +89,8 @@ function happyQueue(profile = { xp: 100, streakCount: 3 }) {
       { date: addDays(vnToday(new Date()), -1) },
       { date: vnToday(new Date()) },
     ],
+    [], // streak_freezes — identity 0-freeze mặc định
+    [{ shieldCredits: 0 }], // profiles.shield_credits — identity 0-credit
     [{ xp: 101 }], // update profiles RETURNING xp
   ];
 }
@@ -187,7 +189,7 @@ describe("awardVocabXpTx — MỘT transaction", () => {
   it("learn-complete lần đầu: +4 XP", async () => {
     happyQueue({ xp: 100, streakCount: 0 });
     dbState.queue[6] = [{ date: vnToday(new Date()) }]; // chỉ hôm nay active → streak 1
-    dbState.queue[7] = [{ xp: 104 }]; // update returning: 100 + 4
+    dbState.queue[9] = [{ xp: 104 }]; // update returning: 100 + 4
     const result = await awardVocabXpTx(
       txMock() as never,
       params({ kind: "learn-complete" }),
@@ -219,11 +221,64 @@ describe("awardVocabXpTx — MỘT transaction", () => {
   it("ngày đã active (daily row tồn tại): KHÔNG recompute streak — giữ cache", async () => {
     happyQueue();
     dbState.queue[4] = [{ userId: "u1", date: vnToday(new Date()) }]; // đã có
-    // nếu code vẫn nhánh recompute → select dates ăn item update-profiles → xp sai shape
+    // nếu code vẫn nhánh recompute → select dates ăn item update-profiles,
+    // freezes ăn xp-returning, credits ăn [] → xp sai shape → đỏ
     dbState.queue[6] = [{ date: "2019-01-01" }];
     const result = await awardVocabXpTx(txMock() as never, params());
     // profile.streakCount giữ nguyên (3) — nhánh recompute không chạy
     expect(result.streak).toBe(3);
+  });
+
+  it("SF-4 identity: ngày chuyển active + 0 credit + 0 freeze → streak = computeStreak thuần, không freeze-write", async () => {
+    happyQueue();
+    // queue mặc định: 3 ngày liên tiếp, freezes [], credits 0 — recompute
+    // phải trả 3 (byte-identical block cũ) và KHÔNG insert/update freeze
+    const result = await awardVocabXpTx(txMock() as never, params());
+    expect(result.streak).toBe(3);
+    // không có .values() freeze rows (userId+date 10 ký tự, không vocabSteps/idempotencyKey)
+    const freezeInserts = dbState.calls.filter(
+      (c) =>
+        Array.isArray(c) &&
+        c.length > 0 &&
+        typeof (c[0] as { date?: unknown }).date === "string" &&
+        !("vocabSteps" in (c[0] as object)),
+    );
+    expect(freezeInserts).toHaveLength(0);
+  });
+
+  it("SF-4 consume: ngày chuyển active + 1 credit + gap hôm qua → freeze bắc cầu, credits −1", async () => {
+    happyQueue();
+    const t = vnToday(new Date());
+    // hôm-nay-kia + (gap hôm-qua) + hôm nay (upsert vừa ghi)
+    dbState.queue[6] = [
+      { date: addDays(t, -2) },
+      { date: t },
+    ];
+    dbState.queue[7] = []; // chưa freeze nào
+    dbState.queue[8] = [{ shieldCredits: 1 }];
+    // nhánh consume thêm 2 await: insert freezes (kết quả không dùng) +
+    // update shield_credits — chèn trước update-profiles returning
+    dbState.queue.splice(9, 0, [], []);
+    const result = await awardVocabXpTx(txMock() as never, params());
+    expect(result.streak).toBe(3); // hôm-nay-kia + freeze hôm-qua + hôm nay
+    const freezeInserts = dbState.calls.filter(
+      (c) =>
+        Array.isArray(c) &&
+        c.length > 0 &&
+        typeof (c[0] as { date?: unknown }).date === "string" &&
+        !("vocabSteps" in (c[0] as object)),
+    );
+    expect(freezeInserts).toHaveLength(1);
+    expect((freezeInserts[0] as { date: string }[])[0].date).toBe(addDays(t, -1));
+  });
+
+  it("SF-4 gate: ngày ĐÃ active → recompute KHÔNG chạy (không select freezes/credits)", async () => {
+    happyQueue();
+    dbState.queue[4] = [{ userId: "u1", date: vnToday(new Date()) }]; // đã có
+    const result = await awardVocabXpTx(txMock() as never, params());
+    expect(result.streak).toBe(3); // cache giữ nguyên
+    // queue còn dư freezes + credits + update — nhánh recompute không ăn
+    expect(dbState.queue.length).toBe(3);
   });
 
   it("profiles không tồn tại → noProfile, không ghi gì", async () => {
