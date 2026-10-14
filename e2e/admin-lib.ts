@@ -20,7 +20,10 @@ import { expect, type Page } from "@playwright/test";
 
 dotenv.config({ path: ".env.local" });
 
-export const QA_UNIT_MIN = 900;
+// [2000, 2089] — DB clone thật (ilec_dev nguồn) có sẵn units level-3 tới
+// number 959 → khoảng [900, 989] cũ ĐỤNG data (unit trùng → "Tạo mới" rơi
+// vào unit có sẵn, lesson auto-number ≠ 1 — base-parity flake sweep 11)
+export const QA_UNIT_MIN = 2000;
 export const QA_PREFIX = "[QA-SF4]";
 export const QA_USER_PASSWORD = "sf4-user-pass";
 
