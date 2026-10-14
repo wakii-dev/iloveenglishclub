@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-import { attemptCount, attemptCountFor, profileOf } from "./db";
+import {
+  attemptCount,
+  attemptCountFor,
+  bumpProfileXpAboveMax,
+  profileOf,
+} from "./db";
 
 /**
  * E2E SF-6 (context pack #9 — plan-critic P1 tách khỏi SF-4): vòng lặp
@@ -152,6 +157,10 @@ test.describe("Progress + Gamification (SF-6)", () => {
     ).toBeVisible();
 
     // /top-users: 2 bảng đều có user với 38 XP
+    // all-time top-50 guard: DB clone thật (ilec_dev nguồn) có sẵn 50+
+    // profiles xp≥38 → user test rơi ngoài bảng KHÔNG phải regression —
+    // bump XP user test lên trên max toàn nền (weekly vẫn 38 — đọc attempts)
+    await bumpProfileXpAboveMax(email);
     await page.goto("/en/top-users", { waitUntil: "domcontentloaded" });
     const weekly = page.locator("section", {
       hasText: /this week|tuần này/i,
