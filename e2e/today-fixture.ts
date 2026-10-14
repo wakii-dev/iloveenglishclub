@@ -307,6 +307,60 @@ export async function seedTodayUserB(): Promise<TodayUser> {
   });
 }
 
+/**
+ * Seed shield user (SF-4, VU-52 — context pack §6): daily_activity
+ * HÔM-NAY-KIA + HÔM NAY (gap HÔM QUA) + `credits` shield_credits. Re-run
+ * sạch: xoá daily_activity/streak_freezes/attempts/quests/badges của user —
+ * attempts RẼN là bẫy gate isFirstToday (attempt cũ của cùng part ⇒
+ * recompute KHÔNG chạy ⇒ freeze không sinh ⇒ suite đỏ vô oan).
+ */
+export async function seedTodayShieldUser(
+  prefix: string,
+  credits: number,
+): Promise<TodayUser> {
+  const c = client();
+  const email = `qa-today-shield-${prefix}@test.ilec`;
+  return c.begin(async (tx) => {
+    const uid = await upsertUser(tx, email, `QA Shield ${prefix.toUpperCase()}`);
+    const today = vnToday(new Date());
+    const dayBefore = addDays(today, -2);
+    await tx`
+      insert into profiles (id, display_name, locale, xp, streak_count,
+        daily_goal_minutes, daily_goal_words, shield_credits)
+      values (${uid}, ${"QA Shield " + prefix.toUpperCase()}, 'vi', 100, 1, 5, 5, ${credits})
+      on conflict (id) do update set xp = 100, streak_count = 1,
+        daily_goal_minutes = 5, daily_goal_words = 5, shield_credits = ${credits}
+    `;
+    // grant-ledger tháng NAY — chặn auto-grant khi visit /today (credits
+    // assert −1 phải deterministic — pattern seedProgressAndActivity)
+    await tx`
+      insert into shield_grants (user_id, month)
+      values (${uid}, ${today.slice(0, 7)})
+      on conflict (user_id, month) do nothing
+    `;
+    await tx`delete from daily_activity where user_id = ${uid}`;
+    await tx`delete from streak_freezes where user_id = ${uid}`;
+    await tx`delete from attempts where user_id = ${uid}`;
+    await tx`delete from quest_completions where user_id = ${uid}`;
+    await tx`delete from user_badges where user_id = ${uid}`;
+    // gap hôm-qua: chỉ 2 ngày active — recompute dictation sẽ freeze hôm-qua
+    await tx`
+      insert into daily_activity (user_id, date, vocab_steps)
+      values (${uid}, ${dayBefore}::date, 1), (${uid}, ${today}::date, 1)
+      on conflict (user_id, date) do update set vocab_steps = 1
+    `;
+    // badge owned cho /me acceptance (user "c" — nhìn thấy badge đã nhận)
+    if (prefix === "c") {
+      await tx`
+        insert into user_badges (user_id, badge_id)
+        values (${uid}, 'streak-3')
+        on conflict (user_id, badge_id) do nothing
+      `;
+    }
+    return { id: uid, email };
+  });
+}
+
 /** Self-clean cuối run — xoá users + words QA (cascade progress/activity). */
 export async function cleanupTodayFixture(): Promise<void> {
   const c = client();
