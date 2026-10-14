@@ -1,0 +1,27 @@
+tdd: RED→GREEN — my-stats.test.ts viết TRƯỚC readMyStats mở rộng (RED 8/10 fail: shape thiếu goalDone + queue 3 chain) → GREEN 10/10 (fix destructure Promise.all + giữ contract throw-on-DB-failure của caller .catch). Components/e2e: verify bằng browser Rule 0 (screens) + e2e 3321 (7 test) — TDD unit không áp cho RSC render thuần (snapshot store đã pin SF-2).
+code commit: 6460fe8 (feat(vu48-sf3): /today page + nav reminder dot + i18n + e2e 3321 — VU-51)
+e2e hardening commit: fa0c784 (fix: review-tới-summary + resetDailyState re-run an toàn + PATCH-goal test click-with-retry)
+review: code-reviewer ĐỘC LẬP — VERDICT: APPROVED (0 P0/P1; 3 P2 không chặn: my-stats practiced-scan perf-debt mirror-today-store · free-input không clear sau save · dead branch badges empty-state — ghi audit log, không churn code sau approve) · coverage 29/29 file + boundary + client-crypto + CHECKLIST-4Q 4/4 PASS
+run: 2026-10-14 · worktree sf-3-daily-journey · DB local ilec_dj_sf3 (fresh clone từ ilec_dev — ĐÃ có 0007, verified information_schema; ilec_sf3 cũ STALE thuộc story khác — không đụng)
+
+== vitest (node node_modules/vitest/vitest.mjs run — src/**) ==
+Test Files  77 passed | 1 skipped (78)
+      Tests  1010 passed | 4 skipped (1014)   [SF-2 baseline 1000 → +10 my-stats]
+  messages parity: today.json vi/en + nav.today — 3/3 xanh
+
+== e2e 3321 (npm run test:e2e:today — playwright.today.config.ts) ==
+7 passed ×2 liên tiếp (40.8s / 47.0s):
+  today-page.spec: guest redirect giữ next + nav không dot · VI hero rings/3 cards/quest list/dot ON đúng seeded (oracle dictation SQL trong beforeAll) · EN i18n swap · PATCH goal phút 15 ring+reload giữ · a11y smoke (1 h1, ring aria, progressbar aria, CTA ≥44px)
+  today-quest.spec: A (quest-hash pin q-review-5) ôn 5 từ → q-review-5 auto-done + badge quests-5 toast ĐÚNG 1 LẦN + reload KHÔNG toast lại KHÔNG record lại (ledger counts before/after equal) · B ôn 2 từ → goal kép → dot TẮT NGAY qua event (URL giữ nguyên)
+  fixture: quest-hash RUNTIME SEARCH (A: set chứa q-review-5; B: set sạch {review-5,listen-goal,plant-3} ∩ ∅) · seed SQL bcrypt tĩnh · resetDailyState re-run an toàn · shield_grants seed trước (Credit 0/2 deterministic) · teardown xoá qa-today-%
+
+== regression (context pack: dashboard 3319 + vocabulary chính) ==
+test:e2e:vocabulary-dashboard: 6 passed (sau khi clean fixture residue từ seed tay walkthrough — failure đầu "10/25→10/32" là nhiễm words qa-today vào level-5, KHÔNG phải code)
+test:e2e:vocabulary: 2 passed
+build: npx next build sạch (/today ● 4.59 kB trong output) · tsc --noEmit sạch · eslint sạch (changed files)
+
+== browser Rule 0 ==
+3 tầng + screenshots: docs/superpowers/evidence/sf-3-daily-journey/browser-verify.md + screens/flow-00..08 (guest redirect, before, deeplink, dot-off qua event, after celebration, goal patch, en, mobile menu+375)
+
+== bổ sung: nghe 1 part → ring phút (acceptance #2 — verify sau review) ==
+part level-3/u1/l1 seed 61s (restore 3500): BEFORE ring 0/10 → nghe THẬT qua player → DB listen_ms 61000 → AFTER ring "Đã nghe 1 trên 10" (floor đúng) → re-attempt cùng part VẪN 61000 (không cộng kép) · quest q-listen-goal 0/10→1/10 · streak 0→1 · dictation next reading-priority chuyển đúng §3.4 · screenshots flow-09..11
