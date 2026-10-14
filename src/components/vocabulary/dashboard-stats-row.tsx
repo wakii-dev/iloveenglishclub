@@ -21,7 +21,7 @@ export function DashboardStatsRow({
   return (
     <div className="mb-3.5 grid grid-cols-3 gap-2.5">
       <article className="flex flex-col items-center gap-1 rounded-[20px] border-[1.5px] border-border bg-card px-3 py-3.5 text-center">
-        <DashboardGoalRing planted={summary.plantedToday} goal={summary.dailyGoalWords} />
+        <DashboardGoalRing planted={summary.practicedToday} goal={summary.dailyGoalWords} />
       </article>
 
       <article className="flex flex-col items-center gap-1 rounded-[20px] border-[1.5px] border-border bg-card px-3 py-3.5 text-center">

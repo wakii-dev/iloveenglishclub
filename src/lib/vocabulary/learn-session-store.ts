@@ -316,14 +316,18 @@ async function scopeWordRow(
   return row ?? null;
 }
 
-/** Count event learn-complete hôm nay (VN) — planted-today cho goalDone. */
-async function countLearnCompleteToday(
+/**
+ * Count DISTINCT từ có ≥1 sự kiện ĐÚNG hôm nay (VN) — practiced-today cho
+ * goalDone (daily-journey §3.5 unify: learn-complete + session-step — "từ
+ * ôn/luyện", không chỉ từ mới planted).
+ */
+async function countPracticedToday(
   exec: Exec,
   userId: string,
 ): Promise<number> {
   const [row] = await exec
     .select({
-      n: sql<number>`count(*) filter (where ${vocabActivity.kind} = 'learn-complete' and (${vocabActivity.createdAt} at time zone 'Asia/Ho_Chi_Minh')::date = ${vnToday(new Date())}::date)::int`,
+      n: sql<number>`count(distinct ${vocabActivity.wordId}) filter (where ${vocabActivity.correct} and ${vocabActivity.kind} in ('learn-complete', 'session-step') and (${vocabActivity.createdAt} at time zone 'Asia/Ho_Chi_Minh')::date = ${vnToday(new Date())}::date)::int`,
     })
     .from(vocabActivity)
     .where(eq(vocabActivity.userId, userId));
@@ -385,7 +389,7 @@ async function reconstructCached(
   }
 
   const goalDone = goalStatus({
-    plantedToday: await countLearnCompleteToday(exec, userId),
+    plantedToday: await countPracticedToday(exec, userId),
     goal: profile?.dailyGoalWords ?? 0,
   }).done;
 
@@ -601,7 +605,7 @@ export async function applyStep(
       }
 
       const goalDone = goalStatus({
-        plantedToday: await countLearnCompleteToday(tx, userId),
+        plantedToday: await countPracticedToday(tx, userId),
         goal: await profileGoal(tx, userId),
       }).done;
 
