@@ -213,7 +213,14 @@ describe("getTodaySnapshot — fan-out + shape spec §3.2", () => {
         "listen-60",
         "quests-5",
       ],
-      badges: [], // read user_badges rỗng (trước award)
+      // union owned (read) + newly (tx vừa award) — response tự-consistent
+      badges: [
+        "streak-3",
+        "streak-7",
+        "words-learned-10",
+        "listen-60",
+        "quests-5",
+      ],
       shield: { credits: 2, cap: 2, freezes: [] }, // post-grant từ UPDATE returning
     });
 
@@ -448,6 +455,34 @@ describe("getTodaySnapshot — fan-out + shape spec §3.2", () => {
       badges: [],
       shield: { credits: 0, cap: 2, freezes: [] },
     });
+  });
+
+  it("chưa học hôm nay (chỉ row hôm qua) → listen/parts 0, KHÔNG tự ghi quest từ số hôm qua (meta-test P0 review)", async () => {
+    fanoutQueue({
+      // stale-first: row mới nhất là HÔM QUA — rows[0] không phải hôm nay
+      activity: [{ date: addDays(today(), -1), listenMs: 900_000, partsDone: 9 }],
+      vocabAgg: [{ practiced: 0, planted: 0, reviewed: 0 }],
+      questCount: [{ n: 0 }],
+      profile: [
+        { dailyGoalMinutes: 15, dailyGoalWords: 5, shieldCredits: 1, streakCount: 0 },
+      ],
+      activeDays: [{ n: 1 }],
+      wordsLearned: [{ n: 0 }],
+      listenMsAll: [{ ms: 0 }],
+      dictationLessons: [],
+    });
+    dbState.queue.push([]); // grant conflict — KHÔNG được có quest insert
+
+    const s = await getTodaySnapshot("u1", new Date());
+    expect(s.listenMinutesToday).toBe(0); // RED code cũ: 15 (số hôm qua)
+    expect(s.partsToday).toBe(0); // RED code cũ: 9
+    expect(s.activeToday).toBe(false);
+    expect(s.streak).toBe(1); // chuỗi còn sống từ hôm qua (computeStreak)
+    expect(s.newlyCompletedQuests).toEqual([]); // RED code cũ: q-parts-* done ảo
+    const questInserts = dbState.calls.filter(
+      (c) => Array.isArray(c) && (c[0] as { questId?: string })?.questId,
+    );
+    expect(questInserts).toHaveLength(0); // RED code cũ: insert quest sai ledger
   });
 
   it("listenMinutesToday floor: 90s → 1 phút (không làm tròn lên)", async () => {

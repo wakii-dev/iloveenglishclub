@@ -82,6 +82,14 @@ describe.each([
     },
   );
 
+  it("store trả {ok:false} (profile mất) → 500 generic", async () => {
+    authState.session = { user: { id: "u1" } };
+    updateMock.mockResolvedValue({ ok: false });
+    const res = await handler(req("PATCH", { minutes: 15 }));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ ok: false, error: "generic" });
+  });
+
   it("store lỗi → 500 generic + log", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     authState.session = { user: { id: "u1" } };

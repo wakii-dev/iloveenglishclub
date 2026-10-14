@@ -137,7 +137,10 @@ type TodayActivityRow = {
   dates: string[];
 };
 
-async function readTodayActivity(userId: string): Promise<TodayActivityRow> {
+async function readTodayActivity(
+  userId: string,
+  today: string,
+): Promise<TodayActivityRow> {
   try {
     const rows = await db
       .select({
@@ -149,9 +152,12 @@ async function readTodayActivity(userId: string): Promise<TodayActivityRow> {
       .where(eq(dailyActivity.userId, userId))
       .orderBy(desc(dailyActivity.date))
       .limit(STREAK_LOOKBACK_DAYS);
+    // row HÔM NAY mới là số hôm nay — rows[0] là HÔM QUA khi user chưa active
+    // hôm nay (meta-test P0 review: yesterday-only → 0s, không tự ghi quest)
+    const todayRow = rows.find((r) => r.date === today);
     return {
-      listenMs: rows[0]?.listenMs ?? 0,
-      partsDone: rows[0]?.partsDone ?? 0,
+      listenMs: todayRow?.listenMs ?? 0,
+      partsDone: todayRow?.partsDone ?? 0,
       dates: rows.map((r) => r.date),
     };
   } catch (error) {
@@ -458,7 +464,7 @@ export async function getTodaySnapshot(
     badgeAgg,
   ] = await Promise.all([
     readProfile(userId),
-    readTodayActivity(userId),
+    readTodayActivity(userId, today),
     readVocabAggregates(userId, today),
     getHubStats(userId),
     getNextDictationTarget(userId),
@@ -592,7 +598,9 @@ export async function getTodaySnapshot(
     quests: questsFinal,
     newlyCompletedQuests,
     newlyEarnedBadges,
-    badges: ownedBadges,
+    // union owned (read) + newly (tx vừa award) — response tự-consistent:
+    // toast SF-3 fire cho badge mà shelf phải thấy CÙNG snapshot (P1 review)
+    badges: [...new Set([...ownedBadges, ...newlyEarnedBadges])],
     shield: { credits: shieldCredits, cap: SHIELD_CAP, freezes },
   };
 }
