@@ -16,12 +16,12 @@ import {
  * label + aria mới (DOM + screenshot) → PATCH /api/today/goal bằng cookie
  * session thật (page.evaluate fetch — authed integration proxy) → persist
  * kiểm DB trực tiếp → guest curl 401 (chạy riêng). Screenshot vào evidence
- * sf-2-today-engine/screens — coordinator tự Read ảnh pixel thật.
+ * sf-2-daily-journey/screens — coordinator tự Read ảnh pixel thật.
  * Chạy: node e2e/rule0-sf2-today-engine.ts (dev server 3318 phải đang sống)
  */
 
 dotenv.config({ path: ".env.local" });
-const SHOT_DIR = "docs/superpowers/evidence/sf-2-today-engine/screens";
+const SHOT_DIR = "docs/superpowers/evidence/sf-2-daily-journey/screens";
 const BASE = "http://localhost:3318";
 const sql = postgres(process.env.DATABASE_URL ?? "", { prepare: false });
 

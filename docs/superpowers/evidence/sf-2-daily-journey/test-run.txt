@@ -57,7 +57,7 @@ SO TAY MATCH: true — expected==got {
 - persist: profiles.daily_goal_minutes = 15 kiểm psql trực tiếp
 - guest /vi/vocabulary: không ring data (dashboard user-only)
 - screenshots (pixel thật, coordinator tự Read): docs/superpowers/evidence/
-  sf-2-today-engine/screens/{1-vocabulary-ring-vi-label-moi,2-vocabulary-
+  sf-2-daily-journey/screens/{1-vocabulary-ring-vi-label-moi,2-vocabulary-
   ring-en-parity,3-guest-vocabulary-khong-ring}.png
 - curl guest trực tiếp: PATCH|POST /api/today/goal → 401 {"ok":false,
   "error":"not-authenticated"} (route thật trên dev server)
