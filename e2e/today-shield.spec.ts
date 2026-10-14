@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import postgres from "postgres";
 import dotenv from "dotenv";
 import { loginUser } from "./today-drivers";
+import { startPart } from "./start-gate";
 import { TODAY_BOOK_SLUG, type TodayUser } from "./today-fixture";
 
 /**
@@ -75,11 +76,9 @@ async function doOneDictationPart(
   text: string,
 ): Promise<void> {
   await page.goto(href, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: START }).click();
-  const box = page.getByRole("textbox");
-  await expect(box).toBeVisible();
-  await box.fill(text);
-  await box.press("Enter"); // check → submitAttempt server action
+  await startPart(page, START); // retry pre-hydration (lesson e2e-authoring)
+  await page.getByRole("textbox").fill(text);
+  await page.getByRole("textbox").press("Enter"); // check → submitAttempt
 }
 
 /** Poll DB đến khi attempts row của user xuất hiện (action compile lạnh tới 115s). */
