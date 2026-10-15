@@ -25,7 +25,7 @@ export default defineConfig({
   timeout: 120_000,
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
-  retries: 0,
+  retries: 1, // grading POST nặng (mỗi câu 1 POST) — dev hiccup response đứt → pending kẹt; fail 2 lần liên tiếp vẫn đỏ
   reporter: [["list"]],
   use: {
     baseURL: BASE,
