@@ -80,9 +80,14 @@ export async function ensureTopUsersFixture(): Promise<void> {
       values (${crypto.randomUUID()}, ${TU_EMAIL}, ${TU_NAME}, ${passwordHash})
       returning id
     `;
+    // XP ĐỘNG: trên max toàn nền +10k — chắc chắn trong top-50 all_time mọi DB
+    const maxRows: { m: number }[] =
+      await tx`select coalesce(max(xp), 0)::int as m from profiles`;
+    const tuXp = Math.max(TU_PROFILE_XP, (maxRows[0]?.m ?? 0) + 10_000);
     await tx`
       insert into profiles (id, display_name, xp, streak_count)
-      values (${user.id}, ${TU_NAME}, ${TU_PROFILE_XP}, 2)
+      values (${user.id}, ${TU_NAME}, ${tuXp}, 2)
+      on conflict (id) do update set xp = ${tuXp}
     `;
     // 3 learn-complete × 4xp — lần-đầu-trong-ngày rule không cần vì seed thẳng
     for (let i = 0; i < 3; i++) {
