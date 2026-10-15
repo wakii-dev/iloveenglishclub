@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "vocabulary": "Từ vựng"
+  },
+  "tabs": {
+    "catalog": "Catalog",
+    "curation": "Curation",
+    "stats": "Thống kê"
+  },
+  "bulk": {
+    "selected": "Đã chọn {count}",
+    "clear": "Bỏ chọn hết"
+  },
+  "errors": {
+    "tooMany": "Quá 500 từ mỗi lượt — chia nhỏ ra",
+    "scopeRequired": "Chọn phạm vi (sách hoặc danh sách từ) trước khi chạy",
+    "invalidCefr": "Cấp CEFR không hợp lệ (A1–C2)",
+    "invalidPos": "Từ loại không hợp lệ (tối đa 32 ký tự)",
+    "invalidSynonyms": "Danh sách đồng nghĩa quá dài (tối đa 500 ký tự)",
+    "invalidImageUrl": "Đường dẫn ảnh phải là URL http(s)",
+    "invalidSource": "Nguồn chỉ nhận oxford-ld hoặc teacher",
+    "imageTooLarge": "Ảnh tối đa 2MB",
+    "imageMime": "Ảnh chỉ nhận PNG, JPEG hoặc WebP",
+    "bookNotFound": "Sách không tồn tại",
+    "meaningRequired": "Thiếu nghĩa tiếng Việt",
+    "invalidEntryWord": "Entry không có headword hợp lệ",
+    "wordNotFound": "Không tìm thấy từ",
+    "notFound": "Không tìm thấy",
+    "duplicateWord": "Từ đã tồn tại",
+    "generic": "Có lỗi xảy ra — thử lại"
+  }
+}

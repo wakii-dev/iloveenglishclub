@@ -1,5 +1,5 @@
 {
-  "id": "4784278e-6abd-4372-a990-1683320eab2d",
+  "id": "1d329213-4988-4530-9c2e-dd9f67614246",
   "prevId": "67bcdc6e-3629-4aee-97c5-83bf95115353",
   "version": "7",
   "dialect": "postgresql",
@@ -589,6 +589,51 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "crawl_entries_cefr_idx": {
+          "name": "crawl_entries_cefr_idx",
+          "columns": [
+            {
+              "expression": "cefr",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "crawl_entries_pos_idx": {
+          "name": "crawl_entries_pos_idx",
+          "columns": [
+            {
+              "expression": "pos",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "crawl_entries_ox3000_idx": {
+          "name": "crawl_entries_ox3000_idx",
+          "columns": [
+            {
+              "expression": "ox3000",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
@@ -631,13 +676,6 @@
         },
         "vocab_steps": {
           "name": "vocab_steps",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "listen_ms": {
-          "name": "listen_ms",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -970,20 +1008,6 @@
           "notNull": true,
           "default": 5
         },
-        "daily_goal_minutes": {
-          "name": "daily_goal_minutes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 10
-        },
-        "shield_credits": {
-          "name": "shield_credits",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1009,67 +1033,6 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.quest_completions": {
-      "name": "quest_completions",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quest_id": {
-          "name": "quest_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "recorded_at": {
-          "name": "recorded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "quest_completions_user_id_profiles_id_fk": {
-          "name": "quest_completions_user_id_profiles_id_fk",
-          "tableFrom": "quest_completions",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "quest_completions_user_id_date_quest_id_pk": {
-          "name": "quest_completions_user_id_date_quest_id_pk",
-          "columns": [
-            "user_id",
-            "date",
-            "quest_id"
-          ]
-        }
-      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1245,114 +1208,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.shield_grants": {
-      "name": "shield_grants",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "month": {
-          "name": "month",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "granted_at": {
-          "name": "granted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "shield_grants_user_id_profiles_id_fk": {
-          "name": "shield_grants_user_id_profiles_id_fk",
-          "tableFrom": "shield_grants",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "shield_grants_user_id_month_pk": {
-          "name": "shield_grants_user_id_month_pk",
-          "columns": [
-            "user_id",
-            "month"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.streak_freezes": {
-      "name": "streak_freezes",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "consumed_at": {
-          "name": "consumed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "streak_freezes_user_id_profiles_id_fk": {
-          "name": "streak_freezes_user_id_profiles_id_fk",
-          "tableFrom": "streak_freezes",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "streak_freezes_user_id_date_pk": {
-          "name": "streak_freezes_user_id_date_pk",
-          "columns": [
-            "user_id",
-            "date"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.units": {
       "name": "units",
       "schema": "",
@@ -1467,60 +1322,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_badges": {
-      "name": "user_badges",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "badge_id": {
-          "name": "badge_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "awarded_at": {
-          "name": "awarded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "user_badges_user_id_profiles_id_fk": {
-          "name": "user_badges_user_id_profiles_id_fk",
-          "tableFrom": "user_badges",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "user_badges_user_id_badge_id_pk": {
-          "name": "user_badges_user_id_badge_id_pk",
-          "columns": [
-            "user_id",
-            "badge_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2073,6 +1874,24 @@
         },
         "source": {
           "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pos": {
+          "name": "pos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "synonyms": {
+          "name": "synonyms",
           "type": "text",
           "primaryKey": false,
           "notNull": false

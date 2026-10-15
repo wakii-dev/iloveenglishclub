@@ -40,3 +40,9 @@
 - **Sweep nhiều suite: `.next` dùng chung → dev hiccup ngẫu nhiên (JSON.parse "Unexpected end of input" trên trang bất kỳ)**. Rule: xoá `.next` trước MỖI e2e suite trong sweep chain (chậm hơn nhưng deterministic). Đích: qa-checklist sweep section.
 - **Retry helpers chuẩn hoá 1 file dùng chung (`e2e/start-gate.ts`)**: startPart (Start click pre-hydration), clickNavUntil (mid-RSC-swap nav), doPartCorrect retry-Enter — áp 9+ specs thay vì patch từng chỗ; pattern cũ click→expect một dòng là nguồn flake số 1 của lane dictation.
 - **Admin e2e (playwright.sf4.config) cần `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `.env.local`** (global-setup upsert admin) — worktree mới copy env thiếu → "No tests" khó hiểu. Đích: qa-checklist bootstrap.
+
+## 2026-10-11 — SF-4 (VU-47) — 2 P2 security-audit Phase 1 DEFERRED (khóm theo directive: chỉ P2-1/P2-2 fix trong SF-4)
+
+1. **P2-3 — backfill route thiếu cap wordIds scope**: `POST /api/admin/vocabulary/audio-backfill` scope `{wordIds[]}` chưa cap độ dài mảng (bulk/promote đã cap 500/200 — `tooMany`). Khuyến nghị: cap `wordIds.length > 500 → tooMany` + test pin, làm cùng batch follow-up với hardening routes.
+2. **P2-4 — image route chưa check magic-byte**: `POST /api/admin/vocabulary/image` validate mime theo Content-Type header (allowlist png/jpeg/webp) — chưa sniff magic-byte nội dung (upload đổi Content-Type vượt qua). Khuyến nghị: đọc 12 byte đầu + so signature PNG/JPEG/WebP trước khi put blob.
+3. Nguồn: `docs/superpowers/reviews/security-audit-story-vu43-phase1.md` (file KHÔNG có trong worktree sf-4 — mô tả lấy từ directive coordinator; khi merge, đối chiếu bản gốc để giữ nguyên thứ tự ưu tiên).

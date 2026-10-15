@@ -1,0 +1,32 @@
+{
+  "title": "Thống kê từ vựng",
+  "lead": "Tổng quan toàn bộ words — coverage audio/image, phân bố CEFR, theo sách và crawl/enrich.",
+  "cards": {
+    "total": "Tổng số từ",
+    "audio": "Coverage audio",
+    "image": "Coverage image",
+    "orphan": "Chưa gắn sách",
+    "enriched": "Coverage Oxford"
+  },
+  "histogram": {
+    "title": "Phân bố CEFR",
+    "untagged": "Chưa gắn",
+    "other": "Khác",
+    "hint": "Tổng các cột luôn bằng tổng số từ."
+  },
+  "perBook": {
+    "title": "Theo sách",
+    "book": "Sách",
+    "words": "Số từ",
+    "audio": "Audio coverage",
+    "empty": "Chưa có sách nào."
+  },
+  "crawl": {
+    "title": "Crawl Oxford",
+    "parsed": "Đã parse",
+    "pending": "Đang chờ",
+    "failed": "Lỗi",
+    "link": "Mở Crawl Oxford"
+  },
+  "error": "Không tải được thống kê."
+}

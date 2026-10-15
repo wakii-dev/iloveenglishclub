@@ -10,6 +10,121 @@ export const IPA_MAX = 100;
 export const EXAMPLE_MAX = 1000;
 export const AUDIO_URL_MAX = 1000;
 
+// Vocab CMS (VU-43 SF-1) — giới hạn field mới (spec §4: pin validate ở 1 chỗ)
+export const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+export type CefrLevel = (typeof CEFR_LEVELS)[number];
+export const POS_MAX = 32;
+export const SYNONYMS_MAX = 500;
+export const IMAGE_URL_MAX = 1000;
+
+/** Chuẩn hoá so khớp/ghi CEFR: trim + uppercase — 'b1 ' ≡ 'B1'. */
+export function normalizeCefr(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+export function isCefrLevel(value: string): value is CefrLevel {
+  return (CEFR_LEVELS as readonly string[]).includes(value);
+}
+
+/**
+ * cefr input (GHI): trim+upper; rỗng → null (optional); lệch allowlist
+ * A1..C2 sau normalize → invalidCefr. Non-string → null (pattern optionalField).
+ */
+export function validateCefrInput(
+  value: unknown,
+): CefrLevel | null | { error: "invalidCefr" } {
+  if (typeof value !== "string") return null;
+  const normalized = normalizeCefr(value);
+  if (normalized.length === 0) return null;
+  if (!isCefrLevel(normalized)) return { error: "invalidCefr" };
+  return normalized;
+}
+
+/**
+ * pos input (GHI): free text ≤ 32, lowercase-trim; rỗng → null.
+ * Nguồn crawl_entries.pos ('noun'…) nhưng teacher có thể sửa tay.
+ */
+export function validatePosInput(
+  value: unknown,
+): string | null | { error: "invalidPos" } {
+  if (typeof value !== "string") return null;
+  const pos = value.trim().toLowerCase();
+  if (pos.length === 0) return null;
+  if (pos.length > POS_MAX) return { error: "invalidPos" };
+  return pos;
+}
+
+/** Chuẩn hoá GHI synonyms: split ',' → trim từng item → bỏ rỗng → join ', '. */
+export function normalizeSynonyms(value: string): string {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .join(", ");
+}
+
+/** synonyms input (GHI): chuẩn hoá xong ≤ 500 ký tự — vượt → invalidSynonyms. */
+export function validateSynonymsInput(
+  value: unknown,
+): string | null | { error: "invalidSynonyms" } {
+  if (typeof value !== "string") return null;
+  const normalized = normalizeSynonyms(value);
+  if (normalized.length === 0) return null;
+  if (normalized.length > SYNONYMS_MAX) return { error: "invalidSynonyms" };
+  return normalized;
+}
+
+/** imageUrl input (GHI): URL http(s) như audio_url (blob CDN hoặc external). */
+export function validateImageUrlInput(
+  value: unknown,
+): string | null | { error: "invalidImageUrl" } {
+  if (typeof value !== "string") return null;
+  const url = value.trim();
+  if (url.length === 0) return null;
+  if (url.length > IMAGE_URL_MAX || !/^https?:\/\//.test(url)) {
+    return { error: "invalidImageUrl" };
+  }
+  return url;
+}
+
+/**
+ * source input (PATCH — giá trị duy nhất admin được sửa tay: 2 giá trị chuẩn
+ * spec §4; promote/enrich tự ghi 'oxford-ld'). 'teacher' ≡ null (mapping
+ * filter §4) — giá trị lạ → invalidSource.
+ */
+export function validateSourceInput(
+  value: unknown,
+): "oxford-ld" | null | { error: "invalidSource" } {
+  if (value === null) return null;
+  if (typeof value !== "string") return { error: "invalidSource" };
+  const source = value.trim();
+  if (source.length === 0 || source === "teacher") return null;
+  if (source === "oxford-ld") return "oxford-ld";
+  return { error: "invalidSource" };
+}
+
+/**
+ * cefr filter (csv 'b1,B2' → ['B1','B2']): normalize + allowlist + dedupe —
+ * token lạ sau normalize bị bỏ (khớp nothing, không lỗi — filter là UI chips).
+ */
+export function parseCefrFilter(raw: string | null): CefrLevel[] {
+  if (!raw) return [];
+  const out = new Set<CefrLevel>();
+  for (const token of raw.split(",")) {
+    const normalized = normalizeCefr(token);
+    if (isCefrLevel(normalized)) out.add(normalized);
+  }
+  return [...out];
+}
+
+/**
+ * Escape LIKE wildcard trong q (spec §4 deliberate bugfix: search literal
+ * '%'/'_'/'\' trước đây vô nghĩa) — PG ILIKE default escape = backslash.
+ */
+export function escapeLikePattern(q: string): string {
+  return q.replace(/([\\%_])/g, "\\$1");
+}
+
 /** Path lưu audio của word — unique theo word id, re-upload = replace. */
 export function buildWordAudioPath(wordId: number, ext: string): string {
   return `audio/vocabulary/${wordId}.${ext}`;
@@ -22,7 +137,10 @@ export function resolveStoredAudioUrl(value: string): string {
 
 /** Field word input — snake_case khớp cột DB (body import/API dùng y nguyên).
  *  cefr/source (SF-2): optional — chỉ crawl-on-add approve set; import hiện có
- *  (6 caller) không đụng, type additive không break. */
+ *  (6 caller) không đụng, type additive không break.
+ *  pos/synonyms/image_url (VU-43 SF-1): optional — validateWordInput chỉ nhét
+ *  key khi body CUNG CẤP (import path cũ không gửi → create insert null,
+ *  giữ nguyên chuỗi query cũ). */
 export type WordInput = {
   word: string;
   ipa: string | null;
@@ -31,6 +149,9 @@ export type WordInput = {
   audio_url: string | null;
   cefr?: string | null;
   source?: string | null;
+  pos?: string | null;
+  synonyms?: string | null;
+  image_url?: string | null;
 };
 
 /** 1 dòng hợp lệ sau validate — line để report lỗi theo dòng (t-1.2). */
@@ -65,13 +186,37 @@ export function validateWordInput(
   const audio = optionalField(raw.audio_url, AUDIO_URL_MAX);
   if (audio !== null && !/^https?:\/\//.test(audio)) return { error: "invalidAudioUrl" };
 
-  return {
+  // VU-43 SF-1: field mới — chỉ validate khi body cung cấp (key không có mặt
+  // → không nhét vào output, giữ chuỗi query cũ cho consumer hiện có)
+  const result: WordInput = {
     word,
     meaning_vi: meaning,
     ipa: optionalField(raw.ipa, IPA_MAX),
     example: optionalField(raw.example, EXAMPLE_MAX),
     audio_url: audio,
   };
+  if (raw.cefr !== undefined) {
+    const cefr = validateCefrInput(raw.cefr);
+    if (cefr !== null && typeof cefr === "object") return cefr;
+    result.cefr = cefr;
+  }
+  if (raw.pos !== undefined) {
+    const pos = validatePosInput(raw.pos);
+    if (pos !== null && typeof pos === "object") return pos;
+    result.pos = pos;
+  }
+  if (raw.synonyms !== undefined) {
+    const synonyms = validateSynonymsInput(raw.synonyms);
+    if (synonyms !== null && typeof synonyms === "object") return synonyms;
+    result.synonyms = synonyms;
+  }
+  const rawImage = raw.image_url ?? raw.imageUrl;
+  if (rawImage !== undefined) {
+    const imageUrl = validateImageUrlInput(rawImage);
+    if (imageUrl !== null && typeof imageUrl === "object") return imageUrl;
+    result.image_url = imageUrl;
+  }
+  return result;
 }
 
 /** Parse header CSV → index cột; thiếu word/meaning_vi → null (file-level lỗi). */
