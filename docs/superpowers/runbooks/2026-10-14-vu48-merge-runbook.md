@@ -10,7 +10,7 @@
 | SF-1 libs + migration 0007 | VU-49 | (merged trước checkpoint) | — | planFreezes/computeStreak pure + 4 bảng ledger |
 | SF-2 snapshot + engine | VU-50 | (merged trước checkpoint) | — | today-store + /api/today/goal |
 | SF-3 /today UI + nav dot | VU-51 | (merged trước checkpoint) | — | hero/quests/badges + e2e 3211 |
-| SF-4 shield wiring + /me + convergence | VU-52 | `story-vu48-daily-journey-sf-4` | _điền sau merge_ | recomputeStreakTx + 2 write-paths + e2e 3321 |
+| SF-4 shield wiring + /me + convergence | VU-52 | `story-vu48-daily-journey-sf-4` (pushed) | _điền sau merge_ | recomputeStreakTx + 2 write-paths + e2e 3321; evidence `docs/superpowers/evidence/{sf-4-daily-journey,vu48-sf4}/` |
 
 Dest story branch: `story-vu48-daily-journey` · Primary: `story-vu15-iloveenglishclub`.
 
