@@ -60,8 +60,6 @@ import { addDays, computeStreak, vnToday } from "./streak";
 
 const TODAY = vnToday(new Date()); // derive từ đồng hồ thật — không time-bomb
 
-type DateRow = { date: string };
-
 /** Queue chuẩn recomputeStreakTx: activity dates → freezes → credits (+ insert/update khi có freeze mới). */
 function queue(dates: string[], freezes: string[], credits: number): void {
   dbState.queue = [

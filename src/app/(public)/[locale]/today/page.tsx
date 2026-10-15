@@ -82,6 +82,7 @@ export default async function TodayPage({
           <TodayBadgeStrip owned={snapshot.badges} />
           <TodayStreakCard
             streak={snapshot.streak}
+            activeToday={snapshot.activeToday}
             shieldCredits={snapshot.shield.credits}
             shieldCap={snapshot.shield.cap}
             shieldFreezes={snapshot.shield.freezes}

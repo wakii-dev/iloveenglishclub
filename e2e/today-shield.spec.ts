@@ -30,7 +30,6 @@ let partTextB: string;
 /** Lesson + part đầu (published, còn part) của book đang đọc — oracle giống today-page.spec. */
 async function nextDictationTarget(
   sql: postgres.Sql,
-  uid: string,
 ): Promise<{ href: string; text: string }> {
   const rows: { unit_number: number; lesson_number: number; text: string }[] =
     await sql`
@@ -58,8 +57,8 @@ test.beforeAll(async () => {
   userA = { id: users[0]!.id, email: users[0]!.email };
   userB = { id: users[1]!.id, email: users[1]!.email };
   userC = { id: users[2]!.id, email: users[2]!.email };
-  const a = await nextDictationTarget(sql, userA.id);
-  const b = await nextDictationTarget(sql, userB.id);
+  const a = await nextDictationTarget(sql);
+  const b = await nextDictationTarget(sql);
   lessonHrefA = a.href;
   partTextA = a.text;
   lessonHrefB = b.href;

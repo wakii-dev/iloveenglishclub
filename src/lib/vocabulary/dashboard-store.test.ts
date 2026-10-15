@@ -172,7 +172,6 @@ describe("getDashboardSummary", () => {
 
   it("không có profile (row rỗng) → mặc định goal 5, xp 0", async () => {
     dbState.queue = [[{ practiced: 0 }], [], [], [], [{ total: 0, dueToday: 0, mastered: 0 }]];
-    dbState.queue = [[{ practiced: 0 }], [], [], [], [{ total: 0, dueToday: 0, mastered: 0 }]];
     const s = await getDashboardSummary("u1", new Date());
     expect(s.dailyGoalWords).toBe(5);
     expect(s.totalXp).toBe(0);
