@@ -61,9 +61,11 @@ async function answerCurrent(page: Page): Promise<boolean> {
   // disabled khi grading — đợi enabled ăn trọn test timeout)
   const before = await page.locator("main").innerText();
   const advance = async (): Promise<void> => {
+    // click timeout LỚN: nút disabled trong lúc grading POST — sweep xoá
+    // .next ⇒ server action compile lạnh tới ~115s (đã đo), không phải deadlock
     await page
       .getByRole("button", { name: "Continue" })
-      .click({ timeout: 10_000 });
+      .click({ timeout: 150_000 });
     await expect(async () => {
       if (await results.isVisible().catch(() => false)) return;
       const now = await page.locator("main").innerText();
@@ -74,7 +76,7 @@ async function answerCurrent(page: Page): Promise<boolean> {
           .catch(() => {});
         return; // chưa advance — toPass thử vòng sau
       }
-    }).toPass({ timeout: 30_000 });
+    }).toPass({ timeout: 60_000 });
   };
   if (await fillInput.isVisible()) {
     await fillInput.fill("qa-typed-answer");
