@@ -53,3 +53,6 @@ DB: ilec_dj_sf4 (local clone, migration 0007) · MỌI test:e2e:* + vitest + rls
   1 flaky
     [chromium] › e2e/oxford-fullchain.spec.ts:81:7 › Full-chain SF-4 › full-chain: crawl-on-add cache-hit REAL → approve → word vào book với audio 
   3 passed (1.7m)
+
+## KẾT LUẬN S6 (sweep-33 — vòng kết luận theo directive)
+15/16 e2e suites + vitest + typecheck + build PASS liên tiếp; rls PASS-BASE-PARITY (6 fail đã biết, khớp base 0409bc8); oxford-fullchain:237 FAIL 2/2 attempts (dev-hiccup/RSC class — base standalone PASS, retries guard không che — ghi trung thực, follow-up recommend). Chi tiết: test-run.md.
