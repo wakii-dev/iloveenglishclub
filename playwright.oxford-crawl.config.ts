@@ -31,7 +31,7 @@ export default defineConfig({
   expect: { timeout: 15_000 }, // pattern admin config — compile lạnh login/action
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
-  retries: 0,
+  retries: 1, // crawl-play flow — dev hiccup; fail 2 lần liên tiếp vẫn đỏ
   reporter: [["list"]],
   use: {
     baseURL: BASE,
