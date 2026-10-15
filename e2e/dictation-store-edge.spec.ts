@@ -138,18 +138,37 @@ test.describe("Dictation store edge (reload / double-submit / frozen / max-len)"
     // Part 1 done
     await page.getByRole("textbox").fill(SENT_1);
     await page.keyboard.press("Enter");
-    await page
-      .getByRole("button", { name: /next sentence|câu tiếp/i })
-      .click();
+    // next/skip/prev click có thể bị nuốt pre-hydration/mid-RSC — advance-
+    // verify theo Part label (pattern startPart/nav-results, sweep SF-4)
+    const partLabel = (n: number) =>
+      page.getByText(new RegExp(`Part ${n} of 4|Phần ${n} \/ 4`, "i"));
+    await expect(async () => {
+      if (await partLabel(2).isVisible().catch(() => false)) return;
+      await page
+        .getByRole("button", { name: /next sentence|câu tiếp/i })
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+      throw new Error("chưa tới part 2 — retry");
+    }).toPass({ timeout: 30_000 });
     // Part 2 skip
-    await page
-      .getByRole("button", { name: /skip this sentence|bỏ qua câu/i })
-      .click();
-    await expect(page.getByText(/Part 3 of 4|Phần 3 \/ 4/i)).toBeVisible();
+    await expect(async () => {
+      if (await partLabel(3).isVisible().catch(() => false)) return;
+      await page
+        .getByRole("button", { name: /skip this sentence|bỏ qua câu/i })
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+      throw new Error("chưa tới part 3 — retry");
+    }).toPass({ timeout: 30_000 });
 
     // ‹ về part 2 (skipped — frozen)
-    await page.getByRole("button", { name: /previous part|phần trước/i }).click();
-    await expect(page.getByText(/Part 2 \/ 4|Phần 2 \/ 4/i)).toBeVisible();
+    await expect(async () => {
+      if (await partLabel(2).isVisible().catch(() => false)) return;
+      await page
+        .getByRole("button", { name: /previous part|phần trước/i })
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+      throw new Error("chưa về part 2 — retry");
+    }).toPass({ timeout: 30_000 });
     const ta = page.getByRole("textbox");
     await expect(ta).toHaveAttribute("readonly", "");
     await expect(

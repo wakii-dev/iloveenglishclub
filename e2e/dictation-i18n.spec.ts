@@ -59,7 +59,7 @@ test.describe("Dictation i18n (en/vi lesson thật)", () => {
     page,
   }) => {
     await page.goto(VI, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: "Bắt đầu" }).click();
+    await startPart(page, "Bắt đầu");
     const ta = page.getByRole("textbox");
 
     await ta.fill(S1_WRONG);
