@@ -99,7 +99,8 @@ async function answerCurrent(page: Page): Promise<boolean> {
 }
 
 test.describe("Vocabulary hub quiz (SF-3)", () => {
-  test.setTimeout(120_000);
+  // grading POST compile lạnh sweep tới ~115s + click timeout 150s ⇒ 300s
+  test.setTimeout(300_000);
 
   test("EN: picker mặc định Tất cả → trả lời đủ → tổng kết % → điểm lên top-users", async ({
     page,
