@@ -61,22 +61,20 @@ async function answerCurrent(page: Page): Promise<boolean> {
   // disabled khi grading — đợi enabled ăn trọn test timeout)
   const before = await page.locator("main").innerText();
   const advance = async (): Promise<void> => {
-    // click timeout LỚN: nút disabled trong lúc grading POST — sweep xoá
-    // .next ⇒ server action compile lạnh tới ~115s (đã đo), không phải deadlock
-    await page
-      .getByRole("button", { name: "Continue" })
-      .click({ timeout: 150_000 });
+    // RACE HYDRATION: dev server boot mới compile nặng → SSR render trước khi
+    // React wired — Continue disabled-mặc-định, click-timeout-dài ăn trọn
+    // timeout. Retry-click NGẮN trong toPass: khi hydrate xong nút enabled,
+    // click ăn, câu đổi → pass (grading POST chậm cũng thoả).
     await expect(async () => {
       if (await results.isVisible().catch(() => false)) return;
       const now = await page.locator("main").innerText();
-      if (now === before) {
-        await page
-          .getByRole("button", { name: "Continue" })
-          .click({ timeout: 1_500 })
-          .catch(() => {});
-        return; // chưa advance — toPass thử vòng sau
-      }
-    }).toPass({ timeout: 60_000 });
+      if (now !== before) return;
+      await page
+        .getByRole("button", { name: "Continue" })
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+      throw new Error("chưa advance — retry");
+    }).toPass({ timeout: 180_000 });
   };
   if (await fillInput.isVisible()) {
     await fillInput.fill("qa-typed-answer");
