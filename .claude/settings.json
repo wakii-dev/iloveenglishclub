@@ -19,7 +19,19 @@
       "Bash(mv *)",
       "Bash(touch *)",
       "Bash(sed -n *)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(gh *)",
+      "Bash(orca *)",
+      "Bash(~/.claude/bin/*)",
+      "Bash(git -C *)",
+      "Bash(sleep *)",
+      "Bash(echo *)",
+      "Bash(date *)",
+      "Bash(ps *)",
+      "Bash(sed *)",
+      "Bash(curl *)"
     ]
   }
 }

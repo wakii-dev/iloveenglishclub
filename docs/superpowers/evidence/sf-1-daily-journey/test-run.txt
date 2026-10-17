@@ -1,0 +1,42 @@
+code commit: 301fab5 (feat(vu48-sf1): migration 0007 + pure libs + listen_ms write-path — VU-49)
+tdd: RED→GREEN — (1) streak frozen-param: viết 5 test frozen trước (RED: bridge/multi fail vì computeStreak bỏ qua param) → implement → GREEN; (2) integration TZ-pin: fixture ranh giới 17:00Z gắn part duration 30000 (review P1 — fixture cũ NULL-duration là tautology) → meta-test patch backfill sang "AT TIME ZONE 'UTC'" → RED đúng số học (D1 expected 60000 got 90000 · D2 expected 90000 got 60000) → restore VN-day → GREEN 10/10
+run: 2026-10-13T23:4x+07 · worktree sf-1-daily-journey · DB local ilec_vu48_sf1 (clone 0006 từ ilec_dev) + ilec_vu48_fresh (migrate chain)
+
+== vitest (npm test — src/**) ==
+Test Files  74 passed | 1 skipped (75)
+      Tests  954 passed | 4 skipped (958)
+
+== pure libs (streak + shield-planner + today/*) ==
+Test Files  5 passed (5)  —  54 passed (54)
+  streak.test.ts: identity frozen-rỗng ≡ legacy (7 fixture) · bridge 1-gap · multi-freeze · freeze-today no-op · gap-không-freeze · frozen-today-chưa-active pin
+  shield-planner.test.ts: 11 case (window-bounded, nearest-first, cap-chặn-trước-credits, lookback 7, micro-edge cap=0/lookback=0, credits 0, today không bao giờ freeze)
+  today-engine.test.ts: 8 case (cả-hai-done / một-done ×2 / 0-goal / goal-0-một-nhánh / floor 33 / vượt-goal / âm)
+  quests.test.ts: pool 7 + 3 vector pin (oracle script độc lập cùng rule re-hash) + 100× determinism + 500× distinct/cover-đủ-7
+  badges.test.ts: pool 15 enumeration + metric map + boundary >= + thứ tự pool
+
+== integration (npx vitest run --config vitest.sf1.config.ts — DB thật ilec_vu48_sf1) ==
+Test Files  1 passed (1)  —  10 passed (10)  ×3 runs (re-run an toàn qua reset-migration-state)
+  migration 0007 dry-run trên clone 0006 thật: DDL 3 cột + 4 bảng tồn tại; backfill D1(2026-09-28)={A}→60000 parts_done=2 GIỮ NGUYÊN · D2(2026-09-29)={A,B,C}→90000 row TẠO parts_done=0 · ranh giới 17:00Z→D2 (meta-test RED trên UTC) · user không attempt → 0 row
+  write-path submitAttempt: part A 60s → 60000 · re-attempt A → vẫn 60000 · part B NULL → +0 parts_done 2 · part C 30s → 90000 streak=1 · duplicate clientAttemptId → không đổi
+
+== migration chain trên DB TRẮNG (drizzle-kit migrate) ==
+[✓] migrations applied successfully — 8/8 entries (0000→0007), __drizzle_migrations = 8
+
+== drizzle-kit push parity (schema.ts ↔ DB sau 0007) ==
+[i] No changes detected    (check: Everything's fine 🐶🔥)
+
+== typecheck / lint ==
+node node_modules/typescript/bin/tsc --noEmit → OK (exit 0)
+node node_modules/eslint/bin/eslint.js <changed files> → OK (exit 0)
+
+== test:rls (story đụng schema — convention VU-43) ==
+DB fresh ilec_vu48_fresh (migrate 0000→0007 + seed): 3 failed | 23 passed (26)
+3 fail = PRE-EXISTING trên master (bằng chứng: base commit ba1d428 file giống hệt + replicate ngoài suite):
+  1. information_schema.referential_constraints KHÔNG có cột "conname" (PG16 — test cũ viết sai, không thể pass trên PG nào)
+  2. queries.ts export getBookVocabulary (có sẵn ở base) không nằm trong allowlist test
+  3. quiz roundtrip: postgres.js 3.4.9 double-encode param `${JSON.stringify()}::jsonb` (jsonb_typeof='string') — driver-level, xem stack-quirks #37
+→ KHÔNG phải regression SF-1; đã flag coordinator (fix thuộc story khác)
+
+== review độc lập (code-reviewer agent) ==
+VERDICT: CHANGES-REQUESTED (P1 ×1 test-fixture tautology TZ — ĐÃ FIX + meta-test proof; P2 ×4: doc-contract SF-4 caller merge freeze dates [đã thêm], node:crypto server-only JSDoc [đã thêm], micro-edge cap/lookback=0 [đã thêm test], frozen-today-chưa-active pin [đã thêm test]) → sau fix: 54 pure / 954 full / 10 integration GREEN
+Đã post lên Linear VU-49 kèm CHECKLIST-4Q.

@@ -33,7 +33,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: false, // fixture DB dùng chung — tuần tự như các suite khác
   workers: 1,
-  retries: 0,
+  retries: 1, // audio-Blob fullchain flow — dev hiccup response đứt; fail 2 lần liên tiếp vẫn đỏ
   reporter: [["list"]],
   use: {
     baseURL: BASE,

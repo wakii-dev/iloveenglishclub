@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import {
@@ -12,7 +12,8 @@ import {
   userLessonProgress,
 } from "@/db/schema";
 import { scoreAttempt } from "@/lib/dictation/diff";
-import { computeStreak, vnToday } from "@/lib/gamification/streak";
+import { recomputeStreakTx } from "@/lib/gamification/streak-store";
+import { vnToday } from "@/lib/gamification/streak";
 
 /**
  * Submit attempt (SF-6 — spec §4, CHỐT CỨNG trust boundary):
@@ -157,23 +158,26 @@ export async function submitAttempt(input: {
       // daily_activity + streak — chỉ lần đầu part xuất hiện trong ngày
       let streak = profile.streakCount;
       if (isFirstToday) {
+        // listen_ms (daily-journey SF-1 VU-49, epic spec §2.2): part đóng góp
+        // coalesce(duration_ms, 0) ĐÚNG MỘT LẦN/ngày — gate isFirstToday của
+        // CHÍNH part này (attempt lại cùng part cùng ngày không cộng thêm);
+        // durationMs nullable → `?? 0` trước khi vào cột NOT NULL.
+        const listenAddMs = part.durationMs ?? 0;
         await tx
           .insert(dailyActivity)
-          .values({ userId, date: today, partsDone: 1 })
+          .values({ userId, date: today, partsDone: 1, listenMs: listenAddMs })
           .onConflictDoUpdate({
             target: [dailyActivity.userId, dailyActivity.date],
-            set: { partsDone: sql`${dailyActivity.partsDone} + 1` },
+            set: {
+              partsDone: sql`${dailyActivity.partsDone} + 1`,
+              listenMs: sql`${dailyActivity.listenMs} + ${listenAddMs}`,
+            },
           });
-        const activityDates = await tx
-          .select({ date: dailyActivity.date })
-          .from(dailyActivity)
-          .where(eq(dailyActivity.userId, userId))
-          .orderBy(desc(dailyActivity.date))
-          .limit(400); // streak >400 ngày v1 chưa tồn tại — cap hợp lý
-        streak = computeStreak(
-          activityDates.map((r) => r.date),
-          today,
-        );
+        // streak recompute + shield consume — recomputeStreakTx (SF-4 VU-52)
+        // là owner duy nhất tạo freeze rows; PRECONDITION profiles FOR UPDATE
+        // ở đầu tx đã thoả. Identity: 0 credit + 0 freeze ⇒ byte-identical
+        // computeStreak thuần như block cũ.
+        streak = await recomputeStreakTx(tx, userId, today);
       }
 
       const [updated] = await tx

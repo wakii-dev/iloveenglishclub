@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import postgres from "postgres";
+import dotenv from "dotenv";
+import { startPart } from "./start-gate";
 
 /**
  * Task 6 — Part-nav / progress / results / transcript (context pack slice #5)
@@ -9,7 +12,33 @@ import { expect, test } from "@playwright/test";
  */
 
 const LESSON = "/en/books/level-3/units/1/lessons/1/listen-and-type";
-const LESSON_LAST = "/en/books/level-3/units/1/lessons/2/listen-and-type";
+dotenv.config({ path: ".env.local" });
+
+// lesson CUỐI unit 1 (published lớn nhất) — DB clone thật có 4 lessons
+// published (ilec_sf3 chỉ 2) → hardcode L2 KHÔNG phải cuối → results có
+// "Next lesson" thay vì fallback "Back to unit" (base-parity sweep SF-4)
+let LESSON_LAST: string;
+let LESSON_LAST_PARTS = 3;
+test.beforeAll(async () => {
+  const sql = postgres(process.env.DATABASE_URL ?? "", { prepare: false });
+  const rows: { n: number; parts: number }[] = await sql`
+    select max(l.number) as n, (
+      select count(*)::int from lesson_parts lp
+      join lessons l2 on l2.id = lp.lesson_id
+      join units u2 on u2.id = l2.unit_id
+      join books b2 on b2.id = u2.book_id
+      where b2.slug = 'level-3' and u2.number = 1
+        and l2.number = max(l.number)
+    ) as parts
+    from lessons l
+    join units u on u.id = l.unit_id
+    join books b on b.id = u.book_id
+    where b.slug = 'level-3' and u.number = 1 and l.published
+      and exists (select 1 from lesson_parts lp where lp.lesson_id = l.id)`;
+  await sql.end();
+  LESSON_LAST = `/en/books/level-3/units/1/lessons/${rows[0]!.n}/listen-and-type`;
+  LESSON_LAST_PARTS = rows[0]!.parts;
+});
 const START = /start part|bắt đầu/i;
 const S1 = "I play football with my friends every Saturday.";
 const S1_WRONG = "I play football with my friend every Saturday.";
@@ -23,8 +52,7 @@ test.describe("Dictation nav / progress / results / transcript", () => {
   async function start(page: import("@playwright/test").Page, url = LESSON): Promise<void> {
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page);
   }
 
   function progressWidth(page: import("@playwright/test").Page) {
@@ -167,8 +195,8 @@ test.describe("Dictation nav / progress / results / transcript", () => {
   test("Hết unit: results fallback 'Back to unit' (không 'Next lesson') — lesson cuối unit", async ({
     page,
   }) => {
-    await start(page, LESSON_LAST); // L3-U1-L2 — lesson số 2 (cuối unit 1)
-    for (let i = 1; i <= 3; i++) {
+    await start(page, LESSON_LAST); // lesson cuối unit 1 (động — DB clone thật khác template)
+    for (let i = 1; i <= LESSON_LAST_PARTS; i++) {
       await page
         .getByRole("button", { name: /skip this sentence|bỏ qua câu/i })
         .click();

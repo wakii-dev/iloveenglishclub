@@ -54,13 +54,36 @@ async function answerCurrent(page: Page): Promise<boolean> {
   await expect(page.getByText("Grading…")).toBeHidden();
   if (await results.isVisible()) return true;
 
+  // Chốt câu TRƯỚC khi trả lời — advance-verify sau Continue: click có thể
+  // bị nuốt mid-RSC (flake sweep: vòng 40 không tiến, results không bao giờ).
+  // Landmark = innerText container chính (Question label KHÔNG có ở mọi loại
+  // bước — before="" sai verifier); retry Continue dùng catch NGẮN (nút
+  // disabled khi grading — đợi enabled ăn trọn test timeout)
+  const before = await page.locator("main").innerText();
+  const advance = async (): Promise<void> => {
+    // RACE HYDRATION: dev server boot mới compile nặng → SSR render trước khi
+    // React wired — Continue disabled-mặc-định, click-timeout-dài ăn trọn
+    // timeout. Retry-click NGẮN trong toPass: khi hydrate xong nút enabled,
+    // click ăn, câu đổi → pass (grading POST chậm cũng thoả).
+    await expect(async () => {
+      if (await results.isVisible().catch(() => false)) return;
+      const now = await page.locator("main").innerText();
+      if (now !== before) return;
+      await page
+        .getByRole("button", { name: "Continue" })
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+      throw new Error("chưa advance — retry");
+    }).toPass({ timeout: 180_000 });
+  };
   if (await fillInput.isVisible()) {
     await fillInput.fill("qa-typed-answer");
-    await page.getByRole("button", { name: "Continue" }).click();
+    await advance();
     return false;
   }
   if (await mcGroup.isVisible()) {
     await mcGroup.getByRole("button").first().click();
+    await advance();
     return false;
   }
   // ghép nghĩa: 5 combobox (placeholder "…" là option index 0)
@@ -69,12 +92,13 @@ async function answerCurrent(page: Page): Promise<boolean> {
   for (let i = 0; i < 5; i++) {
     await selects.nth(i).selectOption({ index: 1 });
   }
-  await page.getByRole("button", { name: "Continue" }).click();
+  await advance();
   return false;
 }
 
 test.describe("Vocabulary hub quiz (SF-3)", () => {
-  test.setTimeout(120_000);
+  // grading POST compile lạnh sweep tới ~115s + click timeout 150s ⇒ 300s
+  test.setTimeout(300_000);
 
   test("EN: picker mặc định Tất cả → trả lời đủ → tổng kết % → điểm lên top-users", async ({
     page,

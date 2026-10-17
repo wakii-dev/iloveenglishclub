@@ -1,0 +1,152 @@
+{
+  "title": "Today's plan",
+  "description": "Your daily goals, next lesson suggestions, quests and streak.",
+  "h1": "Today's plan",
+  "hero": {
+    "minutesLabel": "Listening minutes",
+    "wordsLabel": "Words practiced",
+    "minutesAria": "Listened {minutes} of {goal} minutes today",
+    "wordsAria": "Practiced {practiced} of {goal} words today",
+    "allDone": "Amazing! You've completed both goals for today.",
+    "durationHint": "Minutes estimated from audio",
+    "editGoals": "Edit goals",
+    "heading": "Today's goals"
+  },
+  "goalEditor": {
+    "minutesLabel": "Daily listening goal",
+    "wordsLabel": "Daily words goal",
+    "minutesUnit": "min",
+    "wordsUnit": "words",
+    "minutesPresetAria": "Set a {value}-minute daily listening goal",
+    "wordsPresetAria": "Set a {value}-word daily practice goal",
+    "minutesFreeLabel": "Other minutes (5–120)",
+    "wordsFreeLabel": "Other words (1–100)",
+    "apply": "Apply",
+    "saveError": "Couldn't save your goal — please try again."
+  },
+  "suggestions": {
+    "heading": "What's next?",
+    "dictationTitle": "Next dictation lesson",
+    "partsProgress": "{done}/{total} parts",
+    "dictationCta": "Listen & type",
+    "dictationDone": "You've listened to every lesson — outstanding!",
+    "dueTitle": "{count} words due for review",
+    "dueCta": "Review now",
+    "dueEmpty": "Nothing due for review — great job!",
+    "continueTitle": "Continue {title}",
+    "continueLevel": "Level {level} · {count} new words",
+    "continueCta": "Learn new words",
+    "continueDone": "You've completed this book!"
+  },
+  "quests": {
+    "heading": "Today's quests",
+    "doneLabel": "Completed",
+    "progressAria": "{title}: {progress}/{target}",
+    "q-parts-3": {
+      "title": "Listen to 3 parts",
+      "desc": "Finish 3 dictation parts today."
+    },
+    "q-parts-5": {
+      "title": "Listen to 5 parts",
+      "desc": "Finish 5 dictation parts today."
+    },
+    "q-listen-goal": {
+      "title": "Reach your listening goal",
+      "desc": "Listen for the number of minutes you set for today."
+    },
+    "q-review-5": {
+      "title": "Review 5 words",
+      "desc": "Answer 5 review words correctly today (excluding words newly learned today)."
+    },
+    "q-plant-3": {
+      "title": "Learn 3 new words",
+      "desc": "Finish learning 3 new words today."
+    },
+    "q-goal-words": {
+      "title": "Reach your words goal",
+      "desc": "Practice as many words as you set for today."
+    },
+    "q-goal-dual": {
+      "title": "Complete the dual goal",
+      "desc": "Reach both your listening and words goals today."
+    }
+  },
+  "badges": {
+    "heading": "Badges",
+    "earned": "Earned",
+    "next": "Next: {milestone}",
+    "streak-3": {
+      "title": "3-day streak",
+      "desc": "Study 3 days in a row."
+    },
+    "streak-7": {
+      "title": "1-week streak",
+      "desc": "Study 7 days in a row."
+    },
+    "streak-30": {
+      "title": "1-month streak",
+      "desc": "Study 30 days in a row."
+    },
+    "streak-100": {
+      "title": "100-day streak",
+      "desc": "Study 100 days in a row."
+    },
+    "active-days-10": {
+      "title": "10 active days",
+      "desc": "Be active on 10 days."
+    },
+    "active-days-50": {
+      "title": "50 active days",
+      "desc": "Be active on 50 days."
+    },
+    "active-days-200": {
+      "title": "200 active days",
+      "desc": "Be active on 200 days."
+    },
+    "words-learned-10": {
+      "title": "10 words learned",
+      "desc": "Learn 10 words."
+    },
+    "words-learned-100": {
+      "title": "100 words learned",
+      "desc": "Learn 100 words."
+    },
+    "words-learned-1000": {
+      "title": "1000 words learned",
+      "desc": "Learn 1000 words."
+    },
+    "listen-60": {
+      "title": "60 listening minutes",
+      "desc": "Accumulate 60 minutes of dictation practice."
+    },
+    "listen-600": {
+      "title": "600 listening minutes",
+      "desc": "Accumulate 600 minutes of dictation practice."
+    },
+    "quests-5": {
+      "title": "5 quests",
+      "desc": "Complete 5 quests."
+    },
+    "quests-25": {
+      "title": "25 quests",
+      "desc": "Complete 25 quests."
+    },
+    "quests-100": {
+      "title": "100 quests",
+      "desc": "Complete 100 quests."
+    }
+  },
+  "streak": {
+    "heading": "Study streak",
+    "days": "{count} days",
+    "shieldTitle": "Streak shield",
+    "shieldCredits": "Credits: {credits}/{cap}",
+    "shieldDesc": "You earn 1 shield credit each month (up to {cap}). Shields are spent automatically to keep your streak on missed days.",
+    "shieldActiveTitle": "Shielding your streak",
+    "shieldActiveDesc": "A shield covered {date} — your streak stays intact."
+  },
+  "toast": {
+    "questDone": "Quest completed: {title}",
+    "badgeEarned": "New badge: {title}"
+  }
+}

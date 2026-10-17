@@ -10,7 +10,9 @@ import { expect, test } from "@playwright/test";
  * SF-4 (read-only từ SF-5).
  */
 
-const SITE = "http://localhost:3000";
+// neo NEXT_PUBLIC_SITE_URL như app (sitemap/robots derive cùng env —
+// localhost:3000 chỉ là fallback khi env trống)
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 test("robots.txt: allow all trừ /admin + /api, sitemap absolute", async ({ request }) => {
   const res = await request.get("/robots.txt");

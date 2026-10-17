@@ -31,16 +31,24 @@ export function addDays(date: string, n: number): string {
  * hôm qua (chưa học hôm nay — chuỗi vẫn "còn sống" đến cuối ngày).
  * 3 case contract: hôm qua → +1 · hôm nay → giữ (recompute idempotent) ·
  * cách >1 ngày → reset 1. Duplicate dates (race upsert) không đếm kép.
+ *
+ * `frozen` (daily-journey SF-1 VU-49, epic spec §2.3): ngày trong set được
+ * coi như CÓ hoạt động khi walk-back (streak shield che ngày lỡ). Frozen
+ * RỖNG ≡ byte-identical hành vi cũ — identity test là backward-compat gate
+ * (streak người dùng hiện có không đổi). Chỉ recomputeStreakTx (SF-4) được
+ * tạo freeze rows — param này thuần, không DB.
  */
 export function computeStreak(
   dates: readonly string[],
   today: string,
+  frozen: ReadonlySet<string> = new Set(),
 ): number {
   const set = new Set(dates);
-  let cursor = set.has(today) ? today : addDays(today, -1);
-  if (!set.has(cursor)) return 0;
+  const isActive = (d: string) => set.has(d) || frozen.has(d);
+  let cursor = isActive(today) ? today : addDays(today, -1);
+  if (!isActive(cursor)) return 0;
   let streak = 0;
-  while (set.has(cursor)) {
+  while (isActive(cursor)) {
     streak++;
     cursor = addDays(cursor, -1);
   }

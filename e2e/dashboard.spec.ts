@@ -89,7 +89,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     const ring = page.locator('[role="img"][aria-label*="Mục tiêu hôm nay"]');
     await expect(ring).toHaveAttribute(
       "aria-label",
-      "Mục tiêu hôm nay: 3 trên 5 từ mới",
+      "Mục tiêu hôm nay: 3 trên 5 từ ôn/luyện",
     );
     await expect(page.getByText("3/5", { exact: true })).toBeVisible();
 
@@ -143,7 +143,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     await expect(page.getByText("3/10", { exact: true }).first()).toBeVisible();
     await expect(
       page
-        .locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ mới"]')
+        .locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ ôn/luyện"]')
         .first(),
     ).toBeVisible();
 
@@ -151,7 +151,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByText("3/10", { exact: true })).toBeVisible();
     await expect(
-      page.locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ mới"]'),
+      page.locator('[role="img"][aria-label="Mục tiêu hôm nay: 3 trên 10 từ ôn/luyện"]'),
     ).toBeVisible();
   });
 
@@ -173,7 +173,7 @@ test.describe("Vocabulary dashboard home (SF-4)", () => {
       page.getByText("Level 2 · Words 11–20 — 10 new words left in this level"),
     ).toBeVisible();
     await expect(
-      page.locator('[role="img"][aria-label="Today\'s goal: 3 of 5 new words"]'),
+      page.locator('[role="img"][aria-label="Today\'s goal: 3 of 5 words practiced"]'),
     ).toBeVisible();
     await expect(page.getByText("Word garden")).toBeVisible();
   });
