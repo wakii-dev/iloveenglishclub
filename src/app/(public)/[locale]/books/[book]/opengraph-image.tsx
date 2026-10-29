@@ -27,9 +27,12 @@ export default async function Image({
 }: {
   params: Promise<{ locale: string; book: string }>;
 }) {
-  await connection(); // OG đọc DB — dynamic, không prerender
   const { locale, book } = await params;
-  const bookRow = await getBook(book, locale);
+  const loadBook = async () => {
+    "use cache";
+    return getBook(book, locale);
+  };
+  const bookRow = await loadBook();
 
   const title = bookRow?.title ?? BRAND;
   const color = bookRow?.color ?? C.primary;

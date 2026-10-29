@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { getBook, getLesson } from "@/lib/content/queries";
 import { BRAND } from "@/lib/seo/site";
@@ -35,13 +34,17 @@ export default async function Image({
     lesson: string;
   }>;
 }) {
-  await connection();
   const { locale, book, unit, lesson } = await params;
-  const [t, lessonRow, bookRow] = await Promise.all([
-    getTranslations({ locale, namespace: "seo" }),
-    getLesson(book, unit, lesson, locale),
-    getBook(book, locale),
-  ]);
+  const load = async () => {
+    "use cache";
+    const [lessonRow, bookRow] = await Promise.all([
+      getLesson(book, unit, lesson, locale),
+      getBook(book, locale),
+    ]);
+    return [lessonRow, bookRow] as const;
+  };
+  const t = await getTranslations({ locale, namespace: "seo" });
+  const [lessonRow, bookRow] = await load();
 
   const title = lessonRow?.title ?? BRAND;
   const bookTitle = bookRow?.title ?? "";
