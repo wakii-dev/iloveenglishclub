@@ -359,7 +359,7 @@ const gradeReq = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-/** Đoạn queue của MỘT awardVocabXpTx (8 query theo thứ tự impl SF-1). */
+/** Đoạn queue của MỘT awardVocabXpTx (10 query SF-1 + SF-4 recomputeStreakTx). */
 function awardQueue(
   profile: Record<string, number>,
   opts: { xpToday?: number; dailyExisting?: unknown[]; xpGain?: number } = {},
@@ -374,10 +374,13 @@ function awardQueue(
     [],
   ];
   if (dailyExisting.length === 0) {
+    // ngày chuyển active → recomputeStreakTx (SF-4): dates + freezes + credits
     queue.push([
       { date: addDays(vnToday(new Date()), -1) },
       { date: vnToday(new Date()) },
     ]);
+    queue.push([]); // streak_freezes — identity 0-freeze
+    queue.push([{ shieldCredits: 0 }]); // shield_credits — identity 0-credit
   }
   queue.push([{ xp: profile.xp + xpGain }]);
   return queue;

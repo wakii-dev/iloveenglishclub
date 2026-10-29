@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { startPart } from "./start-gate";
 
 /**
  * Task 9 — i18n en/vi TRÊN LESSON THẬT (context pack slice #8): copy đúng
@@ -27,8 +28,7 @@ test.describe("Dictation i18n (en/vi lesson thật)", () => {
     await expect(page.getByText(/4 câu/)).toBeVisible(); // facts
     await expect(page.getByText(/\+40 XP tối đa/)).toBeVisible();
 
-    await page.getByRole("button", { name: "Bắt đầu" }).click();
-    await expect(page.getByRole("textbox")).toBeVisible();
+    await startPart(page, "Bắt đầu");
     // Tabs + part label + player
     await expect(page.getByRole("button", { name: "Chính tả" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Toàn bộ bài đọc" })).toBeVisible();
@@ -59,7 +59,7 @@ test.describe("Dictation i18n (en/vi lesson thật)", () => {
     page,
   }) => {
     await page.goto(VI, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: "Bắt đầu" }).click();
+    await startPart(page, "Bắt đầu");
     const ta = page.getByRole("textbox");
 
     await ta.fill(S1_WRONG);

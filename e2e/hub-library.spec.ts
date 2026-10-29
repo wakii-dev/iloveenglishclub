@@ -41,7 +41,9 @@ async function registerUser(page: Page, displayName: string): Promise<string> {
 }
 
 function qaRows(page: Page) {
-  return page.getByRole("row").filter({ hasText: "qa-" });
+  // prefix CỦA SUITE (qa-hub-*) — DB clone thật tích tụ qa-* từ fixture các
+  // suite khác (qa-today-w*, qa-dash-*) → filter rộng "qa-" đếm sai (39 rows)
+  return page.getByRole("row").filter({ hasText: "qa-hub-" });
 }
 
 test.describe("Vocabulary hub library (SF-2)", () => {

@@ -1,0 +1,152 @@
+{
+  "title": "Hôm nay học gì",
+  "description": "Mục tiêu hằng ngày, gợi ý bài kế tiếp, nhiệm vụ và chuỗi ngày học của bạn.",
+  "h1": "Hôm nay học gì",
+  "hero": {
+    "minutesLabel": "Phút nghe",
+    "wordsLabel": "Từ ôn/luyện",
+    "minutesAria": "Đã nghe {minutes} trên {goal} phút hôm nay",
+    "wordsAria": "Đã ôn/luyện {practiced} trên {goal} từ hôm nay",
+    "allDone": "Tuyệt vời! Bạn đã hoàn thành cả hai mục tiêu hôm nay.",
+    "durationHint": "Phút ước tính từ audio",
+    "editGoals": "Chỉnh mục tiêu",
+    "heading": "Mục tiêu hôm nay"
+  },
+  "goalEditor": {
+    "minutesLabel": "Mục tiêu phút nghe/ngày",
+    "wordsLabel": "Mục tiêu từ ôn/luyện/ngày",
+    "minutesUnit": "phút",
+    "wordsUnit": "từ",
+    "minutesPresetAria": "Chọn mục tiêu {value} phút nghe mỗi ngày",
+    "wordsPresetAria": "Chọn mục tiêu {value} từ ôn/luyện mỗi ngày",
+    "minutesFreeLabel": "Số phút khác (5–120)",
+    "wordsFreeLabel": "Số từ khác (1–100)",
+    "apply": "Áp dụng",
+    "saveError": "Không lưu được mục tiêu — thử lại nhé."
+  },
+  "suggestions": {
+    "heading": "Học gì kế tiếp?",
+    "dictationTitle": "Bài nghe kế tiếp",
+    "partsProgress": "{done}/{total} phần",
+    "dictationCta": "Nghe và gõ",
+    "dictationDone": "Bạn đã nghe hết mọi bài — quá đỉnh!",
+    "dueTitle": "{count} từ đến hạn ôn",
+    "dueCta": "Ôn ngay",
+    "dueEmpty": "Không có từ nào đến hạn — xuất sắc!",
+    "continueTitle": "Học tiếp sách {title}",
+    "continueLevel": "Level {level} · {count} từ mới",
+    "continueCta": "Học từ mới",
+    "continueDone": "Bạn đã hoàn thành sách này!"
+  },
+  "quests": {
+    "heading": "Nhiệm vụ hôm nay",
+    "doneLabel": "Hoàn thành",
+    "progressAria": "{title}: {progress}/{target}",
+    "q-parts-3": {
+      "title": "Nghe 3 phần",
+      "desc": "Hoàn thành 3 phần luyện nghe trong hôm nay."
+    },
+    "q-parts-5": {
+      "title": "Nghe 5 phần",
+      "desc": "Hoàn thành 5 phần luyện nghe trong hôm nay."
+    },
+    "q-listen-goal": {
+      "title": "Đạt mục tiêu phút nghe",
+      "desc": "Nghe đủ số phút bạn đã đặt cho hôm nay."
+    },
+    "q-review-5": {
+      "title": "Ôn 5 từ",
+      "desc": "Trả lời đúng 5 từ ôn hôm nay (trừ từ mới học hôm nay)."
+    },
+    "q-plant-3": {
+      "title": "Học 3 từ mới",
+      "desc": "Học xong 3 từ mới trong hôm nay."
+    },
+    "q-goal-words": {
+      "title": "Đạt mục tiêu từ",
+      "desc": "Ôn/luyện đủ số từ bạn đã đặt cho hôm nay."
+    },
+    "q-goal-dual": {
+      "title": "Hoàn thành mục tiêu kép",
+      "desc": "Đạt cả mục tiêu phút nghe và mục tiêu từ hôm nay."
+    }
+  },
+  "badges": {
+    "heading": "Huy hiệu",
+    "earned": "Đã nhận",
+    "next": "Kế tiếp: {milestone}",
+    "streak-3": {
+      "title": "Chuỗi 3 ngày",
+      "desc": "Học liên tiếp 3 ngày."
+    },
+    "streak-7": {
+      "title": "Chuỗi 1 tuần",
+      "desc": "Học liên tiếp 7 ngày."
+    },
+    "streak-30": {
+      "title": "Chuỗi 1 tháng",
+      "desc": "Học liên tiếp 30 ngày."
+    },
+    "streak-100": {
+      "title": "Chuỗi 100 ngày",
+      "desc": "Học liên tiếp 100 ngày."
+    },
+    "active-days-10": {
+      "title": "Chăm chỉ 10 ngày",
+      "desc": "Có hoạt động trong 10 ngày."
+    },
+    "active-days-50": {
+      "title": "Chăm chỉ 50 ngày",
+      "desc": "Có hoạt động trong 50 ngày."
+    },
+    "active-days-200": {
+      "title": "Chăm chỉ 200 ngày",
+      "desc": "Có hoạt động trong 200 ngày."
+    },
+    "words-learned-10": {
+      "title": "10 từ đã học",
+      "desc": "Học 10 từ."
+    },
+    "words-learned-100": {
+      "title": "100 từ đã học",
+      "desc": "Học 100 từ."
+    },
+    "words-learned-1000": {
+      "title": "1000 từ đã học",
+      "desc": "Học 1000 từ."
+    },
+    "listen-60": {
+      "title": "60 phút nghe",
+      "desc": "Tích lũy 60 phút luyện nghe."
+    },
+    "listen-600": {
+      "title": "600 phút nghe",
+      "desc": "Tích lũy 600 phút luyện nghe."
+    },
+    "quests-5": {
+      "title": "5 nhiệm vụ",
+      "desc": "Hoàn thành 5 nhiệm vụ."
+    },
+    "quests-25": {
+      "title": "25 nhiệm vụ",
+      "desc": "Hoàn thành 25 nhiệm vụ."
+    },
+    "quests-100": {
+      "title": "100 nhiệm vụ",
+      "desc": "Hoàn thành 100 nhiệm vụ."
+    }
+  },
+  "streak": {
+    "heading": "Chuỗi ngày học",
+    "days": "{count} ngày",
+    "shieldTitle": "Khiên streak",
+    "shieldCredits": "Credit: {credits}/{cap}",
+    "shieldDesc": "Mỗi tháng bạn nhận 1 credit khiên (tối đa {cap}). Khiên tự dùng để giữ chuỗi khi bạn lỡ học.",
+    "shieldActiveTitle": "Đang bảo vệ chuỗi",
+    "shieldActiveDesc": "Khiên đã che ngày {date} — chuỗi của bạn không đứt."
+  },
+  "toast": {
+    "questDone": "Nhiệm vụ hoàn thành: {title}",
+    "badgeEarned": "Huy hiệu mới: {title}"
+  }
+}

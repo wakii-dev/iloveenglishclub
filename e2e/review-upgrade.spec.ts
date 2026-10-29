@@ -205,7 +205,11 @@ test.describe("Review session UI (vocab-memrise SF-3)", () => {
     let postCount = 0;
     await page.route("**/api/vocabulary/session", async (route) => {
       postCount += 1;
-      await new Promise((resolve) => setTimeout(resolve, 400)); // mở cửa sổ double-click
+      // cửa sổ double-click: response PHẢI chưa về khi click #2 chạm — 400ms
+      // không đủ (guard pendingRef chặn #2 SAU khi graded+advance xong →
+      // assert feedback nhìn nhầm bước kế — flake timing, đã tái hiện 3/3
+      // cả trên HEAD lẫn base 0409bc8)
+      await new Promise((resolve) => setTimeout(resolve, 2_500));
       await route.continue();
     });
 

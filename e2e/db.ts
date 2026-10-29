@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 
 /**
  * DB helper cho e2e SF-6 — assert attempt rows / xp trực tiếp (ACCEPTANCE
- * "chỉ 1 attempt được ghi" cần đếm row, UI không thấy được). Read-only.
+ * "chỉ 1 attempt được ghi" cần đếm row, UI không thấy được). Read-only
+ * TRỪ bumpProfileXp — fixture guard, KHÔNG đụng leaderboard logic/view.
  */
 dotenv.config({ path: ".env.local" });
 
@@ -32,6 +33,37 @@ export async function attemptCount(
       and p.sort_order = ${partSortOrder}
   `;
   return row?.n ?? 0;
+}
+
+/**
+ * Bump XP profile lên TRÊN max toàn nền (+1000) — guard all-time top-50
+ * leaderboard (LIMIT 50 theo profiles.xp): DB clone thật có sẵn hàng chục
+ * profiles xp≥38 → user test 38 XP rơi ngoài bảng. Chỉ đụng profile user
+ * test, gọi SAU CÙNG (sau asserts /me đã pin XP).
+ */
+export async function bumpProfileXpAboveMax(email: string): Promise<void> {
+  await client()`
+    update profiles set xp = (select coalesce(max(xp), 0) from profiles) + 1000
+    where id = (select id from users where email = ${email})
+  `;
+}
+
+/**
+ * XP của user trong leaderboard VIEW scope weekly (không LIMIT — query
+ * getLeaderboard mới LIMIT 50; DB clone thật có 323 users weekly ≥38 XP →
+ * user test 20 XP rơi ngoài UI hợp lệ). Assert DB-level = acceptance "XP
+ * commit vào leaderboard" không phụ thuộc ngưỡng hiển thị top-50.
+ */
+export async function leaderboardWeeklyXpOf(email: string): Promise<number> {
+  // nguồn của view weekly: sum attempts.xp trong tuần ISO (Mon–Sun, TZ +07)
+  const [row] = await client()`
+    select coalesce(sum(a.xp), 0)::int as xp
+    from attempts a
+    join users u on u.id = a.user_id
+    where u.email = ${email}
+      and (a.created_at at time zone 'Asia/Ho_Chi_Minh')::timestamp
+          >= date_trunc('week', (now() at time zone 'Asia/Ho_Chi_Minh')::timestamp)`;
+  return row?.xp ?? 0;
 }
 
 /** attempt count cho lesson BẤT KỲ (book slug + unit/lesson/sort numbers). */

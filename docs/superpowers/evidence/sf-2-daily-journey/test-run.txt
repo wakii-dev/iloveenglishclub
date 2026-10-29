@@ -1,0 +1,86 @@
+tdd: RED→GREEN — (1) today-store.test.ts + route.test.ts viết TRƯỚC impl theo contract §3.2/§3.3 (RED đầu: 8 fail — module thiếu + queue shape lệch, route 17 case pass sau impl); GREEN 15/15 + 17/17 sau khi fix imports thiếu (lessons, books — cascade queue lệch toàn bộ fan-out) + queue rows đúng shape. (2) Meta-test SQL pin (PgDialect) cho bug reviewedToday bắt trên DB thật — RED trên code cũ (bare "user_id"), GREEN sau fix qualified refs.
+code commit: 938c2af (feat(vu48-sf2): today engine — snapshot + dictation resolver + unify practicedToday + goal API — VU-50)
+tools commit: ed6bdf1 (rule0 browser flow + integration demo scripts)
+review fix commit: 5aa7feb (fix P0/P1 — readTodayActivity filter row HÔM NAY + union badges)
+review: code-reviewer ĐỘC LẬP — vòng 1 CHANGES-REQUESTED (P0 stale rows[0]
+tính số hôm qua thành hôm nay → quest auto-record sai ledger + P1 badges
+không union newly) → fix + meta-test RED-on-old (2 test đỏ trước fix, xác
+nhận trong run) → vòng 2 re-review VERDICT: APPROVED (P0/P1/P2 closed,
+meta-test genuine, scope 3 files đúng findings)
+run: 2026-10-14T07:xx+07 · worktree sf-2-daily-journey · DB local ilec_sf2 (clone 0006 từ ilec_dev + áp migration 0007 tay — ilec_dev STALE 0006, check information_schema trước khi dùng)
+
+== vitest (node node_modules/vitest/vitest.mjs run — src/** — SAU fix 5aa7feb) ==
+Test Files  76 passed | 1 skipped (77)
+      Tests  1000 passed | 4 skipped (1004)
+  thêm sau review: meta-test P0 'chưa học hôm nay (chỉ row hôm qua)' —
+  listenMinutes/parts = 0 + streak 1 + KHÔNG quest insert (RED trên code cũ:
+  15/9/số-ảo — đã thấy 2 fail trước fix trong run thật)
+  thêm P1: happy test pin badges union owned∪newly (5 badge cùng snapshot)
+  thêm P2: route 500 path store {ok:false} (profile mất)
+  mới: today-store.test.ts 15 case (snapshot shape toàn vẹn + fan-out 15 chain
+  pin thứ tự + grant RETURNING-gated no-row→no-update + cap-2 least() +
+  quest auto-record idempotent reload + badge quests-5 đúng 1 lần (4 cũ+1 mới,
+  run-2 owned→0 insert) + streak freeze-aware 3 KHÔNG consume + tx fail →
+  snapshot vẫn trả + mọi-nhánh-fail fallback zeros + listenMinutes floor 90s→1
+  + resolver 4 case (global-first/reading-priority/all-done→null/0-part skip)
+  + SQL pin NOT EXISTS qualified + evalBadges boundary)
+  mới: api/today/goal/route.test.ts 17 case (PATCH+POST × 401/invalidJson/
+  invalidMinutes 7 shape/valid 5..120/store throw 500 — taxonomy mirror vocab)
+  ripple: dashboard-store.test rename practiced (queue alias + expectations),
+  hub-overview-section.test mock summary shape, learn-session-store.test
+  KHÔNG đổi (queue [{n}] shape giữ nguyên — chỉ SQL text đổi)
+
+== integration demo DB thật (scripts/qa-sf2-today-snapshot-demo.ts) ==
+SO TAY MATCH: true — expected==got {
+  practiced: 5 (3 learn-complete + 2 session-step correct DISTINCT),
+  planted: 3, reviewed: 2 (session-step TRỪ learn-complete words),
+  listenMinutes: 15 (listen_ms 900000), parts: 2,
+  streak: 3 (hôm nay + freeze hôm-qua + hôm-kia — freeze CHỈ ĐỌC,
+  không INSERT streak_freezes), due: 0 }
+  + dictationNext: level-1 lesson 1 (global-first undone 0/3 parts — resolver
+  đúng, sách đang đọc rỗng → fallback toàn hệ)
+  + snapshot LẦN 2: newlyCompletedQuests [] · newlyEarnedBadges [] ·
+  questsRecorded giữ [false,false,true] (q-parts-3 2/3 chưa đạt — không tự
+  ghi) · badge quests-5 = 4 seed cũ + 1 mới → award ĐÚNG 1 lần
+  + monthly grant: shield_credits 1 → 2 (RETURNING-gated, least(+1, 2) cap)
+  + auto-cleanup seed QA (books về 7 — suite rls không ô nhiễm)
+
+== Rule 0 browser (e2e/rule0-sf2-today-engine.ts — dev 3318, Chrome hệ thống) ==
+- register QA user qua UI → seed fixture → /vi/vocabulary:
+  ring aria "Mục tiêu hôm nay: 3 trên 5 từ ôn/luyện" + card "từ ôn/luyện hôm
+  nay" — SỐ 3/5 GIỮ NGUYÊN vs trước rename (fixture 3 learn-complete distinct
+  ⊂ practiced kind IN); label cũ "từ mới hôm nay" count=0
+- /en/vocabulary: "Today's goal: 3 of 5 words practiced" + "words practiced
+  today" (en parity)
+- PATCH /api/today/goal cookie session thật: {minutes:15} → 200
+  {ok:true, dailyGoalMinutes:15}; {minutes:999} → 400 invalidMinutes
+- persist: profiles.daily_goal_minutes = 15 kiểm psql trực tiếp
+- guest /vi/vocabulary: không ring data (dashboard user-only)
+- screenshots (pixel thật, coordinator tự Read): docs/superpowers/evidence/
+  sf-2-daily-journey/screens/{1-vocabulary-ring-vi-label-moi,2-vocabulary-
+  ring-en-parity,3-guest-vocabulary-khong-ring}.png
+- curl guest trực tiếp: PATCH|POST /api/today/goal → 401 {"ok":false,
+  "error":"not-authenticated"} (route thật trên dev server)
+
+== e2e suite 3319 (node node_modules/@playwright/test/cli.js test --config
+   playwright.vocabulary-dashboard.config.ts) ==
+6 passed (36.6s) — aria pins cập nhật "từ ôn/luyện" (VI ×3: 3/5 + 3/10 ×2)
++ EN pin "3 of 5 words practiced" (bắt thêm 1 pin EN hardcode khi chạy —
+fixed cùng commit)
+
+== typecheck / lint / build ==
+node node_modules/typescript/bin/tsc --noEmit → OK (exit 0)
+node node_modules/eslint/bin/eslint.js <changed files> → OK (exit 0)
+node node_modules/next/dist/bin/next build → OK — route /api/today/goal trong
+route manifest (ƒ Dynamic)
+
+== test:rls (vitest.rls.config.ts — story đụng schema, rerun convention) ==
+5 failed | 21 passed — ĐỒNG HOÀN TOÀN trên base 696b2de (git archive base →
+temp dir → chạy cùng DB): pre-existing nhánh story (getUnits draft-ẩn,
+isolation-by-surface, invariant profile, quiz score roundtrip, FK cascade) —
+KHÔNG phải regression SF-2 (SF-2 không đụng schema.ts/migration). Memory
+"3 fail trên master" cũ — nhánh story có 5 (VU-37/VU-43 merge vào sau).
+1 fail phụ (getBooks 8 books) do pollution data demo — đã fix bằng
+auto-cleanup trong demo script, re-run sạch.
+
+evidence commits: e0589c6 (test-run + screens) → ca732d8 (slug rename sf-2-daily-journey theo convention gate)

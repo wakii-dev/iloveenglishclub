@@ -89,3 +89,60 @@ describe("computeStreak — nhánh biên", () => {
     expect(computeStreak([today, today, "2026-09-28"], today)).toBe(2);
   });
 });
+
+/**
+ * Frozen set — daily-journey SF-1 (VU-49, epic spec §2.3 CHỐT CỨNG):
+ * frozen chứa date ⇒ ngày đó được coi như có hoạt động khi walk-back.
+ * IDENTITY TEST là backward-compat gate: frozen rỗng ≡ byte-identical hành
+ * vi cũ — streak người dùng hiện có KHÔNG đổi khi merge SF-1.
+ */
+describe("computeStreak — frozen set (SF-1 VU-49)", () => {
+  const today = "2026-09-29";
+
+  it("IDENTITY: frozen rỗng ≡ legacy trên mọi fixture (backward-compat gate)", () => {
+    const fixtures: Array<[string[], string]> = [
+      [["2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", today], today],
+      [[today], today],
+      [["2026-09-27", "2026-09-28"], today], // hôm nay chưa học
+      [[], today],
+      [["2026-09-20", today], today], // reset case
+      [["2026-09-30"], today], // chỉ tương lai
+      [[today, today, "2026-09-28"], today], // duplicate
+    ];
+    for (const [dates, day] of fixtures) {
+      expect(computeStreak(dates, day, new Set())).toBe(
+        computeStreak(dates, day),
+      );
+    }
+  });
+
+  it("freeze bridge 1-gap: gap hôm qua được freeze → chuỗi liền", () => {
+    const dates = ["2026-09-26", "2026-09-27", today]; // 2026-09-28 gap
+    expect(computeStreak(dates, today)).toBe(1); // không freeze → đứt
+    expect(computeStreak(dates, today, new Set(["2026-09-28"]))).toBe(4);
+  });
+
+  it("multi-freeze: nhiều gap riêng biệt đều được bắc cầu", () => {
+    const dates = ["2026-09-23", "2026-09-25", "2026-09-27", today];
+    const frozen = new Set(["2026-09-24", "2026-09-26", "2026-09-28"]);
+    expect(computeStreak(dates, today, frozen)).toBe(7);
+  });
+
+  it("freeze-hôm-nay là no-op khi hôm nay đã active (write-path luôn upsert today trước recompute)", () => {
+    const dates = ["2026-09-27", "2026-09-28", today];
+    expect(computeStreak(dates, today, new Set([today]))).toBe(3);
+  });
+
+  it("gap KHÔNG nằm trong frozen vẫn đứt như cũ", () => {
+    const dates = ["2026-09-26", "2026-09-27", today];
+    // freeze nhầm ngày 25 (đã active) — gap 28 không freeze → chỉ today
+    expect(computeStreak(dates, today, new Set(["2026-09-25"]))).toBe(1);
+  });
+
+  it("pin edge: frozen chứa today + today CHƯA có trong dates → today được coi active (literal spec §2.3 'coi như có hoạt động')", () => {
+    // Không thể đạt qua planFreezes (walk từ hôm qua, không bao giờ freeze
+    // today) — pin hành vi để caller không lợn vào nhánh này vô thức
+    expect(computeStreak(["2026-09-27", "2026-09-28"], today, new Set([today]))).toBe(3);
+    expect(computeStreak([], today, new Set([today]))).toBe(1);
+  });
+});

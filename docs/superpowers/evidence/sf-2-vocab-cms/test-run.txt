@@ -1,0 +1,108 @@
+tdd: RED→GREEN phần nav/catalog e2e (admin-vocabulary-nav.spec.ts + admin-vocabulary-catalog.spec.ts viết TRƯỚC khi /admin/vocabulary còn 404 — đỏ: page không tồn tại; xanh sau feat commit e20576f) + unit 29 test viết cùng implementation + fix (vocabulary-catalog.test.ts 19 + admin-nav.test.ts 6 + page.test.ts SSR 4). 1052/1052 unit exit 0; e2e nav 2/2 + catalog 10/10 + FS-driver repro t4 1/1; cleanup fixture 0 sót. Code commit CUỐI: 7ff26e0 (HEAD~1 so với evidence commit này — chuỗi: 8e082ae base → e20576f feat → c187143 e2e → 5789f8f lint → c4330e4 fix review r1 → 7ff26e0 fix review r2)
+
+Worktree: sf-2-vocab-cms · Branch: wakii-dev/sf-2-vocab-cms · Base: 8e082ae (story-vu43-vocab-cms, SF-1 đã merge) · Story VU-43 SF-2 (Linear VU-45, tier 1)
+
+════ (0) CODE REVIEW ĐỘC LẬP — 3 vòng, VERDICT: APPROVED (round 3) ════
+Reviewer: code-reviewer độc lập (deny Write — executor ghi hộ verdict; full report
+  docs/superpowers/reviews/code-reviewer-sf-2-vocab-cms.md + /tmp/story/vu43/reviewer-sf2.md)
+- Round 1 (8e082ae..5789f8f) CHANGES_REQUESTED: 1 P1 (FS-driver url tương đối → PATCH
+  invalidImageUrl — upload xong KHÔNG lưu được từ) + 3 P2 (image optional lúc tạo thiếu,
+  delete-plan race, partial-success chunk lỗi mất báo cáo)
+- Round 2 (5789f8f..c4330e4) CHANGES_REQUESTED: 4 finding r1 ĐÓNG nhưng restructure gây
+  1 P1 regression (3 bulk runner mất setBulkBusy(false) nhánh lỗi — busy kẹt true khóa UI)
+- Round 3 (c4330e4..7ff26e0) APPROVED: P1 r2 đóng đúng 3 dòng + state-machine audit sạch;
+  CHECKLIST-4Q 4/4 PASS · deterministic reviewer tự chạy: tsc 0 · vitest 1052|8 · eslint 0
+
+════ (1) FULL UNIT SUITE + TYPECHECK + LINT — exit 0 ════
+Lệnh: node node_modules/vitest/vitest.mjs run (SAU fix review r1+r2 — trạng thái 7ff26e0)
+  Test Files  88 passed | 2 skipped (90)          [baseline SF-1: 85 files / 1023 tests]
+  Tests  1052 passed | 8 skipped (1060)           [+29 mới: catalog params/aggregate/fetch-mock
+                                                   16 + absolutizeStorageUrl 3 (pin P1 r1) +
+                                                   admin-nav active rule 6 + page SSR 4 — gồm
+                                                   messages.test.ts parity vi/en vocab-catalog.json]
+Lệnh: node node_modules/typescript/bin/tsc --noEmit → exit 0 (sạch)
+Lệnh: node node_modules/eslint/bin/eslint.js . → 0 errors, 8 warnings (giống hệt baseline SF-1 —
+  không thêm warning mới; thumb <img> có eslint-disable @next/next/no-img-element có chủ đích)
+
+════ (2) UNIT TEST MỚI — pure legs + fetch mock (không msw — không thêm dep) ════
+src/components/admin/vocabulary-catalog.test.ts (20 test):
+  - buildCatalogParams: default chỉ sort/limit/offset · q/offset trang 2 · cefr csv A1→C2 thứ tự
+    ổn định · orphan=1 WIN (bookId KHÔNG set kèm — spec §4) · bookId+source+audio chỉ khi chọn ·
+    sort word/cefr truyền đúng
+  - toggleCefrFilter bất biến · totalPagesFor 0→1/50→1/51→2
+  - aggregate bulk (assign/tag/delete dry-run/delete apply) — cộng counter + gộp errors
+    (chunk >500 chạy HẾT — không stop-mid) · chunkIds 1201 ids cap 500 → 500/500/201
+  - parseExportFilename Content-Disposition · fetchCatalogPage fetch mock: URL đúng, {ok:false}
+    → CatalogApiError(code), body hỏng → generic (không ném SyntaxError)
+src/components/admin/admin-nav.test.ts (6 test): adminVocabularyNavActive — active
+  /admin/vocabulary (+path con), KHÔNG active /admin/vocabulary/crawl (chỉ Crawl active —
+  unit pin rule explicit), không khớp prefix lạ; adminNavActive dashboard exact + 1-active duy
+  nhất trên /crawl + prefix còn lại.
+src/app/(admin)/admin/vocabulary/page.test.ts (4 test SSR renderToString(await Page())): title/
+  lead từ messages THẬT vi (key thiếu fail rõ) · sub-nav 3 tab đúng href + Catalog active ·
+  catalog shell (search/add/export/bảng) render · books prop không crash.
+
+════ (3) E2E — playwright.admin.config.ts (workers 1, port 3000, dev server riêng worktree) ════
+Bootstrap: .env.local worktree (DATABASE_URL Neon + AUTH_SECRET + BLOB token) + ADMIN_EMAIL/
+  ADMIN_PASSWORD (globalSetup upsert admin@ilec.dev — pattern admin-lib).
+Lệnh: node node_modules/@playwright/test/cli.js test --config playwright.admin.config.ts \
+        e2e/admin-vocabulary-nav.spec.ts
+  ✓ 2 passed (37.0s) — nav "Từ vựng" active /admin/vocabulary + sub-nav Catalog active;
+    /admin/vocabulary/crawl: CHỈ Crawl active (aria-current), Từ vựng KHÔNG (§6.7 phần catalog+crawl)
+Lệnh: node node_modules/@playwright/test/cli.js test --config playwright.admin.config.ts \
+        e2e/admin-vocabulary-catalog.spec.ts
+  ✓ 10 passed (3.7m) — 10/10 §6.1–6.2:
+    t1  search theo NGHĨA tiếng Việt có dấu ("táo" → chỉ alpha) + empty state 0 kết quả
+    t2  sort cefr asc → A1 delta/B1 alpha/B2 gamma, NULL CUỐI · chip B1 · audio thiếu/có ·
+        orphan (beta hiện, alpha mất) · source oxford/teacher (IS NULL)
+    t3  pagination 50/page: 55 fixture → Trang 1/2 → Trang 2/2 (nút disabled đáy)
+    t4  sửa từ: pos "noun" + synonyms "pomme, bưởi" (normalize chuẩn §4) + cefr B1→A2 (PATCH
+        field mới) + source Oxford + upload image (route SF-1 → Vercel Blob) preview thumb
+        TRƯỚC save → refetch thấy badge pos/synonyms/A2/Oxford
+    t5  thêm từ global: word+meaning bắt buộc, cefr C1, KHÔNG gắn sách → badge "Chưa gắn sách"
+        (orphan hợp lệ — note trong dialog)
+    t6  bulk gán 2 books: select-all 50 → dialog → toast report "100 liên kết mới · 0 bỏ qua"
+        (shape §4 {affected, skipped}) → chip book trên row → PUBLIC /vi/books/qa-cms-book-a/
+        vocabulary THẤY qa-cms-page-01/page-50 (revalidateContent)
+    t7  bulk tag CEFR OVERWRITE: 9 từ null→B2 (toast "Đã tag CEFR cho 9 từ") → chọn lại
+        B2→A1 — từ ĐÃ CÓ badge bị GHI ĐÈ (pin §5.7)
+    t8  bulk xoá 2-phase: dry-run dialog "Sẽ xoá 1 từ. Tiến độ học (SRS) của 1 lượt học viên..."
+        (progressAffected từ user_word_progress thật) → confirm → toast "Đã xoá 1 từ · tiến độ
+        ảnh hưởng: 1" → PUBLIC book page: qa-cms-delta biến mất (book vẫn còn từ khác)
+    t9  export giữ filter: filename vocabulary-YYYY-MM-DD.csv (regex) · BOM U+FEFF · header
+        đúng 10 cột thứ tự spec §5.6 · 55 dòng data (đúng filter qa-cms-page, KHÔNG lẫn alpha) ·
+        synonyms escape RFC4180 ("pomme, bưởi" quote-doubling) · image_url blob CDN trong CSV
+    t10 regression per-book manager cũ: /admin/books/qa-cms-book-a/vocabulary render, search
+        client-side, dialog sửa mở/đóng — không vỡ bởi field mới additive
+
+════ (3b) REVIEW-FIX VERIFY (c4330e4 + 7ff26e0) ════
+- vitest 1052 passed | 8 skipped · tsc exit 0 · eslint exit 0 (file đổi)
+- e2e FULL catalog spec sau fix r1: 10/10 passed (3.9m, env thường)
+- P1 r1 REPRO env: t4 với `env -u BLOB_READ_WRITE_TOKEN` (dev server tươi, FS-driver —
+  đúng kịch bản hỏng trước fix): 1 passed (54.7s) — upload → preview → save → refetch
+  thấy thumb; artifact local public/images/words dọn sau run (không track git)
+- P1 r2: e2e t6+t7+t8 (đúng 3 runner restructure) → 3/3 passed (2.5m)
+
+════ (4) CLEANUP FIXTURE — helper SF-1 trong teardown ════
+afterAll: node e2e/helpers/cleanup-vocab-cms.ts --apply + SQL xoá books qa-cms-book-% (helper
+  chỉ phủ words/crawl_entries; book_words cascade theo books):
+  "Đã xoá. Còn lại pattern: words=0 · entries=0
+   Orphan check (phải 0 hết): book_words=0 · progress=0 · vocab_activity=0" — 0 sót trên shared DB.
+
+════ (5) REGRESSION admin suite rộng — 8 fail TRÊN BASE (pre-existing env-drift) ════
+Full admin-* suite trên branch: 50 passed / 8 failed (20.8m). 8 fail (audio-replace×3, publish,
+units, upload×2, users) tái hiện 7/8 Y NGUYÊN trên BASE commit 8e082ae (temp worktree sạch cùng
+env): (a) specs QA-4 giả định dev KHÔNG có BLOB_READ_WRITE_TOKEN ("local dev không có blob
+token — driver local là path test" / expected path tương đối received URL CDN) — env worktree có
+token → uploads đi Vercel Blob; (b) admin-users đếm 2 row substring "admin@ilec.dev" do account
+cũ sf3-admin@ilec.dev trên shared DB (contamination từ SF trước). 1 fail còn lại (admin-units
+500) là transient (pass trên base run) — không thuộc surface SF-2. Kết luận: 0 regression do SF-2.
+
+════ (6) Ghi chú ════
+- Không đụng file tier-0 SF-1 (git diff 8e082ae..HEAD --stat chỉ có page.tsx/page.test.ts,
+  vocabulary-catalog.*, admin-nav.*, vocab-catalog.json vi/en, e2e 2 specs).
+- Gotcha stack đã pin trong code comment: server getTranslations namespace = TÊN FILE
+  ("vocab-catalog" — getRequestConfig đọc theo basename) ≠ client camelCase "vocabCatalog"
+  (NextIntlClientProvider của layout SF-1) — layout READ-ONLY nên giữ 2 tên.
+- Search debounce 300ms: e2e chờ count text commit trước click export (filter cũ race).
+- Route API cold-compile ~60s+: beforeAll warm bằng request fixture 401-no-op (bulk/export/image).

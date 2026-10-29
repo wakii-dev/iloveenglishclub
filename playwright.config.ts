@@ -17,6 +17,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/dictation-global-setup.ts",
   testMatch: /(dictation|progress|i18n).*\.spec\.ts/,
   timeout: 60_000,
   fullyParallel: false, // store singleton + DB seed — chạy tuần tự cho ổn định
@@ -27,6 +28,9 @@ export default defineConfig({
     baseURL: "http://localhost:3110",
     trace: "retain-on-failure",
   },
+  // compile-lạnh dev (mỗi suite xoá .next — sweep deterministic): expect 5s
+  // mặc định không đủ cho render đầu trang lesson → 15s
+  expect: { timeout: 15_000 },
   projects: [
     {
       name: "chromium",

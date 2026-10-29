@@ -4,18 +4,32 @@
  * Pure validate/parse ở vocabulary.ts. Mọi mutation revalidate content
  * (SF-2 public vocabulary page đọc — matrix spec §5).
  */
-import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { bookWords, words } from "@/db/schema";
 import { revalidateContent } from "@/lib/revalidate";
 import { pgErrorCode } from "@/lib/actions/admin/pg-errors";
-import type { ParsedWordRow, WordInput } from "./vocabulary";
+import { escapeLikePattern, type CefrLevel, type ParsedWordRow, type WordInput } from "./vocabulary";
+
+/** Sort spec §4: created (mặc định — desc createdAt, tiebreak word) | word asc
+ *  | cefr asc — PG ASC mặc định NULLS LAST ⇒ cefr null xuống cuối (spec pin). */
+function orderByFor(sort: NonNullable<VocabularyListParams["sort"]>) {
+  if (sort === "word") return [asc(words.word)];
+  if (sort === "cefr") return [asc(words.cefr), asc(words.word)];
+  return [desc(words.createdAt), asc(words.word)];
+}
 
 export type VocabularyListParams = {
   bookId?: number;
   q?: string;
   limit: number;
   offset: number;
+  // VU-43 SF-1 (v2 — additive, signature cũ chạy nguyên):
+  cefr?: CefrLevel[]; // normalized A1..C2 (route parse qua parseCefrFilter)
+  source?: "oxford-ld" | "teacher";
+  audio?: "has" | "missing";
+  orphan?: boolean; // WIN khi conflict bookId (bookId bị ignore)
+  sort?: "created" | "word" | "cefr";
 };
 
 export type VocabularyListItem = WordInput & {
@@ -29,12 +43,19 @@ export async function listVocabulary({
   q,
   limit,
   offset,
+  cefr,
+  source,
+  audio,
+  orphan,
+  sort = "created",
 }: VocabularyListParams): Promise<{
   items: VocabularyListItem[];
   total: number;
 }> {
   // bookId lọc qua JOIN book_words (constraint book_id đi kèm WHERE) — q
-  // ilike trên words đủ dùng standalone; custom select shape giữ phẳng khi join
+  // ilike trên words đủ dùng standalone; custom select shape giữ phẳng khi join.
+  // orphan=1 → LEFT JOIN … IS NULL (spec §4: WIN khi conflict bookId).
+  const joinBook = bookId !== undefined && !orphan;
   const rowsQuery = db
     .select({
       id: words.id,
@@ -45,6 +66,9 @@ export async function listVocabulary({
       audioUrl: words.audioUrl,
       cefr: words.cefr,
       source: words.source,
+      pos: words.pos,
+      imageUrl: words.imageUrl,
+      synonyms: words.synonyms,
       createdAt: words.createdAt,
     })
     .from(words)
@@ -54,27 +78,41 @@ export async function listVocabulary({
     .from(words)
     .$dynamic();
 
+  const like = q ? `%${escapeLikePattern(q)}%` : null;
   const cond = (withBook: boolean) =>
     and(
-      ...(withBook && bookId !== undefined ? [eq(bookWords.bookId, bookId)] : []),
-      ...(q ? [ilike(words.word, `%${q}%`)] : []),
+      ...(withBook && joinBook ? [eq(bookWords.bookId, bookId!)] : []),
+      ...(orphan ? [isNull(bookWords.bookId)] : []),
+      ...(like ? [or(ilike(words.word, like), ilike(words.meaningVi, like))] : []),
+      ...(cefr && cefr.length > 0
+        ? // normalized equality: 'b1 ' dữ vẫn match B1 (spec §4)
+          [inArray(sql`upper(trim(${words.cefr}))`, cefr)]
+        : []),
+      ...(source === "oxford-ld" ? [eq(words.source, "oxford-ld")] : []),
+      ...(source === "teacher" ? [isNull(words.source)] : []),
+      ...(audio === "has" ? [isNotNull(words.audioUrl)] : []),
+      ...(audio === "missing" ? [isNull(words.audioUrl)] : []),
     );
 
   const joinedRows =
-    bookId !== undefined
+    joinBook
       ? rowsQuery.innerJoin(bookWords, eq(bookWords.wordId, words.id))
-      : rowsQuery;
+      : orphan
+        ? rowsQuery.leftJoin(bookWords, eq(bookWords.wordId, words.id))
+        : rowsQuery;
   const joinedCount =
-    bookId !== undefined
+    joinBook
       ? countQuery.innerJoin(bookWords, eq(bookWords.wordId, words.id))
-      : countQuery;
+      : orphan
+        ? countQuery.leftJoin(bookWords, eq(bookWords.wordId, words.id))
+        : countQuery;
 
   const rows = await joinedRows
-    .where(cond(bookId !== undefined))
-    .orderBy(desc(words.createdAt), asc(words.word))
+    .where(cond(joinBook))
+    .orderBy(...orderByFor(sort))
     .limit(limit)
     .offset(offset);
-  const [count] = await joinedCount.where(cond(bookId !== undefined));
+  const [count] = await joinedCount.where(cond(joinBook));
 
   // bookIds gom 1 query cho page hiện tại — không fan-out per-row
   const ids = rows.map((r) => r.id);
@@ -102,6 +140,10 @@ export async function listVocabulary({
       audio_url: w.audioUrl,
       cefr: w.cefr,
       source: w.source,
+      // VU-43 SF-1 (nullable — consumer cũ bỏ qua an toàn, spec §4)
+      pos: w.pos,
+      image_url: w.imageUrl,
+      synonyms: w.synonyms,
       createdAt: w.createdAt,
       bookIds: byWord.get(w.id) ?? [],
     })),
@@ -112,6 +154,39 @@ export async function listVocabulary({
 export type CreateWordResult =
   | { ok: true; id: number; duplicate: boolean }
   | { ok: false; error: "bookNotFound" };
+
+/** Drizzle transaction type (test mock cần shape tương thích). */
+export type VocabularyTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Insert 1 word (semantics createVocabularyWord: unique words.word case-
+ * sensitive, onConflictDoNothing → undefined khi trùng). Shared leg cho
+ * createVocabularyWord + promote-store (VU-43 SF-1 — cùng 1 semantics insert).
+ */
+export async function insertWordReturningId(
+  tx: VocabularyTx,
+  input: WordInput,
+): Promise<number | undefined> {
+  const [row] = await tx
+    .insert(words)
+    .values({
+      word: input.word,
+      ipa: input.ipa,
+      meaningVi: input.meaning_vi,
+      example: input.example,
+      audioUrl: input.audio_url,
+      // SF-2 crawl-on-add: cefr/source chỉ có khi approve set — import không đụng
+      cefr: input.cefr ?? null,
+      source: input.source ?? null,
+      // VU-43 SF-1: field mới — import path cũ không gửi → null
+      pos: input.pos ?? null,
+      synonyms: input.synonyms ?? null,
+      imageUrl: input.image_url ?? null,
+    })
+    .onConflictDoNothing({ target: words.word })
+    .returning({ id: words.id });
+  return row?.id;
+}
 
 /**
  * Create word + attach vào bookIds (order = max+1 mỗi book, cùng pattern
@@ -124,21 +199,8 @@ export async function createVocabularyWord(
 ): Promise<CreateWordResult> {
   try {
     return await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(words)
-        .values({
-          word: input.word,
-          ipa: input.ipa,
-          meaningVi: input.meaning_vi,
-          example: input.example,
-          audioUrl: input.audio_url,
-          // SF-2 crawl-on-add: cefr/source chỉ có khi approve set — import không đụng
-          cefr: input.cefr ?? null,
-          source: input.source ?? null,
-        })
-        .onConflictDoNothing({ target: words.word })
-        .returning({ id: words.id });
-      let id = row?.id;
+      const insertedId = await insertWordReturningId(tx, input);
+      let id = insertedId;
       let duplicate = false;
       if (id === undefined) {
         duplicate = true;
@@ -187,13 +249,19 @@ export type UpdateWordResult =
   | { ok: true }
   | { ok: false; error: "notFound" | "duplicateWord" };
 
-/** Patch theo property-name Drizzle (meaningVi) — route map từ snake_case body. */
+/** Patch theo property-name Drizzle (meaningVi) — route map từ snake_case body.
+ *  VU-43 SF-1: + cefr/source/pos/imageUrl/synonyms (validate ở route). */
 export type WordPatch = Partial<{
   word: string;
   ipa: string | null;
   meaningVi: string;
   example: string | null;
   audioUrl: string | null;
+  cefr: string | null;
+  source: string | null;
+  pos: string | null;
+  imageUrl: string | null;
+  synonyms: string | null;
 }>;
 
 export async function updateVocabularyWord(

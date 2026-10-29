@@ -4,8 +4,10 @@
  * cache (cùng pattern hub-store); DB lỗi → fallback 0/rỗng build-safe.
  *
  * Sở hữu SF-4:
- *  - plantedToday = count `vocab_activity` kind='learn-complete' NGÀY VN
- *    (day boundary qua vnToday/ILEC_TZ — tái dùng src/lib/gamification/streak.ts)
+ *  - practicedToday (daily-journey §3.5 rename từ plantedToday) = COUNT
+ *    DISTINCT word ĐÚNG hôm nay kind IN ('learn-complete','session-step')
+ *    NGÀY VN (day boundary qua vnToday/ILEC_TZ — tái dùng
+ *    src/lib/gamification/streak.ts) — "từ ôn/luyện" unify toàn hệ
  *  - streak/activeToday derive từ `daily_activity` (source of truth) qua
  *    computeStreak — vocab HOẶC dictation đều giữ presence row
  *  - garden distribution: COUNT SQL-side theo boundary `growth.ts` (SF-1) —
@@ -23,6 +25,7 @@ import {
   dailyActivity,
   lessons,
   profiles,
+  streakFreezes,
   units,
   userLessonProgress,
   userWordProgress,
@@ -42,8 +45,8 @@ const STREAK_LOOKBACK_DAYS = 400; // như vocab-xp-store — cap hợp lý v1
 const DEFAULT_GOAL = 5; // profiles.daily_goal_words default migration 0005
 
 export type DashboardSummary = {
-  /** Từ mới planted hôm nay (learn-complete, ngày VN). */
-  plantedToday: number;
+  /** Từ ôn/luyện hôm nay (distinct word ĐÚNG, learn + review — ngày VN). */
+  practicedToday: number;
   dailyGoalWords: number;
   /** profiles.xp — cache write-through (dictation + vocab). */
   totalXp: number;
@@ -60,7 +63,7 @@ export async function getDashboardSummary(
   now: Date,
 ): Promise<DashboardSummary> {
   const fallback: DashboardSummary = {
-    plantedToday: 0,
+    practicedToday: 0,
     dailyGoalWords: DEFAULT_GOAL,
     totalXp: 0,
     streak: 0,
@@ -70,12 +73,13 @@ export async function getDashboardSummary(
   try {
     const today = vnToday(now);
 
-    // planted-today: learn-complete trong ngày VN (pattern count-filter
-    // vocab-xp-store — cùng cast `at time zone`)
-    const [plantedRow] = await db
+    // practiced-today: DISTINCT từ có ≥1 sự kiện ĐÚNG hôm nay (learn-complete
+    // + session-step — daily-journey §3.5; pattern count-filter vocab-xp-store
+    // — cùng cast `at time zone`)
+    const [practicedRow] = await db
       .select({
-        planted:
-          sql<number>`count(*) filter (where ${vocabActivity.kind} = 'learn-complete' and (${vocabActivity.createdAt} at time zone 'Asia/Ho_Chi_Minh')::date = ${today}::date)`.mapWith(
+        practiced:
+          sql<number>`count(distinct ${vocabActivity.wordId}) filter (where ${vocabActivity.correct} and ${vocabActivity.kind} in ('learn-complete', 'session-step') and (${vocabActivity.createdAt} at time zone 'Asia/Ho_Chi_Minh')::date = ${today}::date)`.mapWith(
             Number,
           ),
       })
@@ -97,13 +101,19 @@ export async function getDashboardSummary(
       .orderBy(desc(dailyActivity.date))
       .limit(STREAK_LOOKBACK_DAYS);
     const dates = activityDates.map((r) => r.date);
+    // SF-4 (VU-52): streak LIVE freeze-aware như today-store — CHỈ ĐỌC
+    // streak_freezes (display), KHÔNG consume (consume là recomputeStreakTx)
+    const freezeRows = await db
+      .select({ date: streakFreezes.date })
+      .from(streakFreezes)
+      .where(eq(streakFreezes.userId, userId));
     const stats = await getHubStats(userId);
 
     return {
-      plantedToday: plantedRow?.planted ?? 0,
+      practicedToday: practicedRow?.practiced ?? 0,
       dailyGoalWords: profile?.dailyGoalWords ?? DEFAULT_GOAL,
       totalXp: profile?.xp ?? 0,
-      streak: computeStreak(dates, today),
+      streak: computeStreak(dates, today, new Set(freezeRows.map((r) => r.date))),
       activeToday: dates.includes(today),
       dueToday: stats.dueToday,
     };

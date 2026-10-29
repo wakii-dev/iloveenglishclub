@@ -23,6 +23,7 @@ import { McStep } from "./session-mc-step";
 import { ListenStep } from "./session-listen-step";
 import { TypeStep } from "./session-type-step";
 import { SessionSummary } from "./session-summary";
+import { notifyStatsUpdated } from "@/lib/gamification/events";
 
 /**
  * SessionRunner (vocab-memrise SF-3, VU-40 — context pack #1/#6, hand-off
@@ -141,6 +142,9 @@ export function SessionRunner({
         }
         const result = (await res.json()) as GradeResult & { ok: boolean };
         dispatch({ type: "graded", step, result, response });
+        // daily-journey SF-3: XP/streak + nav-dot sống sau hoạt động vocab —
+        // trước đây chỉ dictation-lesson dispatch (dot stale sau ôn/học từ)
+        notifyStatsUpdated();
       } catch {
         dispatch({ type: "post-failed" });
       }

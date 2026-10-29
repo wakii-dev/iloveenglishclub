@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, LogOut, Trophy, User } from "lucide-react";
+import { CalendarDays, Flame, LogOut, Trophy, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
+import { TodayNavDot } from "@/components/today/today-nav-dot";
 import { cn } from "cn";
 import { readMyStats } from "@/lib/actions/my-stats";
 import {
@@ -126,6 +127,14 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {/* daily-journey SF-3: nav desktop ẩn <md — "Hôm nay" là entry duy
+            nhất trên mobile, dot nhắc khi chưa đạt goal kép */}
+        <DropdownMenuItem asChild className="md:hidden">
+          <Link href="/today">
+            <CalendarDays className="size-4" /> {t("nav.today")} <TodayNavDot />
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="md:hidden" />
         <DropdownMenuLabel className="font-normal">
           <p className="truncate text-sm font-bold">
             {user.name ?? t("header.account")}

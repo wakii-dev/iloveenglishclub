@@ -10,6 +10,12 @@ import { Toaster } from "@/components/ui/sonner";
 // Admin NGOÀI segment [locale] (spec §3) — không có requestLocale nên messages
 // nạp thẳng catalog VI (UI admin tiếng Việt cố định); en/admin.json là mirror.
 import adminMessages from "../../../../messages/vi/admin.json";
+// Vocab CMS (VU-43 SF-1): 4 namespace riêng — KHÔNG đụng admin.json (chống
+// conflict sf-2 ∥ sf-3; SF-2/3/4 điền file của mình, layout chỉ nạp 1 LẦN).
+import vocabCmsCommonMessages from "../../../../messages/vi/vocab-cms-common.json";
+import vocabCatalogMessages from "../../../../messages/vi/vocab-catalog.json";
+import vocabCurationMessages from "../../../../messages/vi/vocab-curation.json";
+import vocabStatsMessages from "../../../../messages/vi/vocab-stats.json";
 import "../../globals.css";
 
 export const metadata: Metadata = {
@@ -46,7 +52,13 @@ export default async function AdminLayout({
       >
         <NextIntlClientProvider
           locale="vi"
-          messages={{ admin: adminMessages }}
+          messages={{
+            admin: adminMessages,
+            vocabCmsCommon: vocabCmsCommonMessages,
+            vocabCatalog: vocabCatalogMessages,
+            vocabCuration: vocabCurationMessages,
+            vocabStats: vocabStatsMessages,
+          }}
         >
           <header className="sticky top-0 z-40 border-b-2 bg-card/90 backdrop-blur">
             <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">

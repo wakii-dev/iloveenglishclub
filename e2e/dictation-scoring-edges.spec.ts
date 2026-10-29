@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { diffWords, computeXp } from "../src/lib/dictation/diff";
 import { SCORING_LESSON_URL, SCORING_PARTS } from "./sf2-db";
+import { startPart } from "./start-gate";
 
 /**
  * Task 2 — Scoring edge TRÊN UI THẬT (context pack slice #1): input bẩn
@@ -21,8 +22,7 @@ test.describe("Dictation scoring edges (UI vs diff.ts truth)", () => {
 
   async function startLesson(page: Page, url = SCORING_LESSON_URL): Promise<void> {
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("button", { name: START })).toBeVisible();
-    await page.getByRole("button", { name: START }).click();
+    await startPart(page); // retry pre-hydration + đợi textbox
   }
 
   /** Skip (n-1) part để tới part n (skip pre-check hợp lệ — attempts 0). */

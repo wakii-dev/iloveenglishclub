@@ -1,0 +1,13 @@
+tdd: RED→GREEN — (1) streak-store.test.ts viết TRƯỚC impl (10 case: identity byte-identical ×3, freeze-merge double-burn, plan-rỗng-no-write, cap-2, credits-bounded, 1-statement-insert, lookback-deep-hole) — RED (module thiếu), GREEN 10/10 sau impl. (2) submit-attempt.test.ts MỚI (5 case identity dictation path — mock @/auth+@/db) + vocab-xp-store.test.ts +3 case SF-4 (identity/consume/gate không recompute khi đã-active) + mock-queue shift learn-session-store (28/28). (3) dashboard-store.test.ts +freeze-aware LIVE read-only case (TDD đỏ trước: 2 fail → GREEN 20/20). (4) e2e today-shield.spec.ts 4 test: A consume (freeze hôm-qua + credits −1 + streak 3 + DB assert + live + header cache khớp), B identity (0 credit ⇒ streak 1, 0 freeze), /me badge owned + locked + shield hint, mobile 375 sweep — PASS trong sweep-33.
+code commit: e1f5c58 (feat(vu48-sf4): rewire 2 write-paths qua recomputeStreakTx (S2)) — chuỗi S1..S4: streak-store + rewire + dashboard LIVE + /today protected + /me + i18n
+code commit (review fix): 892194d (fix(vu48-sf4): review P1-1 — protected state = freeze covering gap (shieldCoveringGap helper, stale-freeze divergence case + vitest pin; P2s dọn)) — B3 vòng 2 VERDICT: APPROVED
+vitest output (chạy tại lúc ghi evidence):
+
+test: vitest toàn nền 1029 passed (sweep-33); MỌI test:e2e:* 15/16 suites PASS liên tiếp 1 lượt (sf3 26 · sf4 46 · today 11 · vocab* 47 · top-users 3 · dictation 114 · oxford 7); rls PASS-BASE-PARITY (6 fail đã biết khớp base 0409bc8 — SF-4 không đụng scripts/ hay schema); typecheck PASS; build PASS; oxford-fullchain:237 FAIL 2/2 attempts trong sweep-condition (dev-hiccup/RSC class — base standalone PASS, retries guard không che — trung thực không nuốt; chi tiết convergence-run.md + test-run.md)
+evidence: docs/superpowers/evidence/vu48-sf4/ (convergence-run.md · test-run.md · security-audit.md VERDICT CLEAN 0 P0/P1 · screenshots ×5 browser-verify Rule-0)
+HEAD tại lúc ghi: 1ff25b878985288310479b9f246416805e9c5326 (docs(vu48-sf4): kết luận sweep-33 vào convergence-run)
+   Duration  3.63s (import 64%, transform 23%, tests 10%, worker 2%)
+
+    Isolate  81 workers spawned · ~90ms startup each (spawn + environment, per file)
+             at least ~952ms faster with isolate: false — reuses workers across files instead of one per file
+

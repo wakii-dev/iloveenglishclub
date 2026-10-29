@@ -105,6 +105,11 @@ export const profiles = pgTable("profiles", {
   // vocab-memrise SF-1 (VU-38): mục tiêu từ mới/ngày — dashboard goal ring
   // đọc, UI chỉnh inline presets 5/10/20 (SF-4 sở hữu surface)
   dailyGoalWords: integer("daily_goal_words").notNull().default(5),
+  // daily-journey SF-1 (VU-49): mục tiêu phút nghe/ngày (hero goal kép /today)
+  dailyGoalMinutes: integer("daily_goal_minutes").notNull().default(10),
+  // daily-journey SF-1 (VU-49): streak shield credits — grant lazy 1/tháng VN,
+  // cap 2 (consumed ở recomputeStreakTx — SF-4 wiring; SF-1 chỉ schema)
+  shieldCredits: integer("shield_credits").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -284,6 +289,10 @@ export const dailyActivity = pgTable(
     // vocab-memrise SF-1 (VU-38): số bước test vocab đã chấm trong ngày —
     // upsert cùng row với dictation: presence row là thứ giữ streak
     vocabSteps: integer("vocab_steps").notNull().default(0),
+    // daily-journey SF-1 (VU-49): materialize phút nghe — mỗi part đóng góp
+    // coalesce(duration_ms, 0) ĐÚNG MỘT lần/ngày (attempt ĐẦU của part trong
+    // ngày VN, gate isFirstToday submit-attempt; backfill 0007 cùng rule)
+    listenMs: integer("listen_ms").notNull().default(0),
   },
   (activity) => [
     primaryKey({ columns: [activity.userId, activity.date] }),
@@ -349,6 +358,12 @@ export const words = pgTable("words", {
   // khi enrich fill ≥1 field (null = teacher tạo thuần).
   cefr: text("cefr"),
   source: text("source"),
+  // Vocab CMS (VU-43 SF-1 — additive, nullable): pos lowercase nguồn
+  // crawl_entries.pos khi promote; imageUrl upload admin (storage dual-driver);
+  // synonyms comma-separated chuẩn hoá join ', ' (validate vocabulary.ts).
+  pos: text("pos"),
+  imageUrl: text("image_url"),
+  synonyms: text("synonyms"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -395,6 +410,11 @@ export const crawlEntries = pgTable("crawl_entries", {
 }, (entry) => [
   index("crawl_entries_status_idx").on(entry.status),
   index("crawl_entries_word_idx").on(entry.word),
+  // Vocab CMS (VU-43 SF-1): curation filter bar — 63.9k rows cần index-supported
+  // pagination server-side (EXPLAIN probe SF-1 task 1).
+  index("crawl_entries_cefr_idx").on(entry.cefr),
+  index("crawl_entries_pos_idx").on(entry.pos),
+  index("crawl_entries_ox3000_idx").on(entry.ox3000),
 ]);
 
 /**
@@ -538,4 +558,76 @@ export const vocabActivity = pgTable(
       activity.wordId,
     ),
   ],
+);
+
+/**
+ * Daily-journey SF-1 (VU-49) — 4 bảng ledger gamification (spec §3.1):
+ * - streak_freezes: ngày được shield che (auto-consume ở recomputeStreakTx —
+ *   SF-4 wiring); PK (user_id, date) idempotent
+ * - shield_grants: 1 credit/tháng VN (lazy RETURNING-gated — SF-2 snapshot tx);
+ *   month = 'YYYY-MM' theo TZ Asia/Ho_Chi_Minh
+ * - quest_completions: ledger auto-record 3 quest/ngày (KHÔNG claim, KHÔNG XP);
+ *   PK prefix-cover (user_id, date) — không cần index thêm
+ * - user_badges: badge milestone 1 lần (ON CONFLICT DO NOTHING RETURNING)
+ * Mọi bảng FK profiles cascade — xoá user dọn hết (pattern bảng gamification).
+ */
+export const streakFreezes = pgTable(
+  "streak_freezes",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "string" }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (freeze) => [primaryKey({ columns: [freeze.userId, freeze.date] })],
+);
+
+export const shieldGrants = pgTable(
+  "shield_grants",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    month: text("month").notNull(), // 'YYYY-MM' VN
+    grantedAt: timestamp("granted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (grant) => [primaryKey({ columns: [grant.userId, grant.month] })],
+);
+
+export const questCompletions = pgTable(
+  "quest_completions",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    date: date("date", { mode: "string" }).notNull(),
+    questId: text("quest_id").notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (completion) => [
+    primaryKey({
+      columns: [completion.userId, completion.date, completion.questId],
+    }),
+  ],
+);
+
+export const userBadges = pgTable(
+  "user_badges",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    badgeId: text("badge_id").notNull(),
+    awardedAt: timestamp("awarded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (badge) => [primaryKey({ columns: [badge.userId, badge.badgeId] })],
 );

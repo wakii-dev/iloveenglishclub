@@ -70,7 +70,7 @@ test.describe("Vocabulary hub — tab Tổng quan dashboard (SF-4)", () => {
     await expect(continueCta).toBeVisible();
     await expect(continueCta).toHaveAttribute(
       "href",
-      /\/en\/vocabulary\/learn\/level-\d/,
+      /\/en\/vocabulary\/learn\/\d+/,
     );
     await expect(
       page.locator('[role="img"][aria-label*="Today\'s goal"]'),
@@ -121,7 +121,7 @@ test.describe("Vocabulary hub — tab Tổng quan dashboard (SF-4)", () => {
     await expect(continueCta).toBeVisible();
     await expect(continueCta).toHaveAttribute(
       "href",
-      /\/vi\/vocabulary\/learn\/level-\d/,
+      /\/vi\/vocabulary\/learn\/\d+/,
     );
   });
 

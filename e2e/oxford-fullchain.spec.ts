@@ -280,7 +280,8 @@ test.describe("Full-chain SF-4", () => {
       }
       throw new Error("feedback không tự mất sau 30s");
     };
-    for (let i = 0; i < 12; i++) {
+    let blanks = 0;
+    for (let i = 0; i < 30; i++) {
       if (await page.getByText("Phiên hoàn tất").isVisible()) break;
       if (await page.getByTestId("type-input").isVisible()) {
         // gõ từ: prompt = nghĩa VI trong ngoặc kép
@@ -291,6 +292,7 @@ test.describe("Full-chain SF-4", () => {
         expect(word, `prompt khớp fixture: ${prompt}`).toBeTruthy();
         await page.getByTestId("type-input").fill(word!);
         await page.getByTestId("type-input").press("Enter");
+        blanks = 0;
         await expect(page.getByTestId("feedback-correct")).toBeVisible({
           timeout: 30_000,
         });
@@ -301,6 +303,7 @@ test.describe("Full-chain SF-4", () => {
           page.getByRole("button", { name: "Dừng audio" }).first(),
         ).toBeVisible({ timeout: 10_000 });
         await page.getByTestId("session-option").first().click();
+        blanks = 0;
         await expect(
           page
             .getByTestId("feedback-correct")
@@ -324,6 +327,7 @@ test.describe("Full-chain SF-4", () => {
           .getByTestId("session-option")
           .filter({ hasText: meaning! })
           .click({ timeout: 10_000 });
+        blanks = 0;
         await expect(
           page
             .getByTestId("feedback-correct")
@@ -334,10 +338,14 @@ test.describe("Full-chain SF-4", () => {
         if (await cont.isVisible()) await cont.click();
         await waitAdvanced();
       } else {
-        break;
+        // blank giữa 2 bước (grading pending / RSC swap) — KHÔNG break sớm:
+        // chờ bước kế hiện; chỉ bỏ cuộc sau 10 lần blank liên tiếp (~10s)
+        blanks += 1;
+        if (blanks >= 10) break;
+        await page.waitForTimeout(1_000);
       }
     }
-    await expect(page.getByText("Phiên hoàn tất")).toBeVisible();
+    await expect(page.getByText("Phiên hoàn tất")).toBeVisible({ timeout: 30_000 });
 
     // cả 2 từ type-đúng → due tương lai → hàng ôn rỗng (persist QUA API mới)
     await page.reload({ waitUntil: "domcontentloaded" });

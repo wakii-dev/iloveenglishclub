@@ -1,5 +1,17 @@
 # I Love English Club
 
+<p>
+  <a href="https://github.com/wakii-dev/iloveenglishclub/actions/workflows/ci.yml"><img src="https://github.com/wakii-dev/iloveenglishclub/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/wakii-dev/iloveenglishclub/actions/workflows/audio-sync.yml"><img src="https://github.com/wakii-dev/iloveenglishclub/actions/workflows/audio-sync.yml/badge.svg" alt="Audio sync" /></a>
+  <img src="https://img.shields.io/badge/Next.js-15-black?logo=nextdotjs" alt="Next.js 15" />
+  <img src="https://img.shields.io/badge/Postgres-Neon-336791?logo=postgresql" alt="Neon Postgres" />
+</p>
+
+> **English listening dictation platform** — learners listen sentence-by-sentence
+> and type what they hear; the app scores a word-level diff, awards XP, and tracks
+> streaks, weekly leaderboards and book progress along the **Cambridge Prepare**
+> path (Pre-A1 → B2 First). Bilingual UI: Tiếng Việt / English.
+
 Nền tảng luyện **nghe – chép chính tả (dictation)** theo sách **Cambridge Prepare**, giao diện song ngữ **Tiếng Việt / English**.
 
 Học viên nghe audio từng câu, gõ lại những gì nghe được, hệ thống so khớp từng từ,
