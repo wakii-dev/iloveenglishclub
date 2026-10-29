@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og";
-import { connection } from "next/server";
 import { getBook } from "@/lib/content/queries";
 import { BRAND } from "@/lib/seo/site";
 
@@ -22,17 +21,18 @@ const C = {
   card: "#ffffff",
 } as const;
 
+async function loadBookCached(book: string, locale: string) {
+  "use cache";
+  return getBook(book, locale);
+}
+
 export default async function Image({
   params,
 }: {
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book } = await params;
-  const loadBook = async () => {
-    "use cache";
-    return getBook(book, locale);
-  };
-  const bookRow = await loadBook();
+  const bookRow = await loadBookCached(book, locale);
 
   const title = bookRow?.title ?? BRAND;
   const color = bookRow?.color ?? C.primary;
