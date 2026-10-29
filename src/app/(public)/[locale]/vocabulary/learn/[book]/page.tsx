@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { and, asc, eq, inArray, lt, sql } from "drizzle-orm";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/db";
@@ -12,14 +13,18 @@ import { SessionRunner } from "@/components/vocabulary/session-runner";
 
 /**
  * Learn session /vocabulary/learn/[book] (vocab-memrise SF-3, VU-40 —
- * context pack #8): force-dynamic, auth redirect `?next` (pattern
+ * context pack #8): động theo request, auth redirect `?next` (pattern
  * me/vocabulary), [book] = bookId số (không hợp lệ / sách không tồn tại →
  * notFound). GET session QUA STORE (server-side — nguồn queue này với route
  * GET; route là bề mặt API public đã pin test). steps rỗng → sách hoàn thành.
  * Header meta level/range derive TỪ CHÍNH queue bước (orders của wordIds →
  * chunkStart → window 10 JOIN reps) — không trùng logic store, không drift.
+ *
+ * ilec-v2 (Next 16 cacheComponents): `dynamic = "force-dynamic"` bị cấm →
+ * `instant = false` (render on-demand — pattern admin layout SF3);
+ * `setRequestLocale` bỏ (locale qua rootParams — pattern SF1).
  */
-export const dynamic = "force-dynamic"; // auth() đọc cookies + queue re-derive
+export const instant = false; // auth() đọc cookies + queue re-derive
 
 export default async function LearnSessionPage({
   params,
@@ -27,7 +32,8 @@ export default async function LearnSessionPage({
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book } = await params;
-  setRequestLocale(locale);
+  // runtime data (cookies + Date.now()) — render on-demand tường minh
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

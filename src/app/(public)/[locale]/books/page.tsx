@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { setRequestLocale } from "next-intl/server";
 import { LevelCard } from "@/components/content/level-card";
 import { getBooks } from "@/lib/content/queries";
 
@@ -8,7 +7,6 @@ import { getBooks } from "@/lib/content/queries";
  * /books — danh sách 7 sách (SSG + revalidate 300, data qua queries.ts có
  * tag `content` — SF-5 publish gọi revalidateContent là stale).
  */
-export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -20,14 +18,15 @@ export async function generateMetadata({
   return { title: t("levels.title") };
 }
 
+export const instant = false;
+
 export default async function BooksPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations("books");
+    const t = await getTranslations("books");
   const books = await getBooks(locale);
 
   return (

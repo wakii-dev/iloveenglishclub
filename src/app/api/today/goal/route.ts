@@ -1,8 +1,8 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { updateDailyGoalMinutes } from "@/lib/today/today-store";
 
-export const runtime = "nodejs";
 
 /**
  * PATCH|POST /api/today/goal (daily-journey SF-2, VU-50 — spec §3.3): lưu

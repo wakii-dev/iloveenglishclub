@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { ENRICH_MAX_WORDS, EnrichCapError, enrichWordsDb } from "@/lib/oxford/enrich";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/crawl/enrich (VU-32 SF-2) — fill-empty cho words

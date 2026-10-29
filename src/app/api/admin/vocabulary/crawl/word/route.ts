@@ -3,7 +3,6 @@ import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { previewWordDb } from "@/lib/oxford/enrich";
 import { WORD_MAX } from "@/lib/admin/vocabulary";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/crawl/word (VU-32 SF-2) — crawl-on-add preview,

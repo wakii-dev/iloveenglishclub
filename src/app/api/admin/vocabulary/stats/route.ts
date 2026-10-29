@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { cmsStatsDb } from "@/lib/admin/cms-stats-store";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * GET /api/admin/vocabulary/stats (VU-43 SF-1 task 8) — shape PIN spec §4:

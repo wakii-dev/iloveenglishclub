@@ -10,7 +10,6 @@ import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { putAudio } from "@/lib/storage-server";
 import { storageDriver } from "@/lib/storage";
 
-export const runtime = "nodejs";
 
 /**
  * Upload audio cho 1 word (SF-1 t-1.3) — CÙNG pattern upload route (SF-5):

@@ -7,7 +7,6 @@ import {
 } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * Bulk import vocabulary (SF-1 t-1.2) — POST JSON body

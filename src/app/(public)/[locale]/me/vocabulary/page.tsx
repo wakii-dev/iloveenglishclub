@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { connection } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { getReviewSession } from "@/lib/vocabulary/learn-session-store";
 import { SessionRunner } from "@/components/vocabulary/session-runner";
@@ -12,8 +13,12 @@ import { SessionRunner } from "@/components/vocabulary/session-runner";
  * hub-review-section CTA `?scope=all` mặc định). Prefill không có progress →
  * FALLBACK phiên thường (URL là ý user — không 404 cứng). steps rỗng →
  * nothing-due. dueAt/SM-2/XP do POST /api/vocabulary/session (engine SF-2).
+ *
+ * ilec-v2 (Next 16 cacheComponents): `dynamic = "force-dynamic"` bị cấm →
+ * `instant = false` (pattern admin layout SF3); `setRequestLocale` bỏ
+ * (locale qua rootParams — pattern SF1).
  */
-export const dynamic = "force-dynamic"; // auth() đọc cookies + queue re-derive
+export const instant = false; // auth() đọc cookies + queue re-derive
 
 export default async function MeVocabularyPage({
   params,
@@ -23,7 +28,8 @@ export default async function MeVocabularyPage({
   searchParams: Promise<{ word?: string; scope?: string; book?: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  // runtime data (cookies + Date.now()) — render on-demand tường minh
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

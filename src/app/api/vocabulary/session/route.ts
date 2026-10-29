@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import {
@@ -7,7 +8,6 @@ import {
 } from "@/lib/vocabulary/learn-session-store";
 import { isSessionKind, isStepKind } from "@/lib/vocabulary/learn-session";
 
-export const runtime = "nodejs";
 
 /**
  * GET/POST /api/vocabulary/session (vocab-memrise SF-2, VU-39 — epic §5).
@@ -38,6 +38,7 @@ function err(body: Record<string, unknown>, status: number): NextResponse {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return err({ error: "not-authenticated" }, 401);
@@ -95,6 +96,7 @@ function sessionResponse(
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return err({ error: "not-authenticated" }, 401);

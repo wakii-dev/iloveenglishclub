@@ -22,7 +22,6 @@ import {
 } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * Admin vocabulary CRUD (SF-1 t-1.2) — REST JSON. Authz app-level (pivot

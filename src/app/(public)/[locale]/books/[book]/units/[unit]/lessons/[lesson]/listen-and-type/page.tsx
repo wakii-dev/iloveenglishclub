@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
 import { getBook, getLesson, getLessons, getUnit } from "@/lib/content/queries";
 import { resolveAudioUrl } from "@/lib/storage";
 import { DictationLesson } from "@/components/dictation/dictation-lesson";
@@ -11,11 +10,7 @@ import { DictationLesson } from "@/components/dictation/dictation-lesson";
  * build (§3); KHÔNG auth() ở RSC — auth() đọc cookies ⟹ dynamic, hỏng ISR
  * (session xử lý client-side qua useSession trong orchestrator).
  */
-export const revalidate = 300;
 
-export async function generateStaticParams() {
-  return [];
-}
 
 export async function generateMetadata({
   params,
@@ -27,14 +22,15 @@ export async function generateMetadata({
   return { title: row?.title ?? "Lesson" };
 }
 
+export const instant = false;
+
 export default async function LessonDictationPage({
   params,
 }: {
   params: Promise<{ locale: string; book: string; unit: string; lesson: string }>;
 }) {
   const { locale, book: bookSlug, unit, lesson } = await params;
-  setRequestLocale(locale);
-  const [book, unitRow, lessonRow, unitLessons] = await Promise.all([
+    const [book, unitRow, lessonRow, unitLessons] = await Promise.all([
     getBook(bookSlug, locale),
     getUnit(bookSlug, unit, locale),
     getLesson(bookSlug, unit, lesson, locale),

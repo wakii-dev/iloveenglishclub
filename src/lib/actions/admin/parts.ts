@@ -53,7 +53,7 @@ async function revalidateIfPublished(lessonId: number): Promise<void> {
     .from(lessons)
     .where(eq(lessons.id, lessonId))
     .limit(1);
-  if (row?.published) revalidateTag(CONTENT_TAG);
+  if (row?.published) revalidateTag(CONTENT_TAG, "max");
 }
 
 export async function addPartsFromScriptAction(

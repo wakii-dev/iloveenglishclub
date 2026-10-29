@@ -3,9 +3,10 @@ import { Link } from "@/i18n/navigation";
 import type { LocalizedLessonSummary } from "@/lib/content/queries";
 
 /**
- * §2.5 LessonRow — tag loại bài pill màu (Dictation = --primary, uppercase
- * 11px) + tên + side số câu + hành động. Anon: không score chip/current state
- * (SF-4/SF-6 bổ sung khi có progress thật).
+ * §2.5 LessonRow (port từ ilec — SF2 migrate): tag loại bài pill màu
+ * (Dictation = --primary, uppercase 11px) + tên + side số câu + hành động.
+ * Anon: không score chip/current state (SF-6 của ilec bổ sung khi có progress
+ * thật). URL tree books→dictation (SF2): /dictation/{book}/{unit}/{lesson}.
  */
 export async function LessonRow({
   lesson,
@@ -17,7 +18,7 @@ export async function LessonRow({
   unitNumber: number;
 }) {
   const t = await getTranslations("books");
-  const href = `/books/${bookSlug}/units/${unitNumber}/lessons/${lesson.number}/listen-and-type`;
+  const href = `/dictation/${bookSlug}/${unitNumber}/${lesson.number}`;
 
   return (
     <div className="flex items-center gap-3 rounded-[18px] border-2 border-border bg-card p-4 transition-colors duration-150 hover:border-secondary sm:gap-4">

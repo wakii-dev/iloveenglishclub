@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getBook, getBooks, getBookVocabulary } from "@/lib/content/queries";
@@ -15,7 +15,6 @@ import { buttonVariants } from "@/components/ui/button";
  * story vocabulary-learn t-1.1: mỗi từ có nút "Học từ này" → /me/vocabulary
  * ?word=<id> (prefill thẻ flashcard có sẵn SF-2 tab Thư viện; guest → login).
  */
-export const revalidate = 300;
 
 export async function generateStaticParams() {
   const books = await getBooks("en");
@@ -41,8 +40,7 @@ export default async function BookVocabularyPage({
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book: bookSlug } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations("vocabulary");
+    const t = await getTranslations("vocabulary");
   const book = await getBook(bookSlug, locale);
   if (!book) notFound();
   const vocab = await getBookVocabulary(bookSlug);

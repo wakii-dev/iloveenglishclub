@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { refreshSitemapDb, retryFailedDb } from "@/lib/oxford/enrich";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/crawl/control (VU-32 SF-2) — control-plane:

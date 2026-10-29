@@ -8,5 +8,5 @@ import { revalidateTag } from "next/cache";
 export const CONTENT_TAG = "content";
 
 export function revalidateContent(): void {
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
 }

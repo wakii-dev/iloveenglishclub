@@ -338,7 +338,9 @@ export function DictationLesson({
     // buộc src load lại từ đầu, né audio kẹt cuối (review P2, side SF-4)
     dictationStore.getState().start(parts.map((p) => ({ transcript: p.text })));
     const sessionUser =
-      user ?? ((await getSession())?.user ?? null);
+      // ilec-v2 SF2: chưa có route /api/auth/session (SF3 mới port auth handler)
+      // → getSession có thể throw network-error; bắt để guest flow không chết.
+      user ?? ((await getSession().catch(() => null))?.user ?? null);
     let pref = relaxedPrefRef.current;
     if (sessionUser && pref === null) {
       pref = await readRelaxedMode().catch(() => null);

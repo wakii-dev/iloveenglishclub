@@ -1,4 +1,4 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { LeaderboardTable } from "@/components/gamification/leaderboard-table";
 import { getLeaderboard } from "@/lib/gamification/queries";
 import { topQuizScores } from "@/lib/vocabulary/quiz-store";
@@ -10,7 +10,8 @@ import { topQuizScores } from "@/lib/vocabulary/quiz-store";
  * lại). Public (anon xem được, §4 view public read). SEO metadata trang này là
  * việc SF-7 — KHÔNG thêm ở đây.
  */
-export const revalidate = 60;
+
+export const instant = false;
 
 export default async function TopUsersPage({
   params,
@@ -18,8 +19,7 @@ export default async function TopUsersPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations("gamification");
+    const t = await getTranslations("gamification");
 
   const [weekly, allTime, quizTop] = await Promise.all([
     getLeaderboard("weekly"),

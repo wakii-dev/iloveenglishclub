@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { buildHubQuiz, submitQuizAttempt } from "@/lib/vocabulary/quiz-store";
@@ -10,7 +11,6 @@ import {
   type QuizType,
 } from "@/lib/vocabulary/quiz";
 
-export const runtime = "nodejs";
 
 const RESPONSE_MAX = 500;
 
@@ -31,6 +31,7 @@ function isQuizMode(value: unknown): value is (typeof QUIZ_MODES)[number] {
  * client), scope khác kèm đúng scope đã parse.
  */
 export async function GET(req: NextRequest) {
+  await connection();
   const sp = req.nextUrl.searchParams;
   const scopeParam = sp.get("scope");
 
@@ -78,6 +79,7 @@ export async function GET(req: NextRequest) {
  * body.scope="multi" + body.book_ids=[...] | body.scope="book" + book_id.
  */
 export async function POST(req: NextRequest) {
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

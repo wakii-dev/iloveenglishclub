@@ -3,7 +3,6 @@ import { listCrawlEntries } from "@/lib/admin/crawl-entries-store";
 import { parseCefrFilter } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * GET /api/admin/vocabulary/crawl/entries (VU-43 SF-1 task 10) — browse lake

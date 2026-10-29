@@ -1,8 +1,8 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { seedBookProgress } from "@/lib/vocabulary/study-store";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/vocabulary/study-book (story vocabulary-learn t-1.2) — "Bắt đầu
@@ -12,6 +12,7 @@ export const runtime = "nodejs";
  * từ chưa có, KHÔNG đè SRS state (client báo "đã trong lộ trình" khi added 0).
  */
 export async function POST(req: NextRequest) {
+  await connection();
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

@@ -11,7 +11,6 @@ import { BRAND } from "@/lib/seo/site";
 export const alt = "Course level — I Love English Club";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const revalidate = 300;
 
 const C = {
   bg: "#fff8f0",

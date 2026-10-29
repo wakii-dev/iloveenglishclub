@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { Flame, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { connection } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { profiles, userBadges } from "@/db/schema";
@@ -19,16 +20,18 @@ import { vnToday } from "@/lib/gamification/streak";
  * tiến độ từng book (% lessons done, 0 skipped). Auth bắt buộc — redirect
  * login kèm ?next để quay lại (flow guest-commit dùng cùng contract).
  */
-export const dynamic = "force-dynamic"; // auth() đọc cookies
+
+/** Auth-only page — blocking route (Next 16 cacheComponents). */
+export const instant = false;
 
 export default async function MePage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  await connection(); // dynamic route (auth + db) — không prerender
   const { locale } = await params;
-  setRequestLocale(locale);
-  const session = await auth();
+    const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
     // Pattern admin layout: next/navigation redirect (locale-prefix tường minh)

@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { putAudio } from "@/lib/storage-server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/image (VU-43 SF-1 task 12) — upload 1 image qua

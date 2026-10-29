@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { setRequestLocale } from "next-intl/server";
 import { LessonRow } from "@/components/content/lesson-row";
 import { Link } from "@/i18n/navigation";
 import {
@@ -16,7 +15,6 @@ import {
  * /books/[book]/units/[unit] — §2.5: page-head (breadcrumb + h1 + lead) +
  * LessonList (tag loại + tên + số câu). SSG với generateStaticParams từ DB.
  */
-export const revalidate = 300;
 
 export async function generateStaticParams() {
   const out: { book: string; unit: string }[] = [];
@@ -52,8 +50,7 @@ export default async function UnitPage({
   params: Promise<{ locale: string; book: string; unit: string }>;
 }) {
   const { locale, book: bookSlug, unit } = await params;
-  setRequestLocale(locale);
-  const [t, book, unitRow] = await Promise.all([
+    const [t, book, unitRow] = await Promise.all([
     getTranslations("books"),
     getBook(bookSlug, locale),
     getUnit(bookSlug, unit, locale),

@@ -1,18 +1,28 @@
-/* === @wakii/ui-kit adapter (2.0.2) — import TRƯỚC tailwind: CSS @import phải đứng
-   đầu file, và layer "utilities" của ui-kit.css đăng ký trước → utilities ilec
-   (cùng layer, đến sau) thắng conflict ⇒ override bằng class ilec vẫn ăn. */
-@import "@wakii/ui-kit/styles/tokens.css"; /* tokens + tự kéo themes/dark.css (data-bp-theme) */
-@import "@wakii/ui-kit/styles/base.css";
-@import "@wakii/ui-kit/styles/ui-kit.css"; /* CSS component đã compile — BẮT BUỘC: thiếu = component wakii mất style (tailwind ilec không quét node_modules) */
+/* === @wakii/ui-kit (2.0.2) — pattern Next 16 + Turbopack (create-wakii-app):
+   theme + utilities đến từ styles/tailwind.css — KHÔNG tự @import
+   "tailwindcss" lần 2 (double preflight/theme làm shift visual hàng loạt).
+   ⚠️ @source PHẢI trỏ qua node_modules ĐÚNG THẾ: path tương đối viết khác đi
+   bị tailwind resolve qua symlink → BỊ IGNORE. Thiếu @source dist, utilities
+   mà kit dùng trong .tsx nguồn không được generate → UI vỡ layout. */
+@import '@wakii/ui-kit/styles/tokens.css';
+@import '@wakii/ui-kit/styles/themes/dark.css';
+@import '@wakii/ui-kit/styles/base.css';
+@import '@wakii/ui-kit/styles/tailwind.css';
 
-@import "tailwindcss";
+@source './';
+@source '../node_modules/@wakii/ui-kit/dist';
+
+/* === ilec port (SF1 migrate) — từ src/app/globals.css của iloveenglishclup.
+   Khác ilec: entry tailwind là styles/tailwind.css của kit (dòng trên), không
+   @import "tailwindcss" + ui-kit.css riêng (kit 2.0.2 quét dist qua @source). */
+
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
   Design tokens — Direction B "Classroom Warm" (user-selected 2026-09-29).
-  NGUỒN SỰ THẬT: docs/superpowers/designs/vu15-dictation-direction.md §1
+  NGUỒN SỰ THẬT: ilec docs/superpowers/designs/vu15-dictation-direction.md §1
   (values copy NGUYÊN VĂN — không tự chỉnh màu/radius/shadow).
   Toggle dark qua class `dark` trên <html> (next-themes attribute="class").
 */
@@ -109,12 +119,10 @@
 
 /*
   Vocab-memrise extension tokens (VU-37 SF-3/SF-4 — hand-off
-  docs/superpowers/designs/vocab-memrise/vocab-memrise-direction.md §1.1/§1.2,
+  ilec docs/superpowers/designs/vocab-memrise/vocab-memrise-direction.md §1.1/§1.2,
   values copy NGUYÊN VĂN). Scope: surface vocabulary (class `dark` trên
   container vocab — KHÔNG đụng theme engine toàn app). Brand colors tái dùng
   trực tiếp (--primary=coral, --secondary=teal, --muted=bg2, --level-1..7).
-  ⚠ FLAG VU-41: file nằm ngoài touch map SF-4 — dependency design-first dùng
-  chung SF-3, đã báo coordinator trong audit comment.
 */
 :root {
   --coral-deep: #a83a24; /* shadow-đáy nút coral */
@@ -231,6 +239,13 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /* ilec-v2: preflight của "tailwindcss" (ilec import trực tiếp) có reset
+     anchor `color: inherit` — kit tailwind.css của wakii KHÔNG mang preflight,
+     mà base.css của kit style <a> accent + underline → đè lại như ilec. */
+  a {
+    color: inherit;
+    text-decoration: inherit;
   }
   body {
     @apply bg-background text-foreground;

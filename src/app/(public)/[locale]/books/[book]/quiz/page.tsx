@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
@@ -14,7 +14,6 @@ import { QuizRunner } from "@/components/vocabulary/quiz-runner";
  * lưu quiz_attempts theo user. Đề sinh server-side từ word pool — force-dynamic
  * để mỗi lần "Làm lại" (reload) nhận đề xáo mới, không ISR cache.
  */
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -29,14 +28,16 @@ export async function generateMetadata({
   return { title: row ? `${t("quizTitle")} · ${row.title}` : t("quizTitle") };
 }
 
+/** Dynamic page (auth/db) — blocking route for Next 16 cacheComponents. */
+export const instant = false;
+
 export default async function BookQuizPage({
   params,
 }: {
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book: bookSlug } = await params;
-  setRequestLocale(locale);
-  const session = await auth();
+    const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
     // Pattern me/vocabulary: redirect locale-prefix tường minh + ?next quay lại

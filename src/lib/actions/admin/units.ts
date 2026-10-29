@@ -52,7 +52,7 @@ export async function createUnitAction(
   }
   // revalidate matrix (QA-302): getBook/getUnits public đếm TẤT CẢ units (kể cả
   // draft-only) — unit mới đổi unitCount book page NGAY, stale tới 300s nếu thiếu
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }
 
@@ -73,7 +73,7 @@ export async function updateUnitAction(
     .where(eq(units.id, unitId));
   // revalidate matrix (QA-302): title/desc unit render trên public unit page +
   // units list — mutation xong public phải fresh (deleteUnit cùng precedent)
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }
 
@@ -91,6 +91,6 @@ export async function deleteUnitAction(unitId: number): Promise<UnitActionState>
     throw error;
   }
   // revalidate matrix (spec §5): cascade xóa lessons/parts — public stale ngay
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }

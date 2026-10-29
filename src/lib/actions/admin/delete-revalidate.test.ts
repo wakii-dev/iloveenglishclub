@@ -28,12 +28,12 @@ describe("delete actions revalidate content (review P1 — matrix spec §5)", ()
   it("deleteLessonAction thành công → revalidateTag('content') đúng 1 lần", async () => {
     const res = await deleteLessonAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 
   it("deleteUnitAction thành công → revalidateTag('content') đúng 1 lần", async () => {
     const res = await deleteUnitAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });

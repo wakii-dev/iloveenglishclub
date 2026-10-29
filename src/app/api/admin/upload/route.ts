@@ -14,7 +14,6 @@ import {
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { storageDriver } from "@/lib/storage";
 
-export const runtime = "nodejs";
 
 /**
  * Upload audio THẲNG browser → route handler (SF-5 — spec §6: KHÔNG Server
@@ -109,7 +108,7 @@ export async function POST(req: NextRequest) {
       .set({ audioPath, durationMs })
       .where(eq(lessonParts.id, part.partId));
 
-    if (part.published) revalidateTag(CONTENT_TAG);
+    if (part.published) revalidateTag(CONTENT_TAG, "max");
 
     return NextResponse.json({ ok: true, path: audioPath });
   } catch (error) {

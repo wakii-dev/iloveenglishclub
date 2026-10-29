@@ -113,7 +113,7 @@ describe("deleteLessonAction", () => {
   it("thành công → revalidateTag('content') đúng 1 lần (unconditional — matrix §5)", async () => {
     const res = await deleteLessonAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });
 
@@ -142,7 +142,7 @@ describe("publishLessonAction gate", () => {
     ];
     const res = await publishLessonAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });
 
@@ -150,7 +150,7 @@ describe("unpublishLessonAction", () => {
   it("luôn revalidate (unpublish là mutation public)", async () => {
     const res = await unpublishLessonAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });
 
@@ -162,7 +162,7 @@ describe("updateLessonMetaAction", () => {
       vocabLevel: "A2",
     });
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 
   it("lesson draft → KHÔNG revalidate (draft không vào public)", async () => {

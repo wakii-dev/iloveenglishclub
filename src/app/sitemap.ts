@@ -18,7 +18,6 @@ import { routing } from "@/i18n/routing";
  * published lesson tự biến mất. Đủ cặp locale + hreflang cặp trong từng entry
  * (bổ trợ link tags). lastModified omit — lessons không có updated_at.
  */
-export const revalidate = 300;
 
 function entry(locale: string, path: string): MetadataRoute.Sitemap[number] {
   return {

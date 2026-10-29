@@ -19,7 +19,7 @@ export async function LevelCard({
 
   return (
     <Link
-      href={`/books/${book.slug}`}
+      href={`/dictation/${book.slug}`}
       className={`group flex shrink-0 flex-col transition-transform duration-150 ease-out group-hover:-translate-y-1.5 focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2 ${
         fluid ? "h-full w-full" : "w-[236px]"
       }`}

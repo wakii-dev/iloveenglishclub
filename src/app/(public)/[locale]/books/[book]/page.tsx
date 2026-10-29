@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { setRequestLocale } from "next-intl/server";
 import { BookCover } from "@/components/content/book-cover";
 import { UnitRow } from "@/components/content/unit-row";
 import { ChevronLeft } from "lucide-react";
@@ -12,7 +11,6 @@ import { getBook, getBooks, getUnits } from "@/lib/content/queries";
  * /books/[book] — §2.4: grid 300px/1fr — aside cover + MetaList, main UnitList.
  * SSG: generateStaticParams từ DB (build không DB → [] = ISR on-demand heal).
  */
-export const revalidate = 300;
 
 export async function generateStaticParams() {
   const books = await getBooks("en");
@@ -38,8 +36,7 @@ export default async function BookPage({
   params: Promise<{ locale: string; book: string }>;
 }) {
   const { locale, book: bookSlug } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations("books");
+    const t = await getTranslations("books");
   const book = await getBook(bookSlug, locale);
   if (!book) notFound();
   const units = await getUnits(bookSlug, locale);

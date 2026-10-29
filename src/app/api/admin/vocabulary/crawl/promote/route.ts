@@ -3,7 +3,6 @@ import { PROMOTE_CAP, promoteCrawlEntries } from "@/lib/admin/promote-store";
 import { MEANING_MAX } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/crawl/promote (VU-43 SF-1 task 11) — {entryIds[],

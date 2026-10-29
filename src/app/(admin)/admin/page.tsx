@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { BookOpen, FileAudio, FileWarning, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,31 +13,45 @@ import {
 } from "@/lib/admin/queries";
 
 /**
- * Dashboard admin (SF-5 — thay placeholder SF-1): số lessons/parts tổng +
- * theo book, drafts, users mới, attempts gần đây (spec §6.4).
- * Server component — đọc fresh qua admin/queries (không cache).
+ * Dashboard admin: số lessons/parts tổng + theo book, drafts, users mới,
+ * attempts gần đây (spec §6.4). Server component — đọc fresh qua admin/queries
+ * (không cache).
+ * ilec gốc đọc label qua getTranslations("admin") — v2 bỏ i18n subtree admin,
+ * label hard-code tiếng Việt (đúng catalog messages/vi/admin.json).
  */
+
+// Next 16 cacheComponents: route đọc DB runtime — blocking tường minh.
+export const instant = false;
+
+const STATS_LABELS = {
+  publishedLessons: "Bài đã xuất bản",
+  draftLessons: "Bài nháp",
+  parts: "Câu hỏi (parts)",
+  partsMissingAudio: "Câu thiếu audio",
+  users: "Người dùng",
+  newUsers7d: "Người mới (7 ngày)",
+} as const;
+
 export default async function AdminDashboardPage() {
-  const t = await getTranslations({ locale: "vi", namespace: "admin" });
   const { totals, perBook, recentAttempts, newUsers } = await getAdminDashboard();
 
   const stats = [
-    { label: t("dashboard.publishedLessons"), value: totals.publishedLessons, icon: BookOpen },
-    { label: t("dashboard.draftLessons"), value: totals.lessons - totals.publishedLessons, icon: FileAudio },
-    { label: t("dashboard.parts"), value: totals.parts, icon: FileAudio },
-    { label: t("dashboard.partsMissingAudio"), value: totals.partsMissingAudio, icon: FileWarning, warn: totals.partsMissingAudio > 0 },
-    { label: t("dashboard.users"), value: totals.users, icon: Users },
-    { label: t("dashboard.newUsers7d"), value: totals.newUsers7d, icon: Users },
+    { label: STATS_LABELS.publishedLessons, value: totals.publishedLessons, icon: BookOpen },
+    { label: STATS_LABELS.draftLessons, value: totals.lessons - totals.publishedLessons, icon: FileAudio },
+    { label: STATS_LABELS.parts, value: totals.parts, icon: FileAudio },
+    { label: STATS_LABELS.partsMissingAudio, value: totals.partsMissingAudio, icon: FileWarning, warn: totals.partsMissingAudio > 0 },
+    { label: STATS_LABELS.users, value: totals.users, icon: Users },
+    { label: STATS_LABELS.newUsers7d, value: totals.newUsers7d, icon: Users },
   ];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-[28px] font-bold tracking-tight">
-          {t("dashboard.title")}
+          Tổng quan
         </h1>
         <p className="mt-1 text-[15px] font-semibold text-muted-foreground">
-          {t("dashboard.lead")}
+          Toàn bộ nội dung platform — bài học, audio và người học.
         </p>
       </div>
 
@@ -64,18 +77,18 @@ export default async function AdminDashboardPage() {
       <Card className="rounded-[18px]">
         <CardHeader>
           <CardTitle className="font-display text-[19px]">
-            {t("dashboard.perBook")}
+            Theo sách
           </CardTitle>
         </CardHeader>
         <CardContent>
           <table className="w-full text-[14px]">
             <thead>
               <tr className="border-b-2 border-border text-left text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-muted-foreground">
-                <th className="py-2 pr-3">{t("dashboard.colBook")}</th>
-                <th className="py-2 pr-3 text-right tabular-nums">{t("dashboard.colUnits")}</th>
-                <th className="py-2 pr-3 text-right tabular-nums">{t("dashboard.colLessons")}</th>
-                <th className="py-2 pr-3 text-right tabular-nums">{t("dashboard.colParts")}</th>
-                <th className="py-2 pr-3 text-right tabular-nums">{t("dashboard.colMissing")}</th>
+                <th className="py-2 pr-3">Sách</th>
+                <th className="py-2 pr-3 text-right tabular-nums">Units</th>
+                <th className="py-2 pr-3 text-right tabular-nums">Bài (XB/tổng)</th>
+                <th className="py-2 pr-3 text-right tabular-nums">Câu</th>
+                <th className="py-2 pr-3 text-right tabular-nums">Thiếu audio</th>
                 <th className="py-2 text-right" aria-label="" />
               </tr>
             </thead>
@@ -105,7 +118,7 @@ export default async function AdminDashboardPage() {
                       href={`/admin/books/${b.slug}/units`}
                       className="whitespace-nowrap rounded-[12px] px-2 py-1 text-[13px] font-bold text-primary transition-colors hover:bg-accent focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
                     >
-                      {t("dashboard.viewBook")}
+                      Mở sách
                     </Link>
                   </td>
                 </tr>
@@ -119,13 +132,13 @@ export default async function AdminDashboardPage() {
         <Card className="rounded-[18px]">
           <CardHeader>
             <CardTitle className="font-display text-[19px]">
-              {t("dashboard.recentAttempts")}
+              Lần học gần đây
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentAttempts.length === 0 ? (
               <p className="text-[14px] text-muted-foreground">
-                {t("dashboard.attemptsEmpty")}
+                Chưa có ai học — attempts sẽ hiện ở đây.
               </p>
             ) : (
               recentAttempts.map((a) => (
@@ -157,13 +170,13 @@ export default async function AdminDashboardPage() {
         <Card className="rounded-[18px]">
           <CardHeader>
             <CardTitle className="font-display text-[19px]">
-              {t("dashboard.newUsers")}
+              Người dùng mới nhất
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {newUsers.length === 0 ? (
               <p className="text-[14px] text-muted-foreground">
-                {t("dashboard.usersEmpty")}
+                Chưa có người dùng nào đăng ký.
               </p>
             ) : (
               newUsers.map((u) => (

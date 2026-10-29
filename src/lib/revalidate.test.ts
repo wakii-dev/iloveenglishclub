@@ -13,6 +13,6 @@ describe("revalidateContent — wire tag 'content' từ đầu (spec §3)", () =
 
   it("gọi revalidateTag('content') — SF-5 publish sẽ dùng helper này", () => {
     revalidateContent();
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });

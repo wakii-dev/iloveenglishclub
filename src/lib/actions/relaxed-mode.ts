@@ -1,43 +1,33 @@
 "use server";
 
-import { eq } from "drizzle-orm";
-import { auth } from "@/auth";
-import { db } from "@/db";
-import { profiles } from "@/db/schema";
+import { getCurrentUserId } from "@/lib/auth/server";
 
 /**
- * Relaxed-mode (context pack #6) — write DB DUY NHẤT của SF-4:
+ * Relaxed-mode (context pack #6) — write DB DUY NHẤT của SF-4 ở ilec:
  * guest = in-memory (store), user đã login = persist profiles.relaxed_mode.
- * KHÔNG nhận userId từ client — id lấy từ auth() server-side (plan §4).
- * RLS prod: policy cho phép self-edit field này (epic §5.5).
+ * ilec-v2 SF2: CHƯA có DB/auth (SF3+) — session seam luôn null ⟹ trả nhánh
+ * no-session của ilec (null / {ok:false} + log). Contract giữ nguyên để SF3
+ * thay seam bằng auth+DB là chạy đúng.
  */
 export async function readRelaxedMode(): Promise<boolean | null> {
-  const session = await auth();
-  const userId = session?.user?.id;
+  const userId = await getCurrentUserId();
   if (!userId) return null;
-  const [row] = await db
-    .select({ relaxedMode: profiles.relaxedMode })
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-  return row?.relaxedMode ?? null;
+  // SF3+: đọc profiles.relaxed_mode từ DB
+  return null;
 }
 
 export async function updateRelaxedMode(
   value: boolean,
 ): Promise<{ ok: boolean }> {
   try {
-    const session = await auth();
-    const userId = session?.user?.id;
+    const userId = await getCurrentUserId();
     if (!userId) {
       console.error("[relaxed-mode] update rejected: no session");
       return { ok: false };
     }
-    await db
-      .update(profiles)
-      .set({ relaxedMode: value })
-      .where(eq(profiles.id, userId));
-    return { ok: true };
+    // SF3+: UPDATE profiles SET relaxed_mode
+    void value;
+    return { ok: false };
   } catch (error) {
     // nuốt lỗi là mất dấu vết (review P1-3) — log server-side trước khi trả ok:false
     console.error("[relaxed-mode] update failed:", error);

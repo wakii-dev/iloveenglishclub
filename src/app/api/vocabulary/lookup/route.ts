@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { lookupWordInBook } from "@/lib/vocabulary/lookup-store";
 
-export const runtime = "nodejs";
 
 /**
  * GET /api/vocabulary/lookup?word=<từ>&bookId=<id> (SF-5 t-5.1) — public như

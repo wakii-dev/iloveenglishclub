@@ -1,5 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { setRequestLocale } from "next-intl/server";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { LevelCard } from "@/components/content/level-card";
 import { LevelPathCarousel } from "@/components/content/level-path-carousel";
@@ -13,9 +12,13 @@ import { getBooks } from "@/lib/content/queries";
 /**
  * Home thật (SF-2) — §2.3: hero split + LevelPath 7 cards + MethodGrid 2×2.
  * HeroVisual = 2 mini-card minh họa (decorative, aria-hidden — mock của
- * prototype b.html; data thật về tiến độ là SF-6). SSG + revalidate 300.
+ * prototype b.html; data thật về tiến độ là SF-6).
+ * ilec-v2: bỏ `export const revalidate = 300` của ilec — Next 16
+ * cacheComponents KHÔNG cho route segment config (build fail). Khi SF content
+ * port queries thật, dùng cacheLife/cacheTag trong query wrapper thay thế.
  */
-export const revalidate = 300;
+
+export const instant = false;
 
 export default async function HomePage({
   params,
@@ -23,7 +26,6 @@ export default async function HomePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
   const t = await getTranslations("home");
   const books = await getBooks(locale);
   const totalLessons = books.reduce((sum, b) => sum + b.lessonCount, 0);
@@ -53,7 +55,7 @@ export default async function HomePage({
                 asChild
                 className="rounded-[14px] text-[15px] font-extrabold shadow-[0_4px_0_var(--primary-deep)] transition-[transform,box-shadow] duration-[80ms] hover:brightness-105 active:translate-y-[3px] active:shadow-[0_1px_0_var(--primary-deep)]"
               >
-                <Link href="/books">
+                <Link href="/dictation">
                   {t("hero.ctaPrimary")}
                   <ArrowRight aria-hidden />
                 </Link>
@@ -64,7 +66,7 @@ export default async function HomePage({
                 asChild
                 className="rounded-[14px] text-[15px] font-extrabold"
               >
-                <Link href="/books/level-1">{t("hero.ctaSecondary")}</Link>
+                <Link href="/dictation/level-1">{t("hero.ctaSecondary")}</Link>
               </Button>
             </div>
           </Reveal>

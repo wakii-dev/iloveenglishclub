@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { TodayBadgeStrip } from "@/components/today/today-badges";
 import { TodayHero } from "@/components/today/today-hero";
@@ -19,7 +19,6 @@ import { getTodaySnapshot } from "@/lib/today/today-store";
  * epic VU-48). Grid 2 cột desktop (hero+suggestions trái, quests+badges+
  * streak phải — hand-off A), mobile 375px stack dọc.
  */
-export const dynamic = "force-dynamic"; // auth() đọc cookies + snapshot write-tx
 
 export async function generateMetadata({
   params,
@@ -31,14 +30,16 @@ export async function generateMetadata({
   return { title: t("title"), description: t("description") };
 }
 
+/** Dynamic page (auth/db) — blocking route for Next 16 cacheComponents. */
+export const instant = false;
+
 export default async function TodayPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
-  const session = await auth();
+    const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
     // Pattern /me: locale-prefix tường minh + ?next quay lại đúng trang

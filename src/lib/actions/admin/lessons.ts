@@ -87,7 +87,7 @@ export async function updateLessonMetaAction(
     .returning({ published: lessons.published });
   // Meta đổi trên bài đã publish → public stale (revalidate matrix spec §5);
   // draft không vào public nên bỏ qua
-  if (row?.published) revalidateTag(CONTENT_TAG);
+  if (row?.published) revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }
 
@@ -106,7 +106,7 @@ export async function deleteLessonAction(lessonId: number): Promise<LessonAction
   }
   // revalidate matrix (spec §5): delete là mutation — public (unit lesson list,
   // book counts) stale ngay; unconditional vì row đã mất, không check được published
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }
 
@@ -138,7 +138,7 @@ export async function publishLessonAction(
     .update(lessons)
     .set({ published: true })
     .where(eq(lessons.id, lessonId));
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }
 
@@ -150,6 +150,6 @@ export async function unpublishLessonAction(
     .update(lessons)
     .set({ published: false })
     .where(eq(lessons.id, lessonId));
-  revalidateTag(CONTENT_TAG);
+  revalidateTag(CONTENT_TAG, "max");
   return { ok: true };
 }

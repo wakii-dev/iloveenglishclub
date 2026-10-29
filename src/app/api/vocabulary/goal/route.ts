@@ -1,8 +1,8 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { updateDailyGoal } from "@/lib/vocabulary/dashboard-store";
 
-export const runtime = "nodejs";
 
 /**
  * PATCH|POST /api/vocabulary/goal (vocab-memrise SF-4, VU-41 — context pack

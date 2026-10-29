@@ -1,11 +1,21 @@
 import { Heart } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
 /**
+ * ilec-v2 (cacheComponents): `new Date()` trực tiếp trong render là runtime
+ * data → chặn prerender. Đọc năm qua "use cache" — prerender được, tự
+ * refresh theo revalidate của cache profile default.
+ */
+async function copyrightYear(): Promise<number> {
+  "use cache";
+  return new Date().getFullYear();
+}
+
+/**
  * §2.6 Footer — bg card, border-t-2, grid 1.6fr_1fr_1fr_1fr.
- * Cột Levels: 7 link /books/[slug] (SF-2 wire). Slug `level-1..7` là contract
+ * Cột Levels: 7 link /dictation/[slug] (SF-2 wire; tree books→dictation SF2). Slug `level-1..7` là contract
  * với seed — đổi slug phải đổi cả 2. Label giữ EN hardcode từ SF-1 (tên proper
  * noun; localize theo title_vi là việc của SF sau nếu cần).
  */
@@ -18,9 +28,9 @@ const LEVELS = [
   { slug: "level-6", label: "Level 6" },
   { slug: "level-7", label: "Level 7 — B2" },
 ];
-export function Footer() {
-  const t = useTranslations("common");
-  const year = new Date().getFullYear();
+export async function Footer() {
+  const t = await getTranslations("common");
+  const year = await copyrightYear();
 
   return (
     <footer className="border-t-2 bg-card">
@@ -47,7 +57,7 @@ export function Footer() {
           <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
             {LEVELS.map((level) => (
               <li key={level.slug}>
-                <Link href={`/books/${level.slug}`} className="hover:text-primary">
+                <Link href={`/dictation/${level.slug}`} className="hover:text-primary">
                   {level.label}
                 </Link>
               </li>

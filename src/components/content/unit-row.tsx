@@ -3,8 +3,9 @@ import { Link } from "@/i18n/navigation";
 import type { LocalizedUnit } from "@/lib/content/queries";
 
 /**
- * §2.4 UnitRow — idx vuông 46px rounded-[14px] bg-muted text-secondary Baloo
- * + title + side lessons count. Hover: border teal. Anon: bỏ progress/score.
+ * §2.4 UnitRow (port từ ilec — SF2 migrate): idx vuông 46px rounded-[14px]
+ * bg-muted text-secondary Baloo + title + side lessons count. Hover: border
+ * teal. Anon: bỏ progress/score. URL tree books→dictation (SF2).
  */
 export async function UnitRow({
   unit,
@@ -17,7 +18,7 @@ export async function UnitRow({
 
   return (
     <Link
-      href={`/books/${bookSlug}/units/${unit.number}`}
+      href={`/dictation/${bookSlug}/${unit.number}`}
       className="group flex items-center gap-4 rounded-[18px] border-2 border-border bg-card p-4 transition-colors duration-150 hover:border-secondary focus-visible:outline-3 focus-visible:outline-ring focus-visible:outline-offset-2"
     >
       <span

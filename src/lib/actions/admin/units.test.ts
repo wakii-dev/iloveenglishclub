@@ -85,13 +85,13 @@ describe("revalidate contract (QA-302 — RED trước fix)", () => {
   it("createUnit thành công → revalidateTag('content') (public book/units list đếm tất cả units)", async () => {
     const res = await createUnitAction(1, { number: 5, titleEn: "X" });
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 
   it("updateUnit thành công → revalidateTag('content') (title render trên public unit page)", async () => {
     const res = await updateUnitAction(1, { titleEn: "New title" });
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 
   it("updateUnit title rỗng → titleRequired, KHÔNG revalidate (không có mutation)", async () => {
@@ -109,7 +109,7 @@ describe("revalidate contract (QA-302 — RED trước fix)", () => {
   it("deleteUnit giữ nguyên contract: revalidate đúng 1 lần (regression)", async () => {
     const res = await deleteUnitAction(1);
     expect(res).toEqual({ ok: true });
-    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith(CONTENT_TAG, "max");
   });
 });
 

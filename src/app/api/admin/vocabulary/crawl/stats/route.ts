@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 import { crawlStatsDb } from "@/lib/oxford/enrich";
 
-export const runtime = "nodejs";
 
 /**
  * GET /api/admin/vocabulary/crawl/stats (VU-32 SF-2) — dashboard crawl.

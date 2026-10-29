@@ -1,5 +1,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { LeaderboardRow } from "@/lib/gamification/queries";
+
+/**
+ * ilec-v2 SF2: type leader-board row tách khỏi lib/gamification/queries.ts
+ * (DB query — SF3+ port). Shape GIỐNG NGUYÊN ilec; SF3 move về queries module
+ * khi port leaderboard SQL view.
+ */
+export interface LeaderboardRow {
+  displayName: string | null;
+  avatarUrl: string | null;
+  xp: number;
+}
 
 /** Vàng/bạc/đồng — accent tĩnh, không phụ thuộc dark mode (hand-off §1.7 style). */
 const MEDAL = ["#f59e0b", "#94a3b8", "#b45309"] as const;

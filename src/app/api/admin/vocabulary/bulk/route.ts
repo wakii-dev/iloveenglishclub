@@ -9,7 +9,6 @@ import {
 import { validateCefrInput } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/bulk (VU-43 SF-1 task 6) — 1 route mọi bulk op:

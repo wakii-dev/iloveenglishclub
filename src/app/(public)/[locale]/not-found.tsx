@@ -37,7 +37,7 @@ export default async function NotFoundPage() {
           <Link href="/">{t("backHome")}</Link>
         </Button>
         <Button size="lg" variant="ghost" asChild className="rounded-[14px] text-[15px] font-extrabold">
-          <Link href="/books">{t("browseLevels")}</Link>
+          <Link href="/dictation">{t("browseLevels")}</Link>
         </Button>
       </div>
     </div>

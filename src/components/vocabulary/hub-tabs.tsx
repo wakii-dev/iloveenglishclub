@@ -31,7 +31,9 @@ export function HubTabs({
   ];
 
   return (
-    <ol className="mt-6 flex w-fit flex-wrap items-center gap-1.5 rounded-[18px] border-2 border-border bg-card p-1.5">
+    // v2 không có Tailwind preflight (kit base.css) — <ol> cần list-none tường
+    // minh (ilec gốc preflight tự strip marker + padding)
+    <ol className="mt-6 flex w-fit list-none flex-wrap items-center gap-1.5 rounded-[18px] border-2 border-border bg-card p-1.5">
       {items.map((item) => {
         const isActive = item.key === active;
         return (

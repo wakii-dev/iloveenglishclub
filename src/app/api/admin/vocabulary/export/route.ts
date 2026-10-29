@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { listVocabulary } from "@/lib/admin/vocabulary-store";
 import {
@@ -8,7 +9,6 @@ import {
 import { parseCefrFilter } from "@/lib/admin/vocabulary";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * GET /api/admin/vocabulary/export (VU-43 SF-1 task 7) — CSV download giữ
@@ -26,6 +26,7 @@ function authError(error: unknown): NextResponse | null {
 }
 
 export async function GET(req: NextRequest) {
+  await connection();
   try {
     await assertAdmin();
   } catch (error) {

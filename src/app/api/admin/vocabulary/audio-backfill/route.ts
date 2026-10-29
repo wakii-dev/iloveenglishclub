@@ -9,7 +9,6 @@ import { downloadMp3 } from "@/lib/oxford/audio";
 import { putAudio } from "@/lib/storage-server";
 import { ForbiddenError, assertAdmin } from "@/lib/content/guards";
 
-export const runtime = "nodejs";
 
 /**
  * POST /api/admin/vocabulary/audio-backfill (VU-43 SF-1 task 9) — {scope:

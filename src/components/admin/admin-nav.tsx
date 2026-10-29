@@ -2,14 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { cn } from "cn";
 
 /**
- * Active rule item "Từ vựng" (VU-43 SF-2 t1): prefix `/admin/vocabulary`
- * TRỪ `/admin/vocabulary/crawl` — item Crawl (href `/admin/vocabulary/crawl`)
- * tranh prefix, xử lý explicit + unit test. Pure leg để test không DOM.
+ * Nav /admin — client component để active state theo pathname.
+ * ilec gốc đọc label qua next-intl (NextIntlClientProvider locale="vi" của
+ * admin layout) — v2 bỏ i18n cho subtree admin: label hard-code tiếng Việt
+ * (UI admin cố định VI, đúng catalog messages/vi/admin.json).
+ *
+ * SF4 migrate: thêm item "Từ vựng" + "Crawl Oxford" (vocabulary cluster +
+ * oxford crawl thuộc phạm vi SF4). Active rule item "Từ vựng" (VU-43 SF-2
+ * t1): prefix `/admin/vocabulary` TRỪ `/admin/vocabulary/crawl` — item Crawl
+ * (href `/admin/vocabulary/crawl`) tranh prefix, xử lý explicit + unit test
+ * (admin-nav.test.ts). Pure leg để test không DOM.
  */
+
+/** Rule riêng item "Từ vựng": prefix /admin/vocabulary nhưng KHÔNG /crawl. */
 export function adminVocabularyNavActive(pathname: string): boolean {
   return (
     pathname.startsWith("/admin/vocabulary") &&
@@ -24,28 +32,20 @@ export function adminNavActive(href: string, pathname: string): boolean {
   return pathname.startsWith(href);
 }
 
-/**
- * Nav /admin (SF-5) — client component để active state theo pathname.
- * Messages qua NextIntlClientProvider locale="vi" của admin layout.
- * VU-43 SF-2: item "Từ vựng" giữa Books và Crawl — label từ
- * vocabCmsCommon.nav (SF-1 skeleton; admin.json KHÔNG đụng — boundary).
- */
-export function AdminNav() {
-  const t = useTranslations("admin.nav");
-  const tv = useTranslations("vocabCmsCommon.nav");
-  const pathname = usePathname();
+const ITEMS = [
+  { href: "/admin", label: "Tổng quan" },
+  { href: "/admin/books", label: "Sách" },
+  { href: "/admin/vocabulary", label: "Từ vựng" },
+  { href: "/admin/vocabulary/crawl", label: "Crawl Oxford" },
+  { href: "/admin/users", label: "Người dùng" },
+];
 
-  const items = [
-    { href: "/admin", label: t("dashboard") },
-    { href: "/admin/books", label: t("books") },
-    { href: "/admin/vocabulary", label: tv("vocabulary") },
-    { href: "/admin/vocabulary/crawl", label: t("crawl") },
-    { href: "/admin/users", label: t("users") },
-  ];
+export function AdminNav() {
+  const pathname = usePathname();
 
   return (
     <nav aria-label="Admin" className="flex items-center gap-1">
-      {items.map((item) => {
+      {ITEMS.map((item) => {
         const active = adminNavActive(item.href, pathname);
         return (
           <Link

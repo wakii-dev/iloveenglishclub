@@ -1,7 +1,6 @@
 "use client";
 
-import { CalendarDays, Flame, LogOut, Trophy, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LogOut, Trophy, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,12 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
-import { TodayNavDot } from "@/components/today/today-nav-dot";
 import { cn } from "cn";
-import { readMyStats } from "@/lib/actions/my-stats";
-import {
-  STATS_UPDATED_EVENT,
-} from "@/lib/gamification/events";
 
 function initialsOf(name: string | null | undefined): string {
   if (!name) return "?";
@@ -34,36 +28,15 @@ function initialsOf(name: string | null | undefined): string {
 
 /**
  * §2.1 UserChip — avatar 28px (teal fallback initials) + name 13px w800.
- * SF-6: hàng stats XP + flame streak (flame #f97316 — hand-off §2.1) dưới
- * name, ẩn ở <sm (hand-off §3 640px: user-chip chỉ còn avatar); XP live qua
- * event ilec:stats-updated (submit-attempt dispatch — context pack #8).
+ * ilec-v2 SF1: ĐÃ BỎ hàng stats XP + flame streak của ilec (SF-6) — phụ thuộc
+ * `@/lib/actions/my-stats` (server action + DB) và `ilec:stats-updated`
+ * (lib/gamification/events) — port lại cùng SF auth/gamification.
  * Guest: Log in (ghost) + Sign up (primary).
  */
 export function UserMenu() {
   const t = useTranslations("common");
-  const tg = useTranslations("gamification");
   const { status, data } = useSession();
-  const [stats, setStats] = useState<{ xp: number; streak: number } | null>(
-    null,
-  );
   const authenticated = status === "authenticated";
-
-  useEffect(() => {
-    if (!authenticated) return;
-    let cancelled = false;
-    const refresh = () =>
-      readMyStats()
-        .then((s) => {
-          if (!cancelled) setStats(s);
-        })
-        .catch(() => {});
-    refresh();
-    window.addEventListener(STATS_UPDATED_EVENT, refresh);
-    return () => {
-      cancelled = true;
-      window.removeEventListener(STATS_UPDATED_EVENT, refresh);
-    };
-  }, [authenticated]);
 
   if (status === "loading") {
     return <div className="h-8 w-24 animate-pulse rounded-full bg-muted" />;
@@ -105,36 +78,10 @@ export function UserMenu() {
             <span className="max-w-40 truncate text-[13px] leading-tight font-extrabold">
               {user.name ?? t("header.account")}
             </span>
-            {stats ? (
-              <span
-                className="flex items-center gap-2 text-[11px] leading-tight font-extrabold tabular-nums"
-                aria-label={tg("header.statsAria", {
-                  xp: stats.xp,
-                  count: stats.streak,
-                })}
-              >
-                <span className="text-secondary">{stats.xp} XP</span>
-                <span
-                  className="inline-flex items-center gap-0.5"
-                  style={{ color: "#f97316" }}
-                >
-                  <Flame aria-hidden className="size-3" />
-                  {stats.streak}
-                </span>
-              </span>
-            ) : null}
           </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {/* daily-journey SF-3: nav desktop ẩn <md — "Hôm nay" là entry duy
-            nhất trên mobile, dot nhắc khi chưa đạt goal kép */}
-        <DropdownMenuItem asChild className="md:hidden">
-          <Link href="/today">
-            <CalendarDays className="size-4" /> {t("nav.today")} <TodayNavDot />
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator className="md:hidden" />
         <DropdownMenuLabel className="font-normal">
           <p className="truncate text-sm font-bold">
             {user.name ?? t("header.account")}

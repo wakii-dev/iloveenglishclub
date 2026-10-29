@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { HubLibrarySection } from "@/components/vocabulary/hub-library-section";
 import { HubOverviewSection } from "@/components/vocabulary/hub-overview-section";
@@ -14,10 +15,14 @@ import { resolveHubTab } from "@/lib/vocabulary/hub-status";
  * searchParams ?tab= (mặc định: user → Tổng quan, guest → Thư viện — duyệt
  * không cần đăng nhập). Tab data cá nhân (Tổng quan/Ôn tập/Kiểm tra) guest →
  * redirect login kèm ?next (pattern me/page). Mỗi tab một section server
- * component tự fetch — chỉ tab active chạy query, force-dynamic (auth() đọc
- * cookies; "Làm lại" quiz nhận đề xáo mới).
+ * component tự fetch — chỉ tab active chạy query (auth() đọc cookies;
+ * "Làm lại" quiz nhận đề xáo mới).
+ *
+ * ilec-v2 (Next 16 cacheComponents): `dynamic = "force-dynamic"` bị cấm →
+ * `instant = false` (pattern admin layout SF3); `setRequestLocale` bỏ
+ * (locale qua rootParams — pattern SF1).
  */
-export const dynamic = "force-dynamic"; // auth() đọc cookies
+export const instant = false; // auth() đọc cookies
 
 export async function generateMetadata({
   params,
@@ -46,7 +51,8 @@ export default async function VocabularyHubPage({
   }>;
 }) {
   const { locale } = await params;
-  setRequestLocale(locale);
+  // runtime data (cookies + Date.now()) — render on-demand tường minh
+  await connection();
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const sp = await searchParams;
