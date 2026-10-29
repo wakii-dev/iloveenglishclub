@@ -1,16 +1,29 @@
+"use client"
+
 import * as React from "react"
 import { cn } from "cn"
+import { Card as WakiiCard } from "@wakii/ui-kit"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Adapter shadcn Card (compound) → wakii Card (@wakii/ui-kit 2.0.2).
+ * wakii Card là component đơn antd-style (title/extra props) — KHÔNG có
+ * sub-component Card.Header…, nên: Card root chạy wakii (bg/border/radius/
+ * shadow từ token, đã map sang var ilec trong UiKitProvider), còn các part
+ * Header/Title/Description/Action/Content/Footer giữ nguyên layout div shadcn
+ * (wakii không có compound tương đương — đổi sẽ phá mọi call site, mission
+ * cấm sửa pages). Body reset p-0 + tái lập gap-6/py-6 của shadcn root.
+ */
+function Card({ className, style, children, ...props }: React.ComponentProps<"div">) {
+  void props
   return (
-    <div
-      data-slot="card"
-      className={cn(
-        "flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",
-        className
-      )}
-      {...props}
-    />
+    <WakiiCard
+      bordered
+      classNames={{ body: "flex flex-col gap-6 p-0 py-6 text-card-foreground" }}
+      className={className}
+      style={style}
+    >
+      {children}
+    </WakiiCard>
   )
 }
 

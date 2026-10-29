@@ -1,5 +1,10 @@
 "use client"
 
+// Adapter (ilec PHẦN C): @wakii/ui-kit Select là options-array API (ariaLabel/
+// value/onChange/options) — KHÔNG tương thích composite Radix 10 exports của
+// shadcn (SelectTrigger/SelectContent/SelectItem/...). Giữ nguyên shadcn để
+// không vỡ callers; đổi sang wakii Select chỉ khi refactor điểm gọi.
+
 import * as React from "react"
 import { cn } from "cn"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"

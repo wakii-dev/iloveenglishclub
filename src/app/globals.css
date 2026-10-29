@@ -1,3 +1,10 @@
+/* === @wakii/ui-kit adapter (2.0.2) — import TRƯỚC tailwind: CSS @import phải đứng
+   đầu file, và layer "utilities" của ui-kit.css đăng ký trước → utilities ilec
+   (cùng layer, đến sau) thắng conflict ⇒ override bằng class ilec vẫn ăn. */
+@import "@wakii/ui-kit/styles/tokens.css"; /* tokens + tự kéo themes/dark.css (data-bp-theme) */
+@import "@wakii/ui-kit/styles/base.css";
+@import "@wakii/ui-kit/styles/ui-kit.css"; /* CSS component đã compile — BẮT BUỘC: thiếu = component wakii mất style (tailwind ilec không quét node_modules) */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 

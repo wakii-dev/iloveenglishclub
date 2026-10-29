@@ -1,5 +1,8 @@
 "use client"
 
+// Adapter (ilec PHẦN C): @wakii/ui-kit 2.0.2 KHÔNG export Label → giữ nguyên
+// shadcn (radix LabelPrimitive). Đổi khi wakii có component tương đương.
+
 import * as React from "react"
 import { cn } from "cn"
 import { Label as LabelPrimitive } from "radix-ui"

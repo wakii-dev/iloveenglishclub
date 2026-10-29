@@ -3,23 +3,99 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
-import { Tabs as TabsPrimitive } from "radix-ui"
+import { Tabs as WakiiTabs } from "@wakii/ui-kit"
+
+/**
+ * Adapter shadcn Tabs → wakii Tabs (@wakii/ui-kit 2.0.2) — ilec PHẦN D.
+ * Export names/props giữ nguyên 100% — internals chạy wakii Tabs (items-driven:
+ * tablist role=tab/tabpanel + roving tabindex + ArrowLeft/Right/Home/End
+ * built-in; chỉ render panel tab active — khớp hành vi Radix mặc định).
+ * - Tabs (Root) nhặt TabsTrigger (trong TabsList, 1 tầng Fragment) +
+ *   TabsContent khỏi children → build `items[]` (key/label/children/disabled)
+ *   feed wakii.
+ * - Controlled `value` → `activeKey`, `onValueChange` → `onChange`.
+ *   Uncontrolled: tự giữ state nội bộ init từ `defaultValue` (wakii không có
+ *   defaultActiveKey — không có state này thì keo lại items[0] mãi).
+ * - Wakii không có đối tác → note:
+ *   + `orientation="vertical"`: wakii chỉ tab bar ngang → bỏ qua.
+ *   + TabsList `variant` (default|line): visual line-style shadcn không map
+ *     được → bỏ qua (luôn look wakii: border-b + gạch accent).
+ *   + className per-TabsTrigger: wakii chỉ có slot `tab` chung → bỏ qua.
+ *   + `forceMount` trên TabsContent: wakii unmount panel ẩn → bỏ qua.
+ *   + Composition lệch chuẩn (Trigger ngoài TabsList vẫn nhặt được qua Fragment;
+ *     sâu hơn 2 tầng thì fallback render trần, không có chuyển tab).
+ */
 
 function Tabs({
+  value: valueProp,
+  defaultValue,
+  onValueChange,
   className,
-  orientation = "horizontal",
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  children,
+}: React.ComponentProps<"div"> & {
+  value?: string
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+  orientation?: "horizontal" | "vertical"
+}) {
+  // Nhặt trigger/content — trigger nằm trong TabsList hoặc trực tiếp/Fragment.
+  const triggers: {
+    value: string
+    label: React.ReactNode
+    disabled?: boolean
+  }[] = []
+  const contents = new Map<string, React.ReactNode>()
+  const scan = (nodes: React.ReactNode, depth: number) => {
+    React.Children.forEach(nodes, (child) => {
+      if (!React.isValidElement(child)) return
+      if (child.type === TabsTrigger) {
+        const el = child as React.ReactElement<{
+          value: string
+          children?: React.ReactNode
+          disabled?: boolean
+        }>
+        triggers.push({
+          value: el.props.value,
+          label: el.props.children,
+          disabled: el.props.disabled,
+        })
+      } else if (child.type === TabsContent) {
+        const el = child as React.ReactElement<{
+          value: string
+          children?: React.ReactNode
+        }>
+        contents.set(el.props.value, el.props.children)
+      } else if (
+        (child.type === TabsList || child.type === React.Fragment) &&
+        depth < 2
+      ) {
+        const el = child as React.ReactElement<{ children?: React.ReactNode }>
+        scan(el.props.children, depth + 1)
+      }
+    })
+  }
+  scan(children, 0)
+  const items = triggers.map((t) => ({
+    key: t.value,
+    label: t.label,
+    disabled: t.disabled,
+    children: contents.get(t.value),
+  }))
+
+  const [innerValue, setInnerValue] = React.useState(defaultValue)
+  const isControlled = valueProp !== undefined
+  const value = isControlled ? valueProp : innerValue
+  const handleChange = (key: string) => {
+    if (!isControlled) setInnerValue(key)
+    onValueChange?.(key)
+  }
+
   return (
-    <TabsPrimitive.Root
-      data-slot="tabs"
-      data-orientation={orientation}
-      orientation={orientation}
-      className={cn(
-        "group/tabs flex gap-2 data-[orientation=horizontal]:flex-col",
-        className
-      )}
-      {...props}
+    <WakiiTabs
+      items={items}
+      activeKey={value}
+      onChange={handleChange}
+      className={className}
     />
   )
 }
@@ -42,48 +118,58 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = "default",
+  children,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) {
+}: React.ComponentProps<"div"> & VariantProps<typeof tabsListVariants>) {
+  // Bình thường được Tabs nhặt; bản fallback cho dùng lệch composition.
   return (
-    <TabsPrimitive.List
+    <div
+      role="tablist"
       data-slot="tabs-list"
       data-variant={variant}
       className={cn(tabsListVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {children}
+    </div>
   )
 }
 
 function TabsTrigger({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+}: React.ComponentProps<"button"> & { value: string }) {
+  // Bình thường được Tabs nhặt vào items[]; bản fallback cho dùng lệch
+  // composition (không có chuyển tab).
   return (
-    <TabsPrimitive.Trigger
+    <button
+      type="button"
+      role="tab"
       data-slot="tabs-trigger"
-      className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none dark:text-muted-foreground dark:hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
-        "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
-        className
-      )}
+      className={className}
       {...props}
-    />
+    >
+      {children}
+    </button>
   )
 }
 
 function TabsContent({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+}: React.ComponentProps<"div"> & { value: string }) {
+  // Bình thường được Tabs nhặt vào items[]; bản fallback cho dùng lệch.
   return (
-    <TabsPrimitive.Content
+    <div
+      role="tabpanel"
       data-slot="tabs-content"
       className={cn("flex-1 outline-none", className)}
       {...props}
-    />
+    >
+      {children}
+    </div>
   )
 }
 
