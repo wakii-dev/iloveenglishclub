@@ -1,4 +1,5 @@
-import "server-only";
+// seed.ts import module này qua tsx — "server-only" chỉ hợp lệ trong Next runtime
+if (!process.env.SEED_RUN) import("server-only");
 import { del, put } from "@vercel/blob";
 
 /**
@@ -28,7 +29,7 @@ export async function putAudio(
     );
   }
   if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const blob = await put(path, data, {
+    const blob = await put(path, data, { allowOverwrite: true,
       contentType,
       access: "public",
       addRandomSuffix: false,

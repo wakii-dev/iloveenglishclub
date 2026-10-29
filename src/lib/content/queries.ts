@@ -27,6 +27,9 @@ async function cachedQuery<T>(
   fn: () => Promise<T>,
   fallback: T,
 ): Promise<T> {
+  // E2E: unstable_cache KHÔNG revalidate giữa tests trong cùng dev server
+  // (Next 16 cacheComponents) → state test trước lọt test sau. E2E_RUN bypass.
+  if (process.env.E2E_RUN) return fn();
   const run = unstable_cache(fn, [key], CACHE_OPTS);
   try {
     return await run();
