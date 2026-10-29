@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { connection } from "next/server";
 import { getBook } from "@/lib/content/queries";
 import { BRAND } from "@/lib/seo/site";
 
@@ -26,6 +27,7 @@ export default async function Image({
 }: {
   params: Promise<{ locale: string; book: string }>;
 }) {
+  await connection(); // OG đọc DB — dynamic, không prerender
   const { locale, book } = await params;
   const bookRow = await getBook(book, locale);
 
