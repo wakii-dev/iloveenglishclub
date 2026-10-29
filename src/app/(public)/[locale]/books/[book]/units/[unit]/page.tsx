@@ -16,18 +16,6 @@ import {
  * LessonList (tag loại + tên + số câu). SSG với generateStaticParams từ DB.
  */
 
-export async function generateStaticParams() {
-  const out: { book: string; unit: string }[] = [];
-  const books = await getBooks("en");
-  for (const b of books) {
-    const units = await getUnits(b.slug, "en");
-    for (const u of units) {
-      out.push({ book: b.slug, unit: String(u.number) });
-    }
-  }
-  return out;
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -43,6 +31,8 @@ export async function generateMetadata({
     title: unitRow ? `${unitRow.title} · ${bookRow?.title ?? book}` : t("levels.title"),
   };
 }
+
+export const instant = false; // DB-driven page — blocking
 
 export default async function UnitPage({
   params,

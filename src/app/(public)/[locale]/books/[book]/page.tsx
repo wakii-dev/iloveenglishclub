@@ -12,11 +12,6 @@ import { getBook, getBooks, getUnits } from "@/lib/content/queries";
  * SSG: generateStaticParams từ DB (build không DB → [] = ISR on-demand heal).
  */
 
-export async function generateStaticParams() {
-  const books = await getBooks("en");
-  return books.map((b) => ({ book: b.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -29,6 +24,8 @@ export async function generateMetadata({
   ]);
   return { title: row ? `${row.title} · ${row.cefrLabel}` : t("levels.title") };
 }
+
+export const instant = false; // DB-driven page — blocking
 
 export default async function BookPage({
   params,

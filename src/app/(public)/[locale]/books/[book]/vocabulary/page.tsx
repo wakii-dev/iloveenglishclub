@@ -16,11 +16,6 @@ import { buttonVariants } from "@/components/ui/button";
  * ?word=<id> (prefill thẻ flashcard có sẵn SF-2 tab Thư viện; guest → login).
  */
 
-export async function generateStaticParams() {
-  const books = await getBooks("en");
-  return books.map((b) => ({ book: b.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {
@@ -33,6 +28,8 @@ export async function generateMetadata({
   ]);
   return { title: row ? `${t("title")} · ${row.title}` : t("title") };
 }
+
+export const instant = false; // DB-driven vocabulary page — blocking
 
 export default async function BookVocabularyPage({
   params,
